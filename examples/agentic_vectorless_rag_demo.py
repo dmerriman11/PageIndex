@@ -119,7 +119,7 @@ def query_agent(
                     output = str(item.output)
                     preview = output[:200] + "..." if len(output) > 200 else output
                     print(f"[tool output]: {preview}\n")
-        return result or "".join(collected)
+        return "".join(collected) if collected else result
 
     try:
         asyncio.get_running_loop()
