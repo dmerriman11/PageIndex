@@ -1,9 +1,10 @@
 {
-  "id": "4e121bfc-0b7a-4623-b691-f0fddc07b7ab",
+  "id": "12345678-abcd-4321-abcd-123456789abc",
   "type": "pdf",
   "path": "../documents/attention-residuals.pdf",
   "doc_name": "attention-residuals.pdf",
   "doc_description": "This document introduces \"Attention Residuals\" (AttnRes) and its scalable variant \"Block AttnRes,\" novel mechanisms for replacing fixed residual accumulation in neural networks with learned, input-dependent depth-wise attention, addressing limitations of standard residual connections while optimizing memory, computation, and scalability for large-scale training and inference.",
+  "page_count": 21,
   "structure": [
     {
       "title": "Preface",
@@ -184,7 +185,6 @@
       "summary": "The partial document discusses an optimized inference I/O strategy for Full Attention Residuals (Full AttnRes) to reduce memory traffic, which scales linearly with model depth in a naïve implementation. It introduces a two-phase scheduling approach for inference, dividing the model into blocks to batch inter-block and intra-block computations. Phase 1 handles batched inter-block attention, reducing redundant memory reads by reusing key-value pairs across layers within a block. Phase 2 processes sequential intra-block dependencies. The document provides detailed calculations for read and write costs during both phases, showing that the proposed method reduces per-layer I/O complexity from O(L) to O(S+N), where S is the block size and N is the number of blocks. The approach maintains the model architecture while optimizing memory efficiency during inference."
     }
   ],
-  "page_count": 21,
   "pages": [
     {
       "page": 1,

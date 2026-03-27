@@ -12,6 +12,9 @@ from .page_index_md import md_to_tree
 from .retrieve import get_document, get_document_structure, get_page_content
 from .utils import ConfigLoader, remove_fields
 
+META_INDEX = "_meta.json"
+
+
 class PageIndexClient:
     """
     A client for indexing and retrieving document content.
@@ -129,21 +132,24 @@ class PageIndexClient:
         path = self.workspace / f"{doc_id}.json"
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=2)
-        # Update meta.json
-        self._save_meta(doc_id, {
+        # Update meta
+        meta_entry = {
             'type': doc.get('type', ''),
             'doc_name': doc.get('doc_name', ''),
             'doc_description': doc.get('doc_description', ''),
-            'page_count': doc.get('page_count'),
-            'line_count': doc.get('line_count'),
             'path': rel_path or doc.get('path', ''),
-        })
+        }
+        if doc.get('type') == 'pdf':
+            meta_entry['page_count'] = doc.get('page_count')
+        elif doc.get('type') == 'md':
+            meta_entry['line_count'] = doc.get('line_count')
+        self._save_meta(doc_id, meta_entry)
         # Drop heavy fields; will lazy-load on demand
         self.documents[doc_id].pop('structure', None)
         self.documents[doc_id].pop('pages', None)
 
     def _save_meta(self, doc_id: str, entry: dict):
-        meta_path = self.workspace / "meta.json"
+        meta_path = self.workspace / META_INDEX
         meta = {}
         if meta_path.exists():
             with open(meta_path, "r", encoding="utf-8") as f:
@@ -153,7 +159,7 @@ class PageIndexClient:
             json.dump(meta, f, ensure_ascii=False, indent=2)
 
     def _load_workspace(self):
-        meta_path = self.workspace / "meta.json"
+        meta_path = self.workspace / META_INDEX
         if not meta_path.exists():
             return
         with open(meta_path, "r", encoding="utf-8") as f:

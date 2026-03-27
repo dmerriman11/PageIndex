@@ -25,25 +25,12 @@ def _parse_pages(pages: str) -> list[int]:
 
 
 def _count_pages(doc_info: dict) -> int:
-    """Return total page count for a document."""
-    if doc_info.get('type') == 'pdf':
-        if doc_info.get('page_count'):
-            return doc_info['page_count']
-        if doc_info.get('pages'):
-            return len(doc_info['pages'])
-        return get_number_of_pages(doc_info['path'])
-    # For MD, find max line_num across all nodes
-    max_line = 0
-    def _traverse(nodes):
-        nonlocal max_line
-        for node in nodes:
-            ln = node.get('line_num', 0)
-            if ln and ln > max_line:
-                max_line = ln
-            if node.get('nodes'):
-                _traverse(node['nodes'])
-    _traverse(doc_info.get('structure', []))
-    return max_line
+    """Return total page count for a PDF document."""
+    if doc_info.get('page_count'):
+        return doc_info['page_count']
+    if doc_info.get('pages'):
+        return len(doc_info['pages'])
+    return get_number_of_pages(doc_info['path'])
 
 
 def _get_pdf_page_content(doc_info: dict, page_nums: list[int]) -> list[dict]:
