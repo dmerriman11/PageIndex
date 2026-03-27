@@ -106,7 +106,7 @@ def get_document(documents: dict, doc_id: str) -> str:
     if doc_info.get('type') == 'pdf':
         result['page_count'] = _count_pages(doc_info)
     else:
-        result['line_count'] = _count_pages(doc_info)
+        result['line_count'] = doc_info.get('line_count', 0)
     return json.dumps(result)
 
 

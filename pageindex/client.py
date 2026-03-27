@@ -102,6 +102,7 @@ class PageIndexClient:
                 'path': file_path,
                 'doc_name': result.get('doc_name', ''),
                 'doc_description': result.get('doc_description', ''),
+                'line_count': result.get('line_count', 0),
                 'structure': result['structure'],
             }
         else:
@@ -114,44 +115,70 @@ class PageIndexClient:
 
     def _save_doc(self, doc_id: str):
         doc = self.documents[doc_id].copy()
-        # Save pages to a separate file to keep the main JSON lightweight
-        pages = doc.pop('pages', None)
-        if pages:
-            pages_path = self.workspace / f"{doc_id}_pages.json"
-            with open(pages_path, "w", encoding="utf-8") as f:
-                json.dump(pages, f, ensure_ascii=False)
-        # Strip text from structure nodes — redundant with pages cache (PDF only)
+        # Strip text from structure nodes — redundant with pages (PDF only)
         if doc.get('structure') and doc.get('type') == 'pdf':
             doc['structure'] = remove_fields(doc['structure'], fields=['text'])
         # Store path relative to workspace so the JSON is portable across machines
+        rel_path = None
         if doc.get('path'):
             try:
-                doc['path'] = os.path.relpath(doc['path'], self.workspace)
+                rel_path = os.path.relpath(doc['path'], self.workspace)
+                doc['path'] = rel_path
             except ValueError:
                 pass  # On Windows, relpath fails across drives; keep absolute
         path = self.workspace / f"{doc_id}.json"
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=2)
-        # Drop pages from memory; queries will lazy-load from {doc_id}_pages.json
+        # Update meta.json
+        self._save_meta(doc_id, {
+            'type': doc.get('type', ''),
+            'doc_name': doc.get('doc_name', ''),
+            'doc_description': doc.get('doc_description', ''),
+            'page_count': doc.get('page_count'),
+            'line_count': doc.get('line_count'),
+            'path': rel_path or doc.get('path', ''),
+        })
+        # Drop heavy fields; will lazy-load on demand
+        self.documents[doc_id].pop('structure', None)
         self.documents[doc_id].pop('pages', None)
 
+    def _save_meta(self, doc_id: str, entry: dict):
+        meta_path = self.workspace / "meta.json"
+        meta = {}
+        if meta_path.exists():
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        meta[doc_id] = entry
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
+
     def _load_workspace(self):
-        loaded = 0
-        for path in self.workspace.glob("*.json"):
-            if path.name.endswith('_pages.json'):
-                continue  # Pages files are loaded on demand
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    doc = json.load(f)
-                # Resolve relative paths stored in workspace JSON
-                if doc.get('path') and not os.path.isabs(doc['path']):
-                    doc['path'] = str((self.workspace / doc['path']).resolve())
-                self.documents[path.stem] = doc
-                loaded += 1
-            except (json.JSONDecodeError, OSError) as e:
-                print(f"Warning: skipping corrupt workspace file {path.name}: {e}")
-        if loaded:
-            print(f"Loaded {loaded} document(s) from workspace.")
+        meta_path = self.workspace / "meta.json"
+        if not meta_path.exists():
+            return
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+        for doc_id, entry in meta.items():
+            doc = dict(entry, id=doc_id)
+            # Resolve relative paths
+            if doc.get('path') and not os.path.isabs(doc['path']):
+                doc['path'] = str((self.workspace / doc['path']).resolve())
+            self.documents[doc_id] = doc
+        print(f"Loaded {len(meta)} document(s) from workspace.")
+
+    def _ensure_doc_loaded(self, doc_id: str):
+        """Load full document JSON on demand (structure, pages, etc.)."""
+        doc = self.documents.get(doc_id)
+        if not doc or doc.get('structure') is not None:
+            return
+        doc_path = self.workspace / f"{doc_id}.json"
+        if not doc_path.exists():
+            return
+        with open(doc_path, "r", encoding="utf-8") as f:
+            full = json.load(f)
+        doc['structure'] = full.get('structure', [])
+        if full.get('pages'):
+            doc['pages'] = full['pages']
 
     def get_document(self, doc_id: str) -> str:
         """Return document metadata JSON."""
@@ -159,14 +186,12 @@ class PageIndexClient:
 
     def get_document_structure(self, doc_id: str) -> str:
         """Return document tree structure JSON (without text fields)."""
+        if self.workspace:
+            self._ensure_doc_loaded(doc_id)
         return get_document_structure(self.documents, doc_id)
 
     def get_page_content(self, doc_id: str, pages: str) -> str:
         """Return page content for the given pages string (e.g. '5-7', '3,8', '12')."""
-        doc = self.documents.get(doc_id)
-        if doc and not doc.get('pages') and self.workspace:
-            pages_path = self.workspace / f"{doc_id}_pages.json"
-            if pages_path.exists():
-                with open(pages_path, 'r', encoding='utf-8') as f:
-                    doc['pages'] = json.load(f)
+        if self.workspace:
+            self._ensure_doc_loaded(doc_id)
         return get_page_content(self.documents, doc_id, pages)

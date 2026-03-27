@@ -243,7 +243,8 @@ def clean_tree_for_output(tree_nodes):
 async def md_to_tree(md_path, if_thinning=False, min_token_threshold=None, if_add_node_summary='no', summary_token_threshold=None, model=None, if_add_doc_description='no', if_add_node_text='no', if_add_node_id='yes'):
     with open(md_path, 'r', encoding='utf-8') as f:
         markdown_content = f.read()
-    
+    line_count = markdown_content.count('\n') + 1
+
     print(f"Extracting nodes from markdown...")
     node_list, markdown_lines = extract_nodes_from_markdown(markdown_content)
 
@@ -282,6 +283,7 @@ async def md_to_tree(md_path, if_thinning=False, min_token_threshold=None, if_ad
             return {
                 'doc_name': os.path.splitext(os.path.basename(md_path))[0],
                 'doc_description': doc_description,
+                'line_count': line_count,
                 'structure': tree_structure,
             }
     else:
@@ -293,6 +295,7 @@ async def md_to_tree(md_path, if_thinning=False, min_token_threshold=None, if_ad
     
     return {
         'doc_name': os.path.splitext(os.path.basename(md_path))[0],
+        'line_count': line_count,
         'structure': tree_structure,
     }
 
