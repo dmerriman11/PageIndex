@@ -25,6 +25,7 @@ import requests
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from agents import Agent, Runner, function_tool
+from agents.model_settings import ModelSettings
 from agents.stream_events import RawResponsesStreamEvent, RunItemStreamEvent
 from openai.types.responses import ResponseTextDeltaEvent, ResponseReasoningSummaryTextDeltaEvent
 
@@ -84,14 +85,30 @@ def query_agent(
         instructions=AGENT_SYSTEM_PROMPT,
         tools=[get_document, get_document_structure, get_page_content],
         model=client.retrieve_model,
+        model_settings=ModelSettings(reasoning={"effort": "medium", "summary": "auto"}),
     )
 
     async def _run():
         streamed_run = Runner.run_streamed(agent, prompt)
         line_has_streamed_text = False
+        current_stream_kind = None
         async for event in streamed_run.stream_events():
             if isinstance(event, RawResponsesStreamEvent):
-                if isinstance(event.data, ResponseTextDeltaEvent):
+                if isinstance(event.data, ResponseReasoningSummaryTextDeltaEvent):
+                    if current_stream_kind != "reasoning":
+                        if line_has_streamed_text:
+                            print()
+                        print("[reasoning] ", end="", flush=True)
+                        current_stream_kind = "reasoning"
+                        line_has_streamed_text = True
+                    delta = event.data.delta
+                    print(delta, end="", flush=True)
+                    line_has_streamed_text = True
+                elif isinstance(event.data, ResponseTextDeltaEvent):
+                    if current_stream_kind == "reasoning":
+                        if line_has_streamed_text:
+                            print()
+                    current_stream_kind = "text"
                     delta = event.data.delta
                     print(delta, end="", flush=True)
                     line_has_streamed_text = True
@@ -101,6 +118,7 @@ def query_agent(
                     if line_has_streamed_text:
                         print()  # end streaming line before tool call
                         line_has_streamed_text = False
+                    current_stream_kind = None
                     raw = item.raw_item
                     args = getattr(raw, "arguments", "{}")
                     args_str = f"({args})" if verbose else ""
@@ -110,6 +128,7 @@ def query_agent(
                     preview = output[:200] + "..." if len(output) > 200 else output
                     print(f"[tool output]: {preview}\n")
                     line_has_streamed_text = False
+                    current_stream_kind = None
         if line_has_streamed_text:
             print()
         return "" if not streamed_run.final_output else str(streamed_run.final_output)
