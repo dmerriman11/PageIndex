@@ -119,6 +119,31 @@ class PageIndexClient:
             self._save_doc(doc_id)
         return doc_id
 
+    @staticmethod
+    def _make_meta_entry(doc: dict) -> dict:
+        """Build a lightweight meta entry from a document dict."""
+        entry = {
+            'type': doc.get('type', ''),
+            'doc_name': doc.get('doc_name', ''),
+            'doc_description': doc.get('doc_description', ''),
+            'path': doc.get('path', ''),
+        }
+        if doc.get('type') == 'pdf':
+            entry['page_count'] = doc.get('page_count')
+        elif doc.get('type') == 'md':
+            entry['line_count'] = doc.get('line_count')
+        return entry
+
+    @staticmethod
+    def _read_json(path) -> dict | None:
+        """Read a JSON file, returning None on any error."""
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"Warning: corrupt {Path(path).name}: {e}")
+            return None
+
     def _save_doc(self, doc_id: str):
         doc = self.documents[doc_id].copy()
         # Strip text from structure nodes — redundant with pages (PDF only)
@@ -127,18 +152,7 @@ class PageIndexClient:
         path = self.workspace / f"{doc_id}.json"
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=2)
-        # Update meta
-        meta_entry = {
-            'type': doc.get('type', ''),
-            'doc_name': doc.get('doc_name', ''),
-            'doc_description': doc.get('doc_description', ''),
-            'path': doc.get('path', ''),
-        }
-        if doc.get('type') == 'pdf':
-            meta_entry['page_count'] = doc.get('page_count')
-        elif doc.get('type') == 'md':
-            meta_entry['line_count'] = doc.get('line_count')
-        self._save_meta(doc_id, meta_entry)
+        self._save_meta(doc_id, self._make_meta_entry(doc))
         # Drop heavy fields; will lazy-load on demand
         self.documents[doc_id].pop('structure', None)
         self.documents[doc_id].pop('pages', None)
@@ -149,42 +163,28 @@ class PageIndexClient:
         for path in self.workspace.glob("*.json"):
             if path.name == META_INDEX:
                 continue
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    doc = json.load(f)
-                entry = {k: doc[k] for k in ('type', 'doc_name', 'doc_description', 'path') if k in doc}
-                if doc.get('type') == 'pdf' and 'page_count' in doc:
-                    entry['page_count'] = doc['page_count']
-                elif doc.get('type') == 'md' and 'line_count' in doc:
-                    entry['line_count'] = doc['line_count']
-                meta[path.stem] = entry
-            except (json.JSONDecodeError, OSError) as e:
-                print(f"Warning: skipping corrupt file {path.name}: {e}")
+            doc = self._read_json(path)
+            if doc and isinstance(doc, dict):
+                meta[path.stem] = self._make_meta_entry(doc)
+        return meta
+
+    def _read_meta(self) -> dict | None:
+        """Read and validate _meta.json, returning None on any corruption."""
+        meta = self._read_json(self.workspace / META_INDEX)
+        if meta is not None and not isinstance(meta, dict):
+            print(f"Warning: {META_INDEX} is not a JSON object, ignoring")
+            return None
         return meta
 
     def _save_meta(self, doc_id: str, entry: dict):
-        meta_path = self.workspace / META_INDEX
-        meta = {}
-        if meta_path.exists():
-            try:
-                with open(meta_path, "r", encoding="utf-8") as f:
-                    meta = json.load(f)
-            except (json.JSONDecodeError, OSError) as e:
-                print(f"Warning: corrupt {META_INDEX}, rebuilding: {e}")
-                meta = self._rebuild_meta()
+        meta = self._read_meta() or self._rebuild_meta()
         meta[doc_id] = entry
+        meta_path = self.workspace / META_INDEX
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(meta, f, ensure_ascii=False, indent=2)
 
     def _load_workspace(self):
-        meta_path = self.workspace / META_INDEX
-        meta = None
-        if meta_path.exists():
-            try:
-                with open(meta_path, "r", encoding="utf-8") as f:
-                    meta = json.load(f)
-            except (json.JSONDecodeError, OSError) as e:
-                print(f"Warning: corrupt {META_INDEX}, falling back to scanning JSON files: {e}")
+        meta = self._read_meta()
         if meta is None:
             meta = self._rebuild_meta()
             if meta:
@@ -200,11 +200,9 @@ class PageIndexClient:
         doc = self.documents.get(doc_id)
         if not doc or doc.get('structure') is not None:
             return
-        doc_path = self.workspace / f"{doc_id}.json"
-        if not doc_path.exists():
+        full = self._read_json(self.workspace / f"{doc_id}.json")
+        if not full:
             return
-        with open(doc_path, "r", encoding="utf-8") as f:
-            full = json.load(f)
         doc['structure'] = full.get('structure', [])
         if full.get('pages'):
             doc['pages'] = full['pages']
