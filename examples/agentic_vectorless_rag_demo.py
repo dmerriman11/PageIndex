@@ -24,15 +24,16 @@ import requests
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agents import Agent, ItemHelpers, Runner, function_tool
+from agents import Agent, Runner, function_tool
 from agents.stream_events import RawResponsesStreamEvent, RunItemStreamEvent
 from openai.types.responses import ResponseTextDeltaEvent, ResponseReasoningSummaryTextDeltaEvent
 
 from pageindex import PageIndexClient
 import pageindex.utils as utils
 
-_EXAMPLES_DIR = os.path.dirname(os.path.abspath(__file__))
 PDF_URL = "https://arxiv.org/pdf/2603.15031"
+
+_EXAMPLES_DIR = os.path.dirname(os.path.abspath(__file__))
 PDF_PATH = os.path.join(_EXAMPLES_DIR, "documents", "attention-residuals.pdf")
 WORKSPACE = os.path.join(_EXAMPLES_DIR, "workspace")
 
@@ -86,31 +87,20 @@ def query_agent(
     )
 
     async def _run():
-        collected = []
-        result = ""
         streamed_run = Runner.run_streamed(agent, prompt)
+        line_has_streamed_text = False
         async for event in streamed_run.stream_events():
             if isinstance(event, RawResponsesStreamEvent):
-                if isinstance(event.data, ResponseReasoningSummaryTextDeltaEvent):
-                    print(event.data.delta, end="", flush=True)
-                elif isinstance(event.data, ResponseTextDeltaEvent):
+                if isinstance(event.data, ResponseTextDeltaEvent):
                     delta = event.data.delta
                     print(delta, end="", flush=True)
-                    collected.append(delta)
+                    line_has_streamed_text = True
             elif isinstance(event, RunItemStreamEvent):
                 item = event.item
-                if item.type == "message_output_item":
-                    if not collected:
-                        text = ItemHelpers.text_message_output(item)
-                        if text:
-                            print(text)
-                    if collected:
-                        result = "".join(collected)
-                    collected.clear()
-                elif item.type == "tool_call_item":
-                    if collected:
+                if item.type == "tool_call_item":
+                    if line_has_streamed_text:
                         print()  # end streaming line before tool call
-                        collected.clear()
+                        line_has_streamed_text = False
                     raw = item.raw_item
                     args = getattr(raw, "arguments", "{}")
                     args_str = f"({args})" if verbose else ""
@@ -119,7 +109,10 @@ def query_agent(
                     output = str(item.output)
                     preview = output[:200] + "..." if len(output) > 200 else output
                     print(f"[tool output]: {preview}\n")
-        return "".join(collected) if collected else result
+                    line_has_streamed_text = False
+        if line_has_streamed_text:
+            print()
+        return "" if not streamed_run.final_output else str(streamed_run.final_output)
 
     try:
         asyncio.get_running_loop()
@@ -165,7 +158,8 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("Step 2: Document Metadata (get_document)")
     print("=" * 60)
-    print(client.get_document(doc_id))
+    doc_metadata = client.get_document(doc_id)
+    print(f"\n{doc_metadata}")
 
     # Step 3: Agent Query
     print("\n" + "=" * 60)
