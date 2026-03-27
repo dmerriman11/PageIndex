@@ -5,10 +5,12 @@ import asyncio
 import concurrent.futures
 from pathlib import Path
 
+import PyPDF2
+
 from .page_index import page_index
 from .page_index_md import md_to_tree
 from .retrieve import get_document, get_document_structure, get_page_content
-from .utils import ConfigLoader
+from .utils import ConfigLoader, remove_fields
 
 class PageIndexClient:
     """
@@ -58,13 +60,21 @@ class PageIndexClient:
                 if_add_node_id='yes',
                 if_add_doc_description='yes'
             )
+            # Extract per-page text so queries don't need the original PDF
+            pages = []
+            with open(file_path, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                for i, page in enumerate(pdf_reader.pages, 1):
+                    pages.append({'page': i, 'content': page.extract_text() or ''})
+
             self.documents[doc_id] = {
                 'id': doc_id,
-                'path': file_path,
                 'type': 'pdf',
-                'structure': result['structure'],
+                'path': file_path,
                 'doc_name': result.get('doc_name', ''),
-                'doc_description': result.get('doc_description', '')
+                'doc_description': result.get('doc_description', ''),
+                'structure': result['structure'],
+                'pages': pages,
             }
 
         elif mode == "md" or (mode == "auto" and is_md):
@@ -87,11 +97,11 @@ class PageIndexClient:
                 result = asyncio.run(coro)
             self.documents[doc_id] = {
                 'id': doc_id,
-                'path': file_path,
                 'type': 'md',
-                'structure': result['structure'],
+                'path': file_path,
                 'doc_name': result.get('doc_name', ''),
-                'doc_description': result.get('doc_description', '')
+                'doc_description': result.get('doc_description', ''),
+                'structure': result['structure'],
             }
         else:
             raise ValueError(f"Unsupported file format for: {file_path}")
@@ -102,9 +112,19 @@ class PageIndexClient:
         return doc_id
 
     def _save_doc(self, doc_id: str):
+        doc = self.documents[doc_id].copy()
+        # Strip text from structure nodes — redundant with pages cache
+        if doc.get('structure'):
+            doc['structure'] = remove_fields(doc['structure'], fields=['text'])
+        # Store path relative to workspace so the JSON is portable across machines
+        if doc.get('path'):
+            try:
+                doc['path'] = os.path.relpath(doc['path'], self.workspace)
+            except ValueError:
+                pass  # On Windows, relpath fails across drives; keep absolute
         path = self.workspace / f"{doc_id}.json"
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.documents[doc_id], f, ensure_ascii=False, indent=2)
+            json.dump(doc, f, ensure_ascii=False, indent=2)
 
     def _load_workspace(self):
         loaded = 0
@@ -112,6 +132,9 @@ class PageIndexClient:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     doc = json.load(f)
+                # Resolve relative paths stored in workspace JSON
+                if doc.get('path') and not os.path.isabs(doc['path']):
+                    doc['path'] = str((self.workspace / doc['path']).resolve())
                 self.documents[path.stem] = doc
                 loaded += 1
             except (json.JSONDecodeError, OSError) as e:

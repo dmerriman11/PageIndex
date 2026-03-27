@@ -27,6 +27,8 @@ def _parse_pages(pages: str) -> list[int]:
 def _count_pages(doc_info: dict) -> int:
     """Return total page count for a document."""
     if doc_info.get('type') == 'pdf':
+        if doc_info.get('pages'):
+            return len(doc_info['pages'])
         return get_number_of_pages(doc_info['path'])
     # For MD, find max line_num across all nodes
     max_line = 0
@@ -43,7 +45,14 @@ def _count_pages(doc_info: dict) -> int:
 
 
 def _get_pdf_page_content(doc_info: dict, page_nums: list[int]) -> list[dict]:
-    """Extract text for specific PDF pages (1-indexed), opening the PDF once."""
+    """Extract text for specific PDF pages (1-indexed). Prefer cached pages, fallback to PDF."""
+    cached_pages = doc_info.get('pages')
+    if cached_pages:
+        page_map = {p['page']: p['content'] for p in cached_pages}
+        return [
+            {'page': p, 'content': page_map[p]}
+            for p in page_nums if p in page_map
+        ]
     path = doc_info['path']
     with open(path, 'rb') as f:
         pdf_reader = PyPDF2.PdfReader(f)
