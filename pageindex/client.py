@@ -73,6 +73,7 @@ class PageIndexClient:
                 'path': file_path,
                 'doc_name': result.get('doc_name', ''),
                 'doc_description': result.get('doc_description', ''),
+                'page_count': len(pages),
                 'structure': result['structure'],
                 'pages': pages,
             }
@@ -113,6 +114,12 @@ class PageIndexClient:
 
     def _save_doc(self, doc_id: str):
         doc = self.documents[doc_id].copy()
+        # Save pages to a separate file to keep the main JSON lightweight
+        pages = doc.pop('pages', None)
+        if pages:
+            pages_path = self.workspace / f"{doc_id}_pages.json"
+            with open(pages_path, "w", encoding="utf-8") as f:
+                json.dump(pages, f, ensure_ascii=False)
         # Strip text from structure nodes — redundant with pages cache (PDF only)
         if doc.get('structure') and doc.get('type') == 'pdf':
             doc['structure'] = remove_fields(doc['structure'], fields=['text'])
@@ -125,10 +132,14 @@ class PageIndexClient:
         path = self.workspace / f"{doc_id}.json"
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=2)
+        # Drop pages from memory; queries will lazy-load from {doc_id}_pages.json
+        self.documents[doc_id].pop('pages', None)
 
     def _load_workspace(self):
         loaded = 0
         for path in self.workspace.glob("*.json"):
+            if path.name.endswith('_pages.json'):
+                continue  # Pages files are loaded on demand
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     doc = json.load(f)
@@ -152,4 +163,10 @@ class PageIndexClient:
 
     def get_page_content(self, doc_id: str, pages: str) -> str:
         """Return page content for the given pages string (e.g. '5-7', '3,8', '12')."""
+        doc = self.documents.get(doc_id)
+        if doc and not doc.get('pages') and self.workspace:
+            pages_path = self.workspace / f"{doc_id}_pages.json"
+            if pages_path.exists():
+                with open(pages_path, 'r', encoding='utf-8') as f:
+                    doc['pages'] = json.load(f)
         return get_page_content(self.documents, doc_id, pages)

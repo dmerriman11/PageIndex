@@ -27,6 +27,8 @@ def _parse_pages(pages: str) -> list[int]:
 def _count_pages(doc_info: dict) -> int:
     """Return total page count for a document."""
     if doc_info.get('type') == 'pdf':
+        if doc_info.get('page_count'):
+            return doc_info['page_count']
         if doc_info.get('pages'):
             return len(doc_info['pages'])
         return get_number_of_pages(doc_info['path'])
