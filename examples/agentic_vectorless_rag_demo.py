@@ -32,8 +32,6 @@ from openai.types.responses import ResponseTextDeltaEvent, ResponseReasoningSumm
 from pageindex import PageIndexClient
 import pageindex.utils as utils
 
-set_tracing_disabled(True)
-
 PDF_URL = "https://arxiv.org/pdf/2603.15031"
 
 _EXAMPLES_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -136,6 +134,8 @@ def query_agent(client: PageIndexClient, doc_id: str, prompt: str, verbose: bool
 
 
 if __name__ == "__main__":
+
+    set_tracing_disabled(True)
 
     # Download PDF if needed
     if not os.path.exists(PDF_PATH):
