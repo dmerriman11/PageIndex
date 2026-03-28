@@ -35,7 +35,10 @@ class PageIndexClient:
             overrides["retrieve_model"] = retrieve_model
         opt = ConfigLoader().load(overrides or None)
         self.model = opt.model
-        self.retrieve_model = opt.retrieve_model or self.model
+        retrieve_model = opt.retrieve_model or self.model
+        if "/" in retrieve_model and not retrieve_model.startswith("litellm/"):
+            retrieve_model = f"litellm/{retrieve_model}"
+        self.retrieve_model = retrieve_model
         if self.workspace:
             self.workspace.mkdir(parents=True, exist_ok=True)
         self.documents = {}

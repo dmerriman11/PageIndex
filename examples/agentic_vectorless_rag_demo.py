@@ -24,13 +24,15 @@ import requests
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agents import Agent, Runner, function_tool
+from agents import Agent, Runner, function_tool, set_tracing_disabled
 from agents.model_settings import ModelSettings
 from agents.stream_events import RawResponsesStreamEvent, RunItemStreamEvent
 from openai.types.responses import ResponseTextDeltaEvent, ResponseReasoningSummaryTextDeltaEvent
 
 from pageindex import PageIndexClient
 import pageindex.utils as utils
+
+set_tracing_disabled(True)
 
 PDF_URL = "https://arxiv.org/pdf/2603.15031"
 
