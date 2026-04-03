@@ -5,6 +5,10 @@ FastAPI server that wraps the PageIndex library to provide a REST API
 for document indexing and reasoning-based retrieval.
 
 Endpoints:
+  GET    /api/keys                       — list API keys (admin scope)
+  POST   /api/keys                       — create API key (admin scope)
+  DELETE /api/keys/{key_id}              — revoke API key (admin scope)
+  POST   /api/chat                       — chat-compatible alias for RAG query
   POST   /api/libraries                  — create a library (group of documents)
   GET    /api/libraries                  — list all libraries
   GET    /api/libraries/{library_id}     — get library details + tree structure
@@ -13,7 +17,7 @@ Endpoints:
   DELETE /api/libraries/{library_id}/documents/{doc_id}  — remove document
   POST   /api/query                      — RAG query across one or more libraries
   GET    /api/health                     — health check
-  GET    /api/dashboard                  — dashboard KPI data (for the UI)
+  GET    /api/admin/dashboard            — dashboard KPI data (for the UI)
   GET    /api/logs                       — query log history
   DELETE /api/logs                       — clear logs
 """
@@ -23,20 +27,21 @@ import sys
 import uuid
 import json
 import time
-import asyncio
 import shutil
 import re
+import hashlib
+import secrets
+import ipaddress
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
+from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # Ensure pageindex package is importable from the repo root
 sys.path.insert(0, str(Path(__file__).parent))
@@ -50,8 +55,16 @@ WORKSPACE_DIR = Path(__file__).parent / "workspace"
 WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
 LIBRARIES_INDEX = WORKSPACE_DIR / "_libraries.json"
 LOGS_FILE = WORKSPACE_DIR / "_query_logs.json"
+API_KEYS_FILE = WORKSPACE_DIR / "_api_keys.json"
 UPLOADS_DIR = WORKSPACE_DIR / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+API_KEY_PREFIX = "pk_live_"
+DEFAULT_API_KEY_RATE_LIMIT = 120
+ALLOWED_API_KEY_PERMISSIONS = {"query", "admin"}
+TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY = (
+    os.getenv("TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY", "true").strip().lower() in {"1", "true", "yes", "on"}
+)
 
 # Determine which model to use
 # Priority: MODEL env var -> GEMINI_API_KEY -> ANTHROPIC_API_KEY -> OPENAI_API_KEY (default)
@@ -133,6 +146,74 @@ def save_logs(logs: list):
     LOGS_FILE.write_text(json.dumps(logs[-1000:], indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def load_api_keys() -> dict:
+    if API_KEYS_FILE.exists():
+        try:
+            data = json.loads(API_KEYS_FILE.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def save_api_keys(keys: dict):
+    API_KEYS_FILE.write_text(json.dumps(keys, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def _hash_api_key(raw_key: str) -> str:
+    return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+
+
+def _mask_api_key(raw_key: str, visible_chars: int = 10) -> str:
+    normalized = (raw_key or "").strip()
+    if len(normalized) <= visible_chars:
+        return normalized
+    return normalized[:visible_chars]
+
+
+def _is_loopback_request(request: Request) -> bool:
+    if not request.client or not request.client.host:
+        return False
+
+    host = request.client.host
+    if host in {"localhost", "::1", "127.0.0.1"}:
+        return True
+
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def _normalize_api_key_permissions(permissions: Optional[List[str]]) -> List[str]:
+    cleaned = []
+    for permission in permissions or []:
+        if not isinstance(permission, str):
+            continue
+        value = permission.strip().lower()
+        if value in ALLOWED_API_KEY_PERMISSIONS and value not in cleaned:
+            cleaned.append(value)
+    return cleaned or ["query"]
+
+
+def _serialize_api_key(record: dict) -> dict:
+    return {
+        "id": record.get("id", ""),
+        "name": record.get("name", ""),
+        "keyPrefix": record.get("keyPrefix", ""),
+        "permissions": record.get("permissions", ["query"]),
+        "rateLimit": record.get("rateLimit", DEFAULT_API_KEY_RATE_LIMIT),
+        "lastUsed": record.get("lastUsed"),
+        "createdAt": record.get("createdAt", ""),
+        "active": bool(record.get("active", True)),
+    }
+
+
+def _generate_api_key_secret() -> str:
+    token = secrets.token_urlsafe(32)
+    return f"{API_KEY_PREFIX}{token}"
+
+
 def _repair_document_states(libraries: dict) -> bool:
     changed = False
 
@@ -169,11 +250,28 @@ def _repair_document_states(libraries: dict) -> bool:
 # Global in-memory state
 LIBRARIES: dict = load_libraries()        # library_id -> library_meta
 QUERY_LOGS: list = load_logs()            # list of log dicts
+API_KEYS: dict = load_api_keys()          # key_id -> key metadata + hash
 # map library_id -> PageIndexClient instance (lazily created)
 CLIENTS: dict = {}
 
 if _repair_document_states(LIBRARIES):
     save_libraries(LIBRARIES)
+
+if API_KEYS:
+    changed_keys = False
+    for key_record in API_KEYS.values():
+        normalized_permissions = _normalize_api_key_permissions(key_record.get("permissions"))
+        if key_record.get("permissions") != normalized_permissions:
+            key_record["permissions"] = normalized_permissions
+            changed_keys = True
+        if "active" not in key_record:
+            key_record["active"] = True
+            changed_keys = True
+        if "rateLimit" not in key_record:
+            key_record["rateLimit"] = DEFAULT_API_KEY_RATE_LIMIT
+            changed_keys = True
+    if changed_keys:
+        save_api_keys(API_KEYS)
 
 def get_client(library_id: str) -> PageIndexClient:
     if library_id not in CLIENTS:
@@ -213,12 +311,144 @@ class QueryRequest(BaseModel):
     top_pages: Optional[int] = 3
 
 
+class ChatRequest(BaseModel):
+    query: Optional[str] = None
+    message: Optional[str] = None
+    prompt: Optional[str] = None
+    messages: Optional[List[dict]] = None
+    library_ids: Optional[List[str]] = None
+    top_pages: Optional[int] = 3
+
+
+class CreateApiKeyRequest(BaseModel):
+    name: str
+    permissions: List[str] = Field(default_factory=lambda: ["query"])
+    rateLimit: int = DEFAULT_API_KEY_RATE_LIMIT
+
+
 STOP_WORDS = {
     "a", "an", "and", "are", "as", "at", "be", "by", "can", "could", "do", "does",
     "for", "from", "how", "i", "in", "into", "is", "it", "of", "on", "or", "that",
     "the", "their", "this", "to", "what", "when", "where", "which", "who", "why",
     "with", "you", "your",
 }
+
+
+def _find_matching_api_key(raw_key: str) -> Optional[dict]:
+    if not raw_key:
+        return None
+
+    raw_value = raw_key.strip()
+    if not raw_value:
+        return None
+
+    raw_hash = _hash_api_key(raw_value)
+    for key_record in API_KEYS.values():
+        if not key_record.get("active", True):
+            continue
+        stored_hash = key_record.get("keyHash", "")
+        if stored_hash and secrets.compare_digest(stored_hash, raw_hash):
+            return key_record
+    return None
+
+
+def _validate_api_key(
+    request: Request,
+    x_api_key: Optional[str],
+    allow_local_bypass: bool = True,
+) -> dict:
+    # Local server-to-server calls from the Next.js app can bypass key checks in local dev.
+    if allow_local_bypass and TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY and _is_loopback_request(request):
+        return {"id": "local-dev-bypass", "permissions": ["admin", "query"]}
+
+    matched_key = _find_matching_api_key(x_api_key or "")
+    if not matched_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key.")
+
+    matched_key["lastUsed"] = datetime.now(timezone.utc).isoformat()
+    save_api_keys(API_KEYS)
+    return matched_key
+
+
+def require_api_key(
+    request: Request,
+    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+) -> dict:
+    return _validate_api_key(request=request, x_api_key=x_api_key, allow_local_bypass=True)
+
+
+def require_api_key_strict(
+    request: Request,
+    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+) -> dict:
+    return _validate_api_key(request=request, x_api_key=x_api_key, allow_local_bypass=False)
+
+
+def require_admin_api_key(
+    request: Request,
+    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+) -> dict:
+    if not API_KEYS and _is_loopback_request(request):
+        return {"id": "bootstrap-admin", "permissions": ["admin", "query"]}
+
+    key = require_api_key(request, x_api_key)
+    permissions = key.get("permissions", [])
+    if "admin" not in permissions:
+        raise HTTPException(status_code=403, detail="Admin API key permission is required.")
+    return key
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# API Keys
+# ────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/keys", dependencies=[Depends(require_admin_api_key)])
+def list_api_keys():
+    key_items = [_serialize_api_key(record) for record in API_KEYS.values()]
+    key_items.sort(key=lambda item: item.get("createdAt", ""), reverse=True)
+    return key_items
+
+
+@app.post("/api/keys", status_code=201, dependencies=[Depends(require_admin_api_key)])
+def create_api_key(req: CreateApiKeyRequest):
+    name = (req.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Key name is required.")
+
+    permissions = _normalize_api_key_permissions(req.permissions)
+    rate_limit = max(1, min(int(req.rateLimit or DEFAULT_API_KEY_RATE_LIMIT), 10000))
+
+    raw_key = _generate_api_key_secret()
+    key_id = str(uuid.uuid4())
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    key_record = {
+        "id": key_id,
+        "name": name,
+        "keyPrefix": _mask_api_key(raw_key),
+        "keyHash": _hash_api_key(raw_key),
+        "permissions": permissions,
+        "rateLimit": rate_limit,
+        "lastUsed": None,
+        "createdAt": now_iso,
+        "active": True,
+    }
+    API_KEYS[key_id] = key_record
+    save_api_keys(API_KEYS)
+
+    return {
+        "key": _serialize_api_key(key_record),
+        "secret": raw_key,
+    }
+
+
+@app.delete("/api/keys/{key_id}", dependencies=[Depends(require_admin_api_key)])
+def revoke_api_key(key_id: str):
+    if key_id not in API_KEYS:
+        raise HTTPException(status_code=404, detail="API key not found.")
+    del API_KEYS[key_id]
+    save_api_keys(API_KEYS)
+    return {"status": "deleted"}
 
 # ────────────────────────────────────────────────────────────────────────────
 # Health
@@ -243,28 +473,59 @@ def dashboard():
     """Return KPI data for the frontend dashboard widget."""
     logs = QUERY_LOGS
     now = time.time()
+    now_dt = datetime.fromtimestamp(now, tz=timezone.utc)
+
     last_24h = [l for l in logs if (now - l.get("ts", 0)) < 86400]
+    last_24h_prev = [l for l in logs if 86400 <= (now - l.get("ts", 0)) < 172800]
+    last_7d = [l for l in logs if (now - l.get("ts", 0)) < 604800]
+    last_30d = [l for l in logs if (now - l.get("ts", 0)) < 2592000]
 
-    # Compute avg latency
-    latencies = [l.get("latency_ms", 0) for l in last_24h if l.get("latency_ms")]
-    avg_latency = int(sum(latencies) / len(latencies)) if latencies else 0
+    def pct_trend(current: float, previous: float) -> float:
+        if previous <= 0:
+            return 0.0 if current <= 0 else 100.0
+        return round(((current - previous) / previous) * 100, 1)
 
-    # Chunk count approximation (sum of doc counts * 100 as placeholder)
+    latencies_24h = [l.get("latency_ms", 0) for l in last_24h if l.get("latency_ms")]
+    latencies_24h_prev = [l.get("latency_ms", 0) for l in last_24h_prev if l.get("latency_ms")]
+    avg_latency = int(sum(latencies_24h) / len(latencies_24h)) if latencies_24h else 0
+    avg_latency_prev = int(sum(latencies_24h_prev) / len(latencies_24h_prev)) if latencies_24h_prev else 0
+
     total_docs = sum(len(lib.get("documents", {})) for lib in LIBRARIES.values())
-    total_chunks = sum(
-        lib.get("total_chunks", 0) for lib in LIBRARIES.values()
-    )
+    total_chunks = sum(lib.get("total_chunks", 0) for lib in LIBRARIES.values())
+    indexed_pages = total_chunks if total_chunks else total_docs * 150
 
-    # Query volume per hour for last 24h
     hour_buckets = {}
     for log in last_24h:
-        bucket = datetime.fromtimestamp(log.get("ts", now), tz=timezone.utc)
+        bucket = datetime.fromtimestamp(log.get("ts", now), tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
         hour_key = bucket.strftime("%Y-%m-%dT%H:00:00Z")
         hour_buckets[hour_key] = hour_buckets.get(hour_key, 0) + 1
 
-    query_volume = [{"time": k, "count": v} for k, v in sorted(hour_buckets.items())]
+    query_volume = []
+    for offset in range(23, -1, -1):
+        bucket = (now_dt - timedelta(hours=offset)).replace(minute=0, second=0, microsecond=0)
+        key = bucket.strftime("%Y-%m-%dT%H:00:00Z")
+        query_volume.append({"time": key, "hour": bucket.hour, "count": hour_buckets.get(key, 0)})
 
-    # Library popularity
+    day_buckets_7d = {}
+    day_buckets_30d = {}
+    for log in last_30d:
+        day_bucket = datetime.fromtimestamp(log.get("ts", now), tz=timezone.utc).date().isoformat()
+        day_buckets_30d[day_bucket] = day_buckets_30d.get(day_bucket, 0) + 1
+        if (now - log.get("ts", 0)) < 604800:
+            day_buckets_7d[day_bucket] = day_buckets_7d.get(day_bucket, 0) + 1
+
+    query_volume_7d = []
+    for offset in range(6, -1, -1):
+        day = (now_dt - timedelta(days=offset)).date()
+        iso_day = day.isoformat()
+        query_volume_7d.append({"time": iso_day, "day": int(day.strftime("%d")), "count": day_buckets_7d.get(iso_day, 0)})
+
+    query_volume_30d = []
+    for offset in range(29, -1, -1):
+        day = (now_dt - timedelta(days=offset)).date()
+        iso_day = day.isoformat()
+        query_volume_30d.append({"time": iso_day, "day": int(day.strftime("%d")), "count": day_buckets_30d.get(iso_day, 0)})
+
     lib_counts = {}
     for log in logs:
         lid = log.get("library_id")
@@ -272,15 +533,10 @@ def dashboard():
             lib_counts[lid] = lib_counts.get(lid, 0) + 1
 
     library_popularity = [
-        {
-            "id": lid,
-            "name": LIBRARIES[lid]["name"],
-            "queryCount": count,
-        }
+        {"id": lid, "name": LIBRARIES[lid]["name"], "queryCount": count}
         for lid, count in sorted(lib_counts.items(), key=lambda x: -x[1])
     ]
 
-    # Recent queries (latest 20)
     recent = sorted(logs, key=lambda x: -x.get("ts", 0))[:20]
     recent_queries = [
         {
@@ -295,29 +551,67 @@ def dashboard():
         for l in recent
     ]
 
+    queue_items = []
+    for library_id, library in LIBRARIES.items():
+        for doc_id, doc in library.get("documents", {}).items():
+            status = doc.get("status")
+            if status != "indexing":
+                continue
+            queue_items.append(
+                {
+                    "id": doc_id,
+                    "libraryId": library_id,
+                    "libraryName": library.get("name", "Unknown library"),
+                    "fileName": doc.get("fileName", "Untitled"),
+                    "status": "processing",
+                    "progress": None,
+                }
+            )
+
+    used_bytes = 0
+    try:
+        for root, _, files in os.walk(UPLOADS_DIR):
+            for file_name in files:
+                file_path = Path(root) / file_name
+                if file_path.exists():
+                    used_bytes += file_path.stat().st_size
+    except Exception:
+        used_bytes = 0
+
+    limit_bytes = int(float(os.getenv("DASHBOARD_STORAGE_LIMIT_GB", "10")) * 1024 * 1024 * 1024)
+    optimize_recommended = used_bytes > int(limit_bytes * 0.8)
+
     return {
         "kpis": {
             "activeLibraries": {"value": len(LIBRARIES), "trend": 0},
-            "indexedChunks": {"value": total_chunks if total_chunks else total_docs * 150, "trend": 0},
-            "queries24h": {"value": len(last_24h), "trend": 0},
-            "avgLatency": {"value": avg_latency, "trend": 0},
+            "indexedPages": {"value": indexed_pages, "trend": 0},
+            "indexedChunks": {"value": indexed_pages, "trend": 0},
+            "queries24h": {"value": len(last_24h), "trend": pct_trend(len(last_24h), len(last_24h_prev))},
+            "avgLatency": {"value": avg_latency, "trend": pct_trend(avg_latency, avg_latency_prev)},
         },
         "queryVolume": query_volume,
+        "queryVolume7d": query_volume_7d,
+        "queryVolume30d": query_volume_30d,
         "libraryPopularity": library_popularity,
         "recentQueries": recent_queries,
-        "ingestionQueue": [],
-        "storage": None,
+        "ingestionQueue": queue_items,
+        "storage": {
+            "usedBytes": used_bytes,
+            "limitBytes": max(1, limit_bytes),
+            "lastOptimizedAt": None,
+            "optimizeRecommended": optimize_recommended,
+        },
     }
 
 # ────────────────────────────────────────────────────────────────────────────
 # Libraries CRUD
 # ────────────────────────────────────────────────────────────────────────────
 
-@app.get("/api/libraries")
+@app.get("/api/libraries", dependencies=[Depends(require_api_key)])
 def list_libraries():
     return list(LIBRARIES.values())
 
-@app.post("/api/libraries", status_code=201)
+@app.post("/api/libraries", status_code=201, dependencies=[Depends(require_api_key)])
 def create_library(req: CreateLibraryRequest):
     lib_id = str(uuid.uuid4())
     library = {
@@ -336,14 +630,14 @@ def create_library(req: CreateLibraryRequest):
     save_libraries(LIBRARIES)
     return library
 
-@app.get("/api/libraries/{library_id}")
+@app.get("/api/libraries/{library_id}", dependencies=[Depends(require_api_key)])
 def get_library(library_id: str):
     lib = LIBRARIES.get(library_id)
     if not lib:
         raise HTTPException(status_code=404, detail="Library not found")
     return lib
 
-@app.delete("/api/libraries/{library_id}")
+@app.delete("/api/libraries/{library_id}", dependencies=[Depends(require_api_key)])
 def delete_library(library_id: str):
     if library_id not in LIBRARIES:
         raise HTTPException(status_code=404, detail="Library not found")
@@ -361,7 +655,7 @@ def delete_library(library_id: str):
 # Document upload & indexing
 # ────────────────────────────────────────────────────────────────────────────
 
-@app.post("/api/libraries/{library_id}/documents")
+@app.post("/api/libraries/{library_id}/documents", dependencies=[Depends(require_api_key)])
 async def upload_document(
     library_id: str,
     background_tasks: BackgroundTasks,
@@ -449,7 +743,7 @@ def _index_document(library_id: str, doc_id: str, file_path: str):
             LIBRARIES[library_id]["syncStatus"] = "error"
             save_libraries(LIBRARIES)
 
-@app.delete("/api/libraries/{library_id}/documents/{doc_id}")
+@app.delete("/api/libraries/{library_id}/documents/{doc_id}", dependencies=[Depends(require_api_key)])
 def delete_document(library_id: str, doc_id: str):
     if library_id not in LIBRARIES:
         raise HTTPException(status_code=404, detail="Library not found")
@@ -472,7 +766,45 @@ def delete_document(library_id: str, doc_id: str):
 # RAG Query
 # ────────────────────────────────────────────────────────────────────────────
 
-@app.post("/api/query")
+def _coerce_chat_content(content) -> str:
+    if isinstance(content, str):
+        return content.strip()
+
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+                continue
+            if not isinstance(item, dict):
+                continue
+            text = item.get("text") or item.get("content")
+            if isinstance(text, str) and text.strip():
+                parts.append(text.strip())
+        return " ".join(parts).strip()
+
+    return ""
+
+
+def _extract_chat_query(req: ChatRequest) -> str:
+    for value in [req.query, req.message, req.prompt]:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    for message in reversed(req.messages or []):
+        if not isinstance(message, dict):
+            continue
+        role = str(message.get("role", "")).strip().lower()
+        if role and role not in {"user", "human"}:
+            continue
+        content = _coerce_chat_content(message.get("content"))
+        if content:
+            return content
+
+    return ""
+
+
+@app.post("/api/query", dependencies=[Depends(require_api_key_strict)])
 def rag_query(req: QueryRequest):
     """
     Reason-based RAG query using PageIndex.
@@ -558,6 +890,33 @@ def rag_query(req: QueryRequest):
         "errors": errors,
         "latencyMs": latency_ms,
         "status": status,
+    }
+
+
+@app.post("/api/chat", dependencies=[Depends(require_api_key_strict)])
+def rag_chat(req: ChatRequest):
+    query_text = _extract_chat_query(req)
+    if not query_text:
+        raise HTTPException(
+            status_code=400,
+            detail="Chat payload must include `query`, `message`, `prompt`, or a user message in `messages`.",
+        )
+
+    query_result = rag_query(
+        QueryRequest(
+            query=query_text,
+            library_ids=req.library_ids,
+            top_pages=req.top_pages,
+        )
+    )
+
+    return {
+        **query_result,
+        "response": query_result.get("answer", ""),
+        "message": {
+            "role": "assistant",
+            "content": query_result.get("answer", ""),
+        },
     }
 
 
@@ -780,6 +1139,13 @@ def _compose_answer(query: str, sources: list) -> str:
 @app.get("/api/logs")
 def get_logs(limit: int = 100):
     logs = sorted(QUERY_LOGS, key=lambda x: -x.get("ts", 0))[:limit]
+    query_counts = {}
+    for entry in QUERY_LOGS:
+        normalized_query = str(entry.get("query", "")).strip().lower()
+        if not normalized_query:
+            continue
+        query_counts[normalized_query] = query_counts.get(normalized_query, 0) + 1
+
     return [
         {
             "id": l.get("id", str(uuid.uuid4())),
@@ -789,6 +1155,7 @@ def get_logs(limit: int = 100):
             "latency": l.get("latency_ms", 0),
             "status": l.get("status", "success"),
             "chunksRetrieved": l.get("result_count", 0),
+            "receivedCount": query_counts.get(str(l.get("query", "")).strip().lower(), 1),
             "timestamp": datetime.fromtimestamp(l.get("ts", time.time()), tz=timezone.utc).isoformat(),
         }
         for l in logs

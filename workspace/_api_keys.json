@@ -1,0 +1,15 @@
+{
+  "e60e83f1-7110-4cfe-8039-9c2048a409f8": {
+    "id": "e60e83f1-7110-4cfe-8039-9c2048a409f8",
+    "name": "nova-insights",
+    "keyPrefix": "pk_live_nc",
+    "keyHash": "68cb3b6a212bdbaf5fd3559f0037ebcbf05b1d61effafe71db934a5bf8352425",
+    "permissions": [
+      "query"
+    ],
+    "rateLimit": 120,
+    "lastUsed": "2026-04-03T23:48:14.371588+00:00",
+    "createdAt": "2026-04-03T23:45:39.811704+00:00",
+    "active": true
+  }
+}
