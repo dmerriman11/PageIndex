@@ -1,14 +1,9 @@
 import os
 import uuid
 import json
-import asyncio
-import concurrent.futures
 from pathlib import Path
 
-import PyPDF2
-
-from .page_index import page_index
-from .page_index_md import md_to_tree
+from .local_index import index_local_document
 from .retrieve import get_document, get_document_structure, get_page_content
 from .utils import ConfigLoader, remove_fields
 
@@ -61,68 +56,13 @@ class PageIndexClient:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         doc_id = str(uuid.uuid4())
-        ext = os.path.splitext(file_path)[1].lower()
+        if mode not in {"auto", "pdf", "md"}:
+            raise ValueError(f"Unsupported indexing mode: {mode}")
 
-        is_pdf = ext == '.pdf'
-        is_md = ext in ['.md', '.markdown']
-
-        if mode == "pdf" or (mode == "auto" and is_pdf):
-            print(f"Indexing PDF: {file_path}")
-            result = page_index(
-                doc=file_path,
-                model=self.model,
-                if_add_node_summary='yes',
-                if_add_node_text='yes',
-                if_add_node_id='yes',
-                if_add_doc_description='yes'
-            )
-            # Extract per-page text so queries don't need the original PDF
-            pages = []
-            with open(file_path, 'rb') as f:
-                pdf_reader = PyPDF2.PdfReader(f)
-                for i, page in enumerate(pdf_reader.pages, 1):
-                    pages.append({'page': i, 'content': page.extract_text() or ''})
-
-            self.documents[doc_id] = {
-                'id': doc_id,
-                'type': 'pdf',
-                'path': file_path,
-                'doc_name': result.get('doc_name', ''),
-                'doc_description': result.get('doc_description', ''),
-                'page_count': len(pages),
-                'structure': result['structure'],
-                'pages': pages,
-            }
-
-        elif mode == "md" or (mode == "auto" and is_md):
-            print(f"Indexing Markdown: {file_path}")
-            coro = md_to_tree(
-                md_path=file_path,
-                if_thinning=False,
-                if_add_node_summary='yes',
-                summary_token_threshold=200,
-                model=self.model,
-                if_add_doc_description='yes',
-                if_add_node_text='yes',
-                if_add_node_id='yes'
-            )
-            try:
-                asyncio.get_running_loop()
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                    result = pool.submit(asyncio.run, coro).result()
-            except RuntimeError:
-                result = asyncio.run(coro)
-            self.documents[doc_id] = {
-                'id': doc_id,
-                'type': 'md',
-                'path': file_path,
-                'doc_name': result.get('doc_name', ''),
-                'doc_description': result.get('doc_description', ''),
-                'line_count': result.get('line_count', 0),
-                'structure': result['structure'],
-            }
-        else:
-            raise ValueError(f"Unsupported file format for: {file_path}")
+        print(f"Indexing locally: {file_path}")
+        document = index_local_document(file_path)
+        document["id"] = doc_id
+        self.documents[doc_id] = document
 
         print(f"Indexing complete. Document ID: {doc_id}")
         if self.workspace:

@@ -1,0 +1,833 @@
+{
+  "id": "a5795590-6fb3-4965-80a4-3c63902f4eeb",
+  "type": "pdf",
+  "path": "D:\\Source Code\\lemur-pageindex\\pageindex-engine\\workspace\\uploads\\32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8\\36473c48-0c2d-47c4-a045-c52f6dcdeaa0.pdf",
+  "doc_name": "36473c48-0c2d-47c4-a045-c52f6dcdeaa0.pdf",
+  "doc_description": "A county-by-county USDA Rural Development Single Family Housing Direct area loan limits table effective 3-7-2025, listing eligible and ineligible jurisdictions across U.S. states and territories with varying maximum loan amounts.",
+  "page_count": 105,
+  "structure": [
+    {
+      "title": "Rural Development Single Family Housing - Area Loan Limits",
+      "node_id": "0000",
+      "start_index": 1,
+      "end_index": 2,
+      "summary": "The document shows Rural Development Single Family Housing area loan limits by county, with a map-style state selector and a table of county-by-county limits. In the visible section, it focuses on Alabama and lists many Alabama counties with the same loan limit of $419,300, effective 3-7-2025.",
+      "nodes": [
+        {
+          "title": "ALABAMA",
+          "node_id": "0001",
+          "start_index": 2,
+          "end_index": 4,
+          "summary": "The document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025. It lists county or equivalent jurisdictions in Alabama and Alaska with their corresponding loan limit amounts. Most Alabama counties have a uniform limit of $419,300. In Alaska, most areas also have a $419,300 limit, but several locations have higher limits such as Aleutians West, Hoonah-Angoon, Juneau, Kodiak Island, Sitka, and Skagway, while Anchorage is marked ineligible."
+        },
+        {
+          "title": "ALASKA",
+          "node_id": "0002",
+          "start_index": 4,
+          "end_index": 5,
+          "summary": "The document is a table of Single Family Housing Direct loan limits effective 3-7-2025, listing county or equivalent areas and their corresponding maximum loan amounts. It covers Alaska and Arizona, showing that most areas have a limit of $419,300, with some locations assigned higher limits due to local housing costs. It also notes one ineligible area in Alaska (Anchorage Municipality)."
+        },
+        {
+          "title": "ARIZONA",
+          "node_id": "0003",
+          "start_index": 5,
+          "end_index": 6,
+          "summary": "The document lists area loan limits for Single Family Housing Direct loans, effective 3-7-2025, by county in Arizona and Arkansas. Most counties shown have a limit of $419,300, with a few higher limits in Arizona such as Coconino County at $450,800 and Maricopa and Pinal Counties at $437,000."
+        },
+        {
+          "title": "ARKANSAS",
+          "node_id": "0004",
+          "start_index": 6,
+          "end_index": 8,
+          "summary": "This document is a partial table of USDA Single Family Housing Direct area loan limits effective 3-7-2025. It lists county-by-county loan limit amounts for Arkansas and California. In Arkansas, the counties shown all have the same loan limit of $419,300. In California, the table shows varying county limits, with many counties at the baseline $419,300 and higher limits for certain higher-cost areas, such as $967,800 in counties like Alameda, Los Angeles, Orange, San Francisco, and Santa Clara, along with several other intermediate amounts for different counties."
+        },
+        {
+          "title": "CALIFORNIA",
+          "node_id": "0005",
+          "start_index": 8,
+          "end_index": 10,
+          "summary": "The partial document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025 for California and Colorado counties. It lists each county or equivalent area alongside its maximum loan limit, showing that limits vary by location based on housing market conditions. Some high-cost areas have the highest limits, such as many California coastal counties at $967,800 or higher, while many lower-cost counties are set at $419,300. In Colorado, the table includes a mix of limits ranging from $419,300 to $967,800, and it also identifies certain counties or areas, such as Broomfield County and Denver County, as ineligible."
+        },
+        {
+          "title": "COLORADO",
+          "node_id": "0006",
+          "start_index": 10,
+          "end_index": 12,
+          "summary": "The partial document lists county or equivalent area loan limits for Single Family Housing Direct programs, effective 3-7-2025. It includes detailed loan limit amounts for counties in Colorado and Connecticut, showing that limits vary by county based on local area classifications. Some counties are marked “Ineligible,” while others have specific dollar limits ranging from about $419,300 to $967,800, indicating regional differences in housing loan eligibility and maximum financing amounts."
+        },
+        {
+          "title": "CONNECTICUT",
+          "node_id": "0007",
+          "start_index": 12,
+          "end_index": 13,
+          "summary": "The partial document lists area loan limits for Single Family Housing Direct loans by county or equivalent, effective 3-7-2025. It includes Connecticut counties, showing Fairfield County with a higher limit of $680,800 and the other Connecticut counties at $419,300. It also includes Delaware counties, listing Kent County at $419,300, New Castle County at $475,600, and Sussex County at $419,300."
+        },
+        {
+          "title": "DELAWARE",
+          "node_id": "0008",
+          "start_index": 13,
+          "end_index": 14,
+          "summary": "The partial document lists 2025 area loan limits for Single Family Housing Direct programs. It shows county-level limits for Delaware—Kent County at $419,300, New Castle County at $475,600, and Sussex County at $419,300—and indicates that the District of Columbia is ineligible."
+        },
+        {
+          "title": "DISTRICT OF COLUMBIA",
+          "node_id": "0009",
+          "start_index": 14,
+          "end_index": 15,
+          "summary": "The partial document lists area loan limits for Single Family Housing Direct programs effective 3-7-2025. It includes county-by-county loan limit amounts for the District of Columbia and Florida, showing that some counties are marked ineligible while others have specific dollar limits such as $419,300, $437,900, $464,600, and $611,800."
+        },
+        {
+          "title": "FLORIDA",
+          "node_id": "0010",
+          "start_index": 15,
+          "end_index": 17,
+          "summary": "The partial document lists USDA Single Family Housing Direct area loan limits effective 3-7-2025 for counties in Florida and Georgia. It provides each county’s loan limit amount, with most counties shown at a standard limit of $419,300, some counties assigned higher limits such as $437,900, $451,700, $464,600, $477,400, $483,000, $523,400, $551,000, and $611,800, and some counties marked “Ineligible.” The content is formatted as a county-by-county reference table identifying local loan eligibility and maximum limits by area."
+        },
+        {
+          "title": "GEORGIA",
+          "node_id": "0011",
+          "start_index": 17,
+          "end_index": 21,
+          "summary": "The partial document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025. It lists county or equivalent jurisdictions and their maximum loan limits, mainly for Georgia and Hawaii. Most Georgia counties have a limit of $419,300, with some counties assigned higher limits such as $444,300, $483,000, $551,000, or $600,000, $725,000, $888,700 depending on the county, while several counties are marked “Ineligible.” The Hawaii section shows higher loan limits by county, including Hawaii County, Honolulu County, Kauai County, Maui County, and Maui County - Molokai."
+        },
+        {
+          "title": "HAWAII",
+          "node_id": "0012",
+          "start_index": 21,
+          "end_index": 22,
+          "summary": "The document lists Single Family Housing Direct area loan limits effective 3-7-2025 for counties in Hawaii and Idaho. It shows the maximum loan amount by county or equivalent area, including Hawaii County, Honolulu County, Kauai County, Maui County, and Maui County - Molokai, followed by a long county-by-county table for Idaho with varying limits such as $419,300, $498,500, $515,400, $517,000, $607,200, and others."
+        },
+        {
+          "title": "IDAHO",
+          "node_id": "0013",
+          "start_index": 22,
+          "end_index": 24,
+          "summary": "The partial document lists area loan limits for Single Family Housing Direct programs, effective 3-7-2025, organized by county for Idaho and Illinois. It shows the maximum loan limit amount for each county or marks some counties as ineligible. Most counties share a standard limit of $419,300, while some counties have higher limits such as Ada County ($498,500), Kootenai County ($515,400), Lincoln County ($517,000), Blaine County and Camas County ($607,200), and Teton County ($967,800). In Illinois, the excerpt begins an alphabetical county list and includes examples of ineligible counties like Cook County and DuPage County."
+        },
+        {
+          "title": "ILLINOIS",
+          "node_id": "0014",
+          "start_index": 24,
+          "end_index": 27,
+          "summary": "The document is a state-by-state loan limit table for USDA Single Family Housing Direct programs, effective 3-7-2025. It lists counties or equivalent areas in Illinois and Indiana and assigns each an area loan limit, mostly $419,300. Some counties in Illinois, such as Cook, DuPage, and Lake, are marked ineligible rather than given a dollar limit. The main focus is on geographic eligibility and the maximum loan amount available by county."
+        },
+        {
+          "title": "INDIANA",
+          "node_id": "0015",
+          "start_index": 27,
+          "end_index": 30,
+          "summary": "The document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025 for Indiana and Iowa. It lists counties or equivalent jurisdictions and their corresponding loan limit amounts, which are generally $419,300 across the counties shown. One Indiana county, Marion County, is marked ineligible."
+        },
+        {
+          "title": "IOWA",
+          "node_id": "0016",
+          "start_index": 30,
+          "end_index": 33,
+          "summary": "The document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025, listing counties by state and the maximum loan limit for each. It covers Iowa and Kansas counties shown in the excerpt, and every county listed has the same limit of $419,300."
+        },
+        {
+          "title": "KANSAS",
+          "node_id": "0017",
+          "start_index": 33,
+          "end_index": 36,
+          "summary": "The partial document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025. It lists counties in Kansas and Kentucky and shows the loan limit for each county, which is generally $419,300. The document also includes repeated section headers and indicates one exception in Kentucky: Fayette County is marked ineligible rather than assigned a loan limit."
+        },
+        {
+          "title": "KENTUCKY",
+          "node_id": "0018",
+          "start_index": 36,
+          "end_index": 39,
+          "summary": "The partial document lists area loan limits for Single Family Housing Direct loans, effective 3-7-2025, organized by county or parish for Kentucky and Louisiana. Most listed counties/parishes have a loan limit of $419,300, while a few locations are marked ineligible, including Fayette County and Jefferson County in Kentucky, and Orleans Parish in Louisiana."
+        },
+        {
+          "title": "LOUISIANA",
+          "node_id": "0019",
+          "start_index": 39,
+          "end_index": 41,
+          "summary": "The document lists USDA Single Family Housing Direct area loan limits effective 3-7-2025 for counties/parishes in Louisiana and Maine. Most locations shown have a limit of $419,300, with a few higher-limit exceptions in Maine at $480,200. It also marks Orleans Parish as ineligible."
+        },
+        {
+          "title": "MAINE",
+          "node_id": "0020",
+          "start_index": 41,
+          "end_index": 42,
+          "summary": "The document lists county-by-county single-family housing direct loan limits effective March 7, 2025, for Maine and Maryland. It shows that most counties in Maine have a limit of $419,300, with Cumberland, Sagadahoc, and York counties at $480,200. In Maryland, limits vary more widely: many counties are set at $419,300, some at $475,600 or $585,100, and several higher-cost counties such as Calvert, Charles, Frederick, Montgomery, and Prince George’s are at $967,800. Baltimore city is marked ineligible."
+        },
+        {
+          "title": "MARYLAND",
+          "node_id": "0021",
+          "start_index": 42,
+          "end_index": 43,
+          "summary": "The document lists area loan limits for Single Family Housing Direct loans, effective 3-7-2025, for counties in Maryland and Massachusetts. It shows the maximum loan limit amounts by county or marks some areas as ineligible. Maryland counties are grouped mostly into limits of $419,300, $585,100, or $967,800, with Baltimore city marked ineligible. Massachusetts counties are listed with limits such as $419,300, $588,800, $598,000, $731,400, and $967,800, with Suffolk County marked ineligible."
+        },
+        {
+          "title": "MASSACHUSETTS",
+          "node_id": "0022",
+          "start_index": 43,
+          "end_index": 44,
+          "summary": "The document is a table of area loan limits for Single Family Housing Direct loans, effective 3-7-2025, listing county-by-county limits for Massachusetts and Michigan. It shows different maximum loan amounts by county, with most Massachusetts counties assigned limits such as $419,300, $588,800, $731,400, or $967,800, while Suffolk County is marked ineligible. The Michigan section continues with a long list of counties, and the counties shown there are generally set at a $419,300 limit."
+        },
+        {
+          "title": "MICHIGAN",
+          "node_id": "0023",
+          "start_index": 44,
+          "end_index": 46,
+          "summary": "The document is a list of USDA Single Family Housing Direct area loan limits effective March 7, 2025. It shows county-by-county loan limit amounts for Michigan and Minnesota. Most Michigan counties are listed with the same limit of $419,300. In Minnesota, most counties also have a limit of $419,300, while a few counties have a higher limit of $423,200. The document also identifies some counties as “ineligible,” meaning they do not qualify for the listed loan program limits."
+        },
+        {
+          "title": "MINNESOTA",
+          "node_id": "0024",
+          "start_index": 46,
+          "end_index": 48,
+          "summary": "The document is a table of U.S. county-level area loan limits for the USDA Single Family Housing Direct program, effective 3-7-2025. It lists counties in Minnesota and Mississippi and shows the maximum loan limit for each county, with most counties set at $419,300, some Minnesota counties at a higher $423,200 limit, and certain counties marked as ineligible."
+        },
+        {
+          "title": "MISSISSIPPI",
+          "node_id": "0025",
+          "start_index": 48,
+          "end_index": 50,
+          "summary": "The document is a list of USDA Single Family Housing Direct area loan limits effective 3-7-2025 for counties in Mississippi and Missouri. It shows county-by-county borrowing limits, with the visible counties in both states all set at $419,300. The excerpt appears to be part of a larger state-by-state table of loan limits for eligible rural areas."
+        },
+        {
+          "title": "MISSOURI",
+          "node_id": "0026",
+          "start_index": 50,
+          "end_index": 53,
+          "summary": "The partial document is a list of USDA Single Family Housing Direct area loan limits effective 3-7-2025, organized by county or equivalent jurisdiction. It shows that most listed counties in Missouri and Montana have a loan limit of $419,300, while a few counties in Montana have higher limits such as Carbon County ($603,500), Flathead County ($458,100), Gallatin County ($575,000), Missoula County ($448,000), and Park County ($450,800). It also identifies certain Missouri areas, specifically St. Louis city and St. Louis County, as ineligible."
+        },
+        {
+          "title": "MONTANA",
+          "node_id": "0027",
+          "start_index": 53,
+          "end_index": 55,
+          "summary": "The document lists county-by-county area loan limits for Single Family Housing Direct loans, effective 3-7-2025, for Montana and Nebraska. It provides specific dollar limits for each county or equivalent area, showing that most counties share a standard limit of $419,300 while certain higher-cost counties have elevated limits such as $448,000, $450,800, $458,100, $483,000, $575,000, and $603,500. The main purpose of the document is to define geographic loan eligibility limits by county for these two states."
+        },
+        {
+          "title": "NEBRASKA",
+          "node_id": "0028",
+          "start_index": 55,
+          "end_index": 58,
+          "summary": "The partial document lists USDA Single Family Housing Direct area loan limits effective 3-7-2025 for counties in Nebraska and Nevada. Most Nebraska counties have a limit of $419,300, with a few higher-limit counties such as Dawson County and Gosper County at $483,000. The Nevada section shows most counties at $419,300, with higher limits for Douglas County at $575,000 and Storey and Washoe Counties at $506,000, and Carson City marked ineligible."
+        },
+        {
+          "title": "NEVADA",
+          "node_id": "0029",
+          "start_index": 58,
+          "end_index": 59,
+          "summary": "The document lists county-level loan limits for Single Family Housing Direct programs effective 3-7-2025. It provides Nevada and New Hampshire area loan limits, showing most counties at $419,300, with some higher limits such as Douglas County in Nevada at $575,000, Storey and Washoe Counties at $506,000, and certain New Hampshire counties like Rockingham and Strafford at $731,400. It also notes that Carson City, Nevada is ineligible."
+        },
+        {
+          "title": "NEW HAMPSHIRE",
+          "node_id": "0030",
+          "start_index": 59,
+          "end_index": 60,
+          "summary": "The document lists county-level area loan limits for Single Family Housing Direct programs, effective 3-7-2025, for New Hampshire and New Jersey. It shows each county or equivalent area with its corresponding loan limit amount, and marks some counties as ineligible. In New Hampshire, most counties have limits of $419,300, with higher limits for Hillsborough, Rockingham, and Strafford counties. In New Jersey, the limits vary widely by county, ranging from $419,300 to $967,800, with several counties listed as ineligible."
+        },
+        {
+          "title": "NEW JERSEY",
+          "node_id": "0031",
+          "start_index": 60,
+          "end_index": 61,
+          "summary": "The partial document lists county-by-county area loan limits for the USDA Single Family Housing Direct program, effective 3-7-2025, for New Jersey and New Mexico. It shows the maximum loan limit for each county, with some counties marked ineligible in New Jersey and varying limits such as $419,300, $475,600, $533,600, and $967,800. In New Mexico, most counties have a limit of $419,300, with a few exceptions like Los Alamos County at $553,800 and Santa Fe County at $433,300."
+        },
+        {
+          "title": "NEW MEXICO",
+          "node_id": "0032",
+          "start_index": 61,
+          "end_index": 62,
+          "summary": "The partial document lists area loan limits for Single Family Housing Direct programs, effective 3-7-2025, for counties in New Mexico and New York. It provides the maximum loan limit for each county or notes when a county is ineligible. Most listed counties have a limit of $419,300, while some have higher limits such as Los Alamos County ($553,800), Santa Fe County ($433,300), Dutchess County ($581,200), and Orange County ($581,200). Several New York counties, including Bronx, Kings, Nassau, and New York County, are marked ineligible."
+        },
+        {
+          "title": "NEW YORK",
+          "node_id": "0033",
+          "start_index": 62,
+          "end_index": 64,
+          "summary": "The partial document is a table of Area Loan Limits for Single Family Housing Direct loans, effective 3-7-2025, listing county-by-county loan limit amounts. It shows New York counties first, including many counties with a standard limit of $419,300, some higher-limit counties such as Dutchess, Orange, Putnam, Rockland, Suffolk, and Westchester, and several counties marked ineligible. The document then continues with North Carolina counties, again listing each county and its corresponding loan limit, with most at $419,300 and a few counties assigned higher limits such as Camden, Chatham, Currituck, Dare, Durham, Franklin, Gates, and Granville."
+        },
+        {
+          "title": "NORTH CAROLINA",
+          "node_id": "0034",
+          "start_index": 64,
+          "end_index": 67,
+          "summary": "The document is a table of area loan limits for Single Family Housing Direct, effective 3-7-2025. It lists counties or county equivalents in North Carolina and North Dakota along with their corresponding loan limit amounts. Most counties have a standard limit of $419,300, while some counties have higher limits such as $424,100, $506,000, $530,800, $606,200, and $644,000. The document is organized by state and county, showing regional variations in loan eligibility limits."
+        },
+        {
+          "title": "NORTH DAKOTA",
+          "node_id": "0035",
+          "start_index": 67,
+          "end_index": 69,
+          "summary": "The document lists county-level area loan limits for the USDA Single Family Housing Direct program, effective March 7, 2025. It includes entries for North Dakota and Ohio, showing the maximum loan limit for each county or marking a county as ineligible. Most counties are assigned a limit of $419,300, while a few Ohio counties have a higher limit of $455,400. The main purpose is to provide an updated reference of geographic loan eligibility and loan cap amounts by county."
+        },
+        {
+          "title": "OHIO",
+          "node_id": "0036",
+          "start_index": 69,
+          "end_index": 71,
+          "summary": "The document lists area loan limits for Single Family Housing Direct loans, effective 3-7-2025, by county or equivalent. It includes county-by-county limits for Ohio and Oklahoma, showing most counties with a limit of $419,300, some higher-cost counties in Ohio with a limit of $455,400, and a few counties marked ineligible."
+        },
+        {
+          "title": "OKLAHOMA",
+          "node_id": "0037",
+          "start_index": 71,
+          "end_index": 73,
+          "summary": "The document lists USDA Single Family Housing Direct area loan limits effective 3-7-2025 for counties in Oklahoma and Oregon. It shows that most Oklahoma counties have a uniform loan limit of $419,300. In Oregon, the limits vary by county, with many counties at $419,300 but higher limits in some areas such as Benton, Clackamas, Columbia, Multnomah, Washington, and Yamhill counties, as well as especially high limits in Deschutes County and Hood River County."
+        },
+        {
+          "title": "OREGON",
+          "node_id": "0038",
+          "start_index": 73,
+          "end_index": 74,
+          "summary": "The partial document lists Single Family Housing Direct area loan limits effective 3-7-2025 for counties in Oregon and Pennsylvania. It provides county-by-county maximum loan amounts, showing most counties at a standard limit of $419,300, with higher limits in certain higher-cost areas such as Clackamas, Columbia, Multnomah, Washington, and Yamhill counties in Oregon, and Bucks, Chester, and Delaware counties in Pennsylvania."
+        },
+        {
+          "title": "PENNSYLVANIA",
+          "node_id": "0039",
+          "start_index": 74,
+          "end_index": 76,
+          "summary": "The document lists area loan limits for the USDA Single Family Housing Direct program, effective 3-7-2025, for counties in Pennsylvania and municipios in Puerto Rico. It shows the maximum loan limit assigned to each location, with most Pennsylvania counties set at $419,300, several higher-limit counties such as Bucks, Chester, Delaware, and Montgomery at $475,600, Pike County at $967,800, and Philadelphia County marked ineligible. For Puerto Rico, many municipios are listed with limits of $419,300 or $552,000, with some exceptions such as Culebra at $425,900 and Cataño marked ineligible."
+        },
+        {
+          "title": "PUERTO RICO",
+          "node_id": "0040",
+          "start_index": 76,
+          "end_index": 78,
+          "summary": "The document lists Single Family Housing Direct area loan limits effective 3-7-2025 for counties or county-equivalent areas. It shows a table of municipalities in Puerto Rico with their corresponding loan limits, which are mostly either $419,300 or $552,000, with some areas marked ineligible and one at $425,900. It then lists Rhode Island counties and their limits, showing Bristol County as ineligible and the other counties—Kent, Newport, Providence, and Washington—each with a loan limit of $588,800."
+        },
+        {
+          "title": "RHODE ISLAND",
+          "node_id": "0041",
+          "start_index": 78,
+          "end_index": 79,
+          "summary": "The document lists USDA Single Family Housing Direct area loan limits effective 3-7-2025 for counties in Rhode Island and South Carolina. It shows that Bristol County, Rhode Island is ineligible, while other Rhode Island counties have a limit of $588,800. For South Carolina, most counties have a loan limit of $419,300, with higher limits in some counties such as Beaufort and Jasper at $487,600, and Berkeley, Charleston, and Dorchester at $506,000."
+        },
+        {
+          "title": "SOUTH CAROLINA",
+          "node_id": "0042",
+          "start_index": 79,
+          "end_index": 81,
+          "summary": "The document lists area loan limits for Single Family Housing Direct programs effective 3-7-2025. It provides county-by-county loan limit amounts for South Carolina and South Dakota, showing that most counties have a standard limit of $419,300, with some higher limits in select counties such as Beaufort, Jasper, Berkeley, Charleston, and Dorchester in South Carolina, and Lawrence County in South Dakota."
+        },
+        {
+          "title": "SOUTH DAKOTA",
+          "node_id": "0043",
+          "start_index": 81,
+          "end_index": 83,
+          "summary": "The document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025, listing county-by-county loan cap amounts for South Dakota and Tennessee. Most counties shown have a limit of $419,300, with a few higher limits highlighted, such as Lawrence County in South Dakota at $433,300 and several Tennessee counties at $791,200, plus Hickman County at $427,800."
+        },
+        {
+          "title": "TENNESSEE",
+          "node_id": "0044",
+          "start_index": 83,
+          "end_index": 86,
+          "summary": "The document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025. It lists counties or equivalents in Tennessee and Texas along with their corresponding loan limit amounts. Most counties have a standard limit of $419,300, while some counties have higher limits such as $427,800, $446,200, $450,800, $457,200, $712,000, and $791,200, indicating different geographic loan eligibility tiers by county."
+        },
+        {
+          "title": "TEXAS",
+          "node_id": "0045",
+          "start_index": 86,
+          "end_index": 92,
+          "summary": "The document is a county-by-county list of USDA Single Family Housing Direct area loan limits effective 3-7-2025. It shows Texas and Utah counties, along with the maximum loan limit assigned to each county, with most Texas counties at $419,300 and some higher limits such as $446,200, $450,800, and $457,200. A few Texas counties are highlighted with even higher or distinct amounts, and some Utah counties have much larger limits such as $595,200, $797,600, and $931,000. The document also marks certain counties as “ineligible,” indicating no loan eligibility in those areas."
+        },
+        {
+          "title": "UTAH",
+          "node_id": "0046",
+          "start_index": 92,
+          "end_index": 93,
+          "summary": "The partial document lists county-by-county area loan limits for the USDA Single Family Housing Direct program, effective 3-7-2025, for two states: Utah and Vermont. It shows each county or equivalent jurisdiction with a corresponding loan limit amount, and marks some counties as “ineligible” rather than assigning a dollar limit.\n\nFor Utah, most counties have limits of $419,300, with higher limits in certain counties such as Box Elder and Cache ($595,200), Grand ($567,600), Juab and Utah ($481,100), Rich ($463,600), Tooele ($503,200), Washington ($534,000), Wayne ($797,600), and Summit and Wasatch ($931,000). Davis, Salt Lake, and Weber Counties are listed as ineligible.\n\nFor Vermont, the document lists all counties and their loan limits, mostly $419,300, with higher limits for Chittenden ($460,000), Franklin ($460,000), and Grand Isle ($460,000)."
+        },
+        {
+          "title": "VERMONT",
+          "node_id": "0047",
+          "start_index": 93,
+          "end_index": 94,
+          "summary": "The partial document lists county or equivalent area loan limits effective 3-7-2025 for Vermont and the Virgin Islands under Single Family Housing Direct loan limits. It shows that most Vermont counties have a limit of $419,300, while Chittenden, Franklin, and Grand Isle Counties have a higher limit of $460,000. For the Virgin Islands, the limits are $419,300 for St. Croix, $891,400 for St. John, and $538,200 for St. Thomas."
+        },
+        {
+          "title": "VIRGIN ISLANDS",
+          "node_id": "0048",
+          "start_index": 94,
+          "end_index": 95,
+          "summary": "The document lists area loan limits for Single Family Housing Direct programs effective 3-7-2025, organized by county or equivalent jurisdiction. It includes specific loan limit amounts for locations in the Virgin Islands and Virginia, and marks some cities and counties as ineligible. The excerpt shows varying limit tiers, such as $419,300, $473,800, $538,200, $539,100, and higher limits like $891,400 and $967,800 for certain areas."
+        },
+        {
+          "title": "VIRGINIA",
+          "node_id": "0049",
+          "start_index": 95,
+          "end_index": 99,
+          "summary": "This document lists county or equivalent area loan limits for the USDA Single Family Housing Direct program, effective 3-7-2025, for Virginia and Washington. It identifies each county or city as either eligible with a specific loan limit amount or ineligible, showing different limit tiers across areas. In Virginia, many counties and a few cities have limits ranging from $419,300 up to $967,800, with numerous cities marked ineligible. In Washington, the listed counties have loan limits mostly at $419,300, with some higher limits such as $437,000, $446,200, $450,800, $460,000, $463,600, $483,000, $506,000, $556,600, $829,800, and several areas included by county."
+        },
+        {
+          "title": "WASHINGTON",
+          "node_id": "0050",
+          "start_index": 99,
+          "end_index": 100,
+          "summary": "The document is a table of area loan limits for Single Family Housing Direct loans effective 3-7-2025. It lists county-by-county maximum loan limit amounts for Washington and West Virginia. Most counties have a standard limit of $419,300, while certain higher-cost counties have elevated limits such as King, Pierce, and Snohomish counties in Washington at $829,800, and Jefferson County in West Virginia at $967,800. The section is organized by state and county or equivalent jurisdiction, showing how loan limits vary by location."
+        },
+        {
+          "title": "WEST VIRGINIA",
+          "node_id": "0051",
+          "start_index": 100,
+          "end_index": 102,
+          "summary": "The partial document lists Area Loan Limits for USDA Single Family Housing Direct loans, effective 3-7-2025, by county in two states: West Virginia and Wisconsin. Most counties shown have a limit of $419,300. In West Virginia, Jefferson County is highlighted with a higher limit of $967,800, while in Wisconsin, Milwaukee County is marked ineligible. The excerpt is organized as a county-by-county table showing the applicable loan limit or eligibility status."
+        },
+        {
+          "title": "WISCONSIN",
+          "node_id": "0052",
+          "start_index": 102,
+          "end_index": 104,
+          "summary": "The partial document is a table of USDA Single Family Housing Direct area loan limits effective 3-7-2025. It lists county-by-county loan limit amounts for Wisconsin and Wyoming, showing that most counties have a limit of $419,300, with a few exceptions such as Pierce County and Sauk County at $423,200, Sublette County at $472,000, and Teton County at $967,800. It also marks Milwaukee County as ineligible."
+        },
+        {
+          "title": "WYOMING",
+          "node_id": "0053",
+          "start_index": 104,
+          "end_index": 105,
+          "summary": "The document lists area loan limits for Single Family Housing Direct loans effective 3-7-2025. It provides county-by-county limits for Wyoming, showing most counties at $419,300, with higher limits for Sublette County ($472,000) and Teton County ($967,800). It also includes limits for U.S. territories: American Samoa ($419,300), Guam ($450,800), and the Northern Mariana Islands ($423,200)."
+        },
+        {
+          "title": "AMERICAN SAMOA",
+          "node_id": "0054",
+          "start_index": 105,
+          "end_index": 105,
+          "summary": "The partial document lists area loan limits for Single Family Housing Direct loans, showing the county-equivalent limit effective March 7, 2025 for U.S. territories. It includes American Samoa at $419,300, Guam at $450,800, and the Northern Mariana Islands at $423,200."
+        },
+        {
+          "title": "GUAM",
+          "node_id": "0055",
+          "start_index": 105,
+          "end_index": 105,
+          "summary": "The partial document lists area loan limits for Single Family Housing Direct loans, effective 3-7-2025, for U.S. territories. It shows the county or equivalent limit amounts for American Samoa ($419,300), Guam ($450,800), and the Northern Mariana Islands ($423,200)."
+        },
+        {
+          "title": "NORTHERN MARIANA ISLANDS",
+          "node_id": "0056",
+          "start_index": 105,
+          "end_index": 105,
+          "summary": "The partial document lists area loan limits for Single Family Housing Direct loans, showing the county or equivalent effective limits as of 3-7-2025 for U.S. territories. It includes American Samoa at $419,300, Guam at $450,800, and the Northern Mariana Islands at $423,200."
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "content": "Rural Development Single Family Housing - Area Loan LimitsSelect a state to see the area loan limits\n for the counties in that state.\nWVOHPAME\nVT\nNH\nMANY\nMD\nDCDENJCTRI\nVA\nNC\nSCWA\nCANVIDMT\nWYND\nSD\nNE\nKS\nOKMN\nIA\nMO\nAR\nMS ALWI\nMI\nIL IN\nKY\nTN\nGA\nFLLA\nTXUT\nAZ\nAK\nHIWP/AS\nPRVINMCOOR\n"
+    },
+    {
+      "page": 2,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAutauga County $419,300\nBaldwin County $419,300\nBarbour County $419,300\nBibb County $419,300\nBlount County $419,300\nBullock County $419,300\nButler County $419,300\nCalhoun County $419,300\nChambers County $419,300\nCherokee County $419,300\nChilton County $419,300\nChoctaw County $419,300\nClarke County $419,300\nClay County $419,300\nCleburne County $419,300\nCoffee County $419,300\nColbert County $419,300\nConecuh County $419,300\nCoosa County $419,300\nCovington County $419,300\nCrenshaw County $419,300\nCullman County $419,300\nDale County $419,300\nDallas County $419,300\nDeKalb County $419,300\nElmore County $419,300\nEscambia County $419,300\nEtowah County $419,300\nFayette County $419,300\nFranklin County $419,300\nGeneva County $419,300\nGreene County $419,300\nHale County $419,300\nHenry County $419,300\nHouston County $419,300\nJackson County $419,300\nJefferson County $419,300\nLamar County $419,300\nLauderdale County $419,300\nLawrence County $419,300\nLee County $419,300\nLimestone County $419,300\nLowndes County $419,300ALABAMA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 3,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMacon County $419,300\nMadison County $419,300\nMarengo County $419,300\nMarion County $419,300\nMarshall County $419,300\nMobile County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nMorgan County $419,300\nPerry County $419,300\nPickens County $419,300\nPike County $419,300\nRandolph County $419,300\nRussell County $419,300\nSt. Clair County $419,300\nShelby County $419,300\nSumter County $419,300\nTalladega County $419,300\nTallapoosa County $419,300\nTuscaloosa County $419,300\nWalker County $419,300\nWashington County $419,300\nWilcox County $419,300\nWinston County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 4,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAleutians East Borough $419,300\nAleutians West Census Area $468,200\nAnchorage Municipality ineligible\nBethel Census Area $419,300\nBristol Bay Borough $419,300\nChugach Census $419,300\nCopper River Census $419,300\nDenali Borough $419,300\nDillingham Census Area $419,300\nFairbanks North Star Borough $419,300\nHaines Borough $419,300\nHoonah-Angoon Census Area $419,500\nJuneau City and Borough $483,700\nKenai Peninsula Borough $419,300\nKetchikan Gateway Borough $419,300\nKodiak Island Borough $443,700\nKusilvak Census Area $419,300\nLake and Peninsula Borough $419,300\nMatanuska-Susitna Borough $419,300\nNome Census Area $419,300\nNorth Slope Borough $419,300\nNorthwest Arctic Borough $419,300\nPetersburg Census Area $419,300\nPrince of Wales-Hyder Census Area $419,300\nSitka City and Borough $488,700\nSkagway Municipality $463,700\nSoutheast Fairbanks Census Area $419,300\nWrangell City and Borough $419,300\nYakutat City and Borough $419,300\nYukon-Koyukuk Census Area $419,300ALASKA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 5,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nApache County $419,300\nCochise County $419,300\nCoconino County $450,800\nGila County $419,300\nGraham County $419,300\nGreenlee County $419,300\nLa Paz County $419,300\nMaricopa County $437,000\nMohave County $419,300\nNavajo County $419,300\nPima County $419,300\nPinal County $437,000\nSanta Cruz County $419,300\nYavapai County $419,300\nYuma County $419,300ARIZONA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 6,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nArkansas County $419,300\nAshley County $419,300\nBaxter County $419,300\nBenton County $419,300\nBoone County $419,300\nBradley County $419,300\nCalhoun County $419,300\nCarroll County $419,300\nChicot County $419,300\nClark County $419,300\nClay County $419,300\nCleburne County $419,300\nCleveland County $419,300\nColumbia County $419,300\nConway County $419,300\nCraighead County $419,300\nCrawford County $419,300\nCrittenden County $419,300\nCross County $419,300\nDallas County $419,300\nDesha County $419,300\nDrew County $419,300\nFaulkner County $419,300\nFranklin County $419,300\nFulton County $419,300\nGarland County $419,300\nGrant County $419,300\nGreene County $419,300\nHempstead County $419,300\nHot Spring County $419,300\nHoward County $419,300\nIndependence County $419,300\nIzard County $419,300\nJackson County $419,300\nJefferson County $419,300\nJohnson County $419,300\nLafayette County $419,300\nLawrence County $419,300\nLee County $419,300\nLincoln County $419,300\nLittle River County $419,300\nLogan County $419,300\nLonoke County $419,300ARKANSAS\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 7,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMadison County $419,300\nMarion County $419,300\nMiller County $419,300\nMississippi County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nNevada County $419,300\nNewton County $419,300\nOuachita County $419,300\nPerry County $419,300\nPhillips County $419,300\nPike County $419,300\nPoinsett County $419,300\nPolk County $419,300\nPope County $419,300\nPrairie County $419,300\nPulaski County $419,300\nRandolph County $419,300\nSaline County $419,300\nScott County $419,300\nSearcy County $419,300\nSebastian County $419,300\nSevier County $419,300\nSharp County $419,300\nSt. Francis County $419,300\nStone County $419,300\nUnion County $419,300\nVan Buren County $419,300\nWashington County $419,300\nWhite County $419,300\nWoodruff County $419,300\nYell County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 8,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAlameda County $967,800\nAlpine County $419,300\nAmador County $419,300\nButte County $419,300\nCalaveras County $419,300\nColusa County $419,300\nContra Costa County $967,800\nDel Norte County $419,300\nEl Dorado County $610,800\nFresno County $454,800\nGlenn County $419,300\nHumboldt County $525,000\nImperial County $460,000\nInyo County $419,300\nKern County $460,000\nKings County $498,000\nLake County $419,300\nLassen County $419,300\nLos Angeles County $967,800\nMadera County $454,200\nMarin County $967,800\nMariposa County $470,700\nMendocino County $437,000\nMerced County $459,800\nModoc County $419,300\nMono County $621,000\nMonterey County $776,400\nNapa County $814,200\nNevada County $515,200\nOrange County $967,800\nPlacer County $610,800\nPlumas County $419,300\nRiverside County $561,300\nSacramento County $610,800\nSan Benito County $967,800\nSan Bernardino County $568,700\nSan Diego County $862,000\nSan Francisco County $967,800\nSan Joaquin County $585,000\nSan Luis Obispo County $773,700\nSan Mateo County $967,800\nSanta Barbara County $730,400\nSanta Clara County $967,800CALIFORNIA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 9,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nSanta Cruz County $970,800\nShasta County $419,300\nSierra County $419,300\nSiskiyou County $419,300\nSolano County $548,300\nSonoma County $763,200\nStanislaus County $493,500\nSutter County $419,300\nTehama County $419,300\nTrinity County $419,300\nTulare County $498,000\nTuolumne County $455,000\nVentura County $814,200\nYolo County $610,800\nYuba County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 10,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $667,000\nAlamosa County $547,400\nArapahoe County $667,000\nArchuleta County $547,400\nBaca County $420,600\nBent County $419,300\nBoulder County $747,500\nBroomfield County Ineligible\nChaffee County $600,800\nCheyenne County $419,300\nClear Creek County $667,000\nConejos County $419,300\nCostilla County $419,300\nCrowley County $419,300\nCuster County $419,300\nDelta County $420,600\nDenver County Ineligible\nDolores County $420,600\nDouglas County $667,000\nEagle County $967,800\nEl Paso County $667,000\nElbert County $653,200\nFremont County $419,300\nGarfield County $967,800\nGilpin County $667,000\nGrand County $699,200\nGunnison County $598,000\nHinsdale County $419,300\nHuerfano County $419,300\nJackson County $419,300\nJefferson County $684,200\nKiowa County $419,300\nKit Carson County $419,300\nLa Plata County $622,000\nLake County $498,000\nLarimer County $551,000\nLas Animas County $419,300\nLincoln County $419,300\nLogan County $419,300\nMesa County $420,600\nMineral County $420,600\nMoffat County $419,300\nMontezuma County $419,300COLORADO\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 11,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMontrose County $600,700\nMorgan County $420,600\nOtero County $419,300\nOuray County $600,700\nPark County $667,000\nPhillips County $419,300\nPitkin County $967,800\nProwers County $419,300\nPueblo County $419,300\nRio Blanco County $419,300\nRio Grande County $420,600\nRoutt County $809,600\nSaguache County $419,300\nSan Juan County $420,600\nSan Miguel County $836,200\nSedgwick County $419,300\nSummit County $853,700\nTeller County $515,000\nWashington County $419,300\nWeld County $450,800\nYuma County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 12,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nFairfield County $680,800\nHartford County $419,300\nLitchfield County $419,300\nMiddlesex County $419,300\nNew Haven County $419,300\nNew London County $419,300\nTolland County $419,300\nWindham County $419,300CONNECTICUT\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 13,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nKent County $419,300\nNew Castle County $475,600\nSussex County $419,300DELAWARE\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 14,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nDistrict of Columbia IneligibleDISTRICT OF COLUMBIA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 15,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAlachua County $419,300\nBaker County $464,600\nBay County $419,300\nBradford County $419,300\nBrevard County $419,300\nBroward County Ineligible\nCalhoun County $419,300\nCharlotte County $419,300\nCitrus County $419,300\nClay County $464,600\nCollier County $611,800\nColumbia County $419,300\nDeSoto County $419,300\nDixie County $419,300\nDuval County $464,600\nEscambia County $419,300\nFlagler County $419,300\nFranklin County $419,300\nGadsden County $419,300\nGilchrist County $419,300\nGlades County $419,300\nGulf County $419,300\nHamilton County $419,300\nHardee County $419,300\nHendry County $419,300\nHernando County $419,300\nHighlands County $419,300\nHillsborough County $419,300\nHolmes County $419,300\nIndian River County $419,300\nJackson County $419,300\nJefferson County $419,300\nLafayette County $419,300\nLake County $419,300\nLee County $419,300\nLeon County $419,300\nLevy County $419,300\nLiberty County $419,300\nMadison County $419,300\nManatee County $437,900FLORIDA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 16,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMarion County $419,300\nMartin County $477,400\nMiami-Dade County Ineligible\nMonroe County Ineligible\nNassau County $464,600\nOkaloosa County $483,000\nOkeechobee County $431,400\nOrange County $419,300\nOsceola County $419,300\nPalm Beach County $523,400\nPasco County $419,300\nPinellas County Ineligible\nPolk County $419,300\nPutnam County $419,300\nSanta Rosa County $464,600\nSarasota County $437,900\nSeminole County $419,300\nSt. Johns County $451,700\nSt. Lucie County $425,000\nSumter County $419,300\nSuwannee County $419,300\nTaylor County $419,300\nUnion County $419,300\nVolusia County $419,300\nWakulla County $419,300\nWalton County $483,000\nWashington County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 17,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAppling County $419,300\nAtkinson County $419,300\nBacon County $419,300\nBaker County $419,300\nBaldwin County $419,300\nBanks County $419,300\nBarrow County $551,000\nBartow County $551,000\nBen Hill County $419,300\nBerrien County $419,300\nBibb County Ineligible\nBleckley County $419,300\nBrantley County $419,300\nBrooks County $419,300\nBryan County $419,300\nBulloch County $419,300\nBurke County $419,300\nButts County $551,000\nCalhoun County $419,300\nCamden County $419,300\nCandler County $419,300\nCarroll County $551,000\nCatoosa County $419,300\nCharlton County $419,300\nChatham County $419,300\nChattahoochee County $419,300\nChattooga County $419,300\nCherokee County $551,000\nClarke County Ineligible\nClay County $419,300\nClayton County Ineligible\nClinch County $419,300\nCobb County Ineligible\nCoffee County $419,300\nColquitt County $419,300\nColumbia County $419,300\nCook County $419,300\nCoweta County $551,000\nCrawford County $419,300\nCrisp County $419,300\nDade County $419,300\nDawson County $551,000GEORGIA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 18,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nDecatur County $419,300\nDeKalb County Ineligible\nDodge County $419,300\nDooly County $419,300\nDougherty County $419,300\nDouglas County $551,000\nEarly County $419,300\nEchols County $419,300\nEffingham County $419,300\nElbert County $419,300\nEmanuel County $419,300\nEvans County $419,300\nFannin County $419,300\nFayette County Ineligible\nFloyd County $419,300\nForsyth County $551,000\nFranklin County $419,300\nFulton County $551,000\nGilmer County $419,300\nGlascock County $419,300\nGlynn County $419,300\nGordon County $419,300\nGrady County $419,300\nGreene County $444,300\nGwinnett County Ineligible\nHabersham County $419,300\nHall County $419,300\nHancock County $419,300\nHaralson County $551,000\nHarris County $419,300\nHart County $419,300\nHeard County $551,000\nHenry County $551,000\nHouston County $419,300\nIrwin County $419,300\nJackson County $419,300\nJasper County $551,000\nJeff Davis County $419,300\nJefferson County $419,300\nJenkins County $419,300\nJohnson County $419,300\nJones County $419,300\nLamar County $551,000\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 19,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nLanier County $419,300\nLaurens County $419,300\nLee County $419,300\nLiberty County $419,300\nLincoln County $419,300\nLong County $419,300\nLowndes County $419,300\nLumpkin County $419,300\nMacon County $419,300\nMadison County $419,300\nMarion County $419,300\nMcDuffie County $483,000\nMcIntosh County $419,300\nMeriwether County $551,000\nMiller County $419,300\nMitchell County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nMorgan County $551,000\nMurray County $419,300\nMuscogee County Ineligible\nNewton County $551,000\nOconee County $483,000\nOglethorpe County $483,000\nPaulding County $551,000\nPeach County $419,300\nPickens County $551,000\nPierce County $419,300\nPike County $551,000\nPolk County $419,300\nPulaski County $419,300\nPutnam County $419,300\nQuitman County $419,300\nRabun County $419,300\nRandolph County $419,300\nRichmond County Ineligible\nRockdale County Ineligible\nSchley County $419,300\nScreven County $419,300\nSeminole County $419,300\nSpalding County $551,000\nStephens County $419,300\nStewart County $419,300\nSumter County $419,300\nTalbot County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 20,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nTaliaferro County $419,300\nTattnall County $419,300\nTaylor County $419,300\nTelfair County $419,300\nTerrell County $419,300\nThomas County $419,300\nTift County $419,300\nToombs County $419,300\nTowns County $419,300\nTreutlen County $419,300\nTroup County $419,300\nTurner County $419,300\nTwiggs County $419,300\nUnion County $419,300\nUpson County $419,300\nWalker County $419,300\nWalton County $551,000\nWare County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWebster County $419,300\nWheeler County $419,300\nWhite County $419,300\nWhitfield County $419,300\nWilcox County $419,300\nWilkes County $419,300\nWilkinson County $419,300\nWorth County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 21,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nHawaii County $600,000\nHonolulu County $725,000\nKauai County $888,700\nMaui County $879,500\nMaui County - Molokai $879,500HAWAII\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 22,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAda County $498,500\nAdams County $419,300\nBannock County $419,300\nBear Lake County $419,300\nBenewah County $419,300\nBingham County $419,300\nBlaine County $607,200\nBoise County $498,500\nBonner County $444,700\nBonneville County $419,300\nBoundary County $419,300\nButte County $419,300\nCamas County $607,200\nCanyon County $498,500\nCaribou County $419,300\nCassia County $419,300\nClark County $419,300\nClearwater County $419,300\nCuster County $419,300\nElmore County $419,300\nFranklin County $419,300\nFremont County $419,300\nGem County $498,500\nGooding County $419,300\nIdaho County $419,300\nJefferson County $419,300\nJerome County $419,300\nKootenai County $515,400\nLatah County $419,300\nLemhi County $419,300\nLewis County $419,300\nLincoln County $517,000\nMadison County $419,300\nMinidoka County $419,300\nNez Perce County $419,300\nOneida County $419,300\nOwyhee County $469,200\nPayette County $419,300\nPower County $419,300\nShoshone County $419,300IDAHO\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 23,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nTeton County $967,800\nTwin Falls County $419,300\nValley County $459,000\nWashington County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 24,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nAlexander County $419,300\nBond County $419,300\nBoone County $419,300\nBrown County $419,300\nBureau County $419,300\nCalhoun County $419,300\nCarroll County $419,300\nCass County $419,300\nChampaign County $419,300\nChristian County $419,300\nClark County $419,300\nClay County $419,300\nClinton County $419,300\nColes County $419,300\nCook County ineligible\nCrawford County $419,300\nCumberland County $419,300\nDe Witt County $419,300\nDeKalb County $419,300\nDouglas County $419,300\nDuPage County ineligible\nEdgar County $419,300\nEdwards County $419,300\nEffingham County $419,300\nFayette County $419,300\nFord County $419,300\nFranklin County $419,300\nFulton County $419,300\nGallatin County $419,300\nGreene County $419,300\nGrundy County $419,300\nHamilton County $419,300\nHancock County $419,300\nHardin County $419,300\nHenderson County $419,300\nHenry County $419,300\nIroquois County $419,300\nJackson County $419,300\nJasper County $419,300\nJefferson County $419,300\nJersey County $419,300ILLINOIS\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 25,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nJo Daviess County $419,300\nJohnson County $419,300\nKane County $419,300\nKankakee County $419,300\nKendall County $419,300\nKnox County $419,300\nLake County ineligible\nLa Salle County $419,300\nLawrence County $419,300\nLee County $419,300\nLivingston County $419,300\nLogan County $419,300\nMacon County $419,300\nMacoupin County $419,300\nMadison County $419,300\nMarion County $419,300\nMarshall County $419,300\nMason County $419,300\nMassac County $419,300\nMcDonough County $419,300\nMcHenry County $419,300\nMcLean County $419,300\nMenard County $419,300\nMercer County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nMorgan County $419,300\nMoultrie County $419,300\nOgle County $419,300\nPeoria County $419,300\nPerry County $419,300\nPiatt County $419,300\nPike County $419,300\nPope County $419,300\nPulaski County $419,300\nPutnam County $419,300\nRandolph County $419,300\nRichland County $419,300\nRock Island County $419,300\nSaline County $419,300\nSangamon County $419,300\nSchuyler County $419,300\nScott County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 26,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nShelby County $419,300\nSt. Clair County $419,300\nStark County $419,300\nStephenson County $419,300\nTazewell County $419,300\nUnion County $419,300\nVermilion County $419,300\nWabash County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWhite County $419,300\nWhiteside County $419,300\nWill County $419,300\nWilliamson County $419,300\nWinnebago County $419,300\nWoodford County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 27,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nAllen County $419,300\nBartholomew County $419,300\nBenton County $419,300\nBlackford County $419,300\nBoone County $419,300\nBrown County $419,300\nCarroll County $419,300\nCass County $419,300\nClark County $419,300\nClay County $419,300\nClinton County $419,300\nCrawford County $419,300\nDaviess County $419,300\nDearborn County $419,300\nDecatur County $419,300\nDeKalb County $419,300\nDelaware County $419,300\nDubois County $419,300\nElkhart County $419,300\nFayette County $419,300\nFloyd County $419,300\nFountain County $419,300\nFranklin County $419,300\nFulton County $419,300\nGibson County $419,300\nGrant County $419,300\nGreene County $419,300\nHamilton County $419,300\nHancock County $419,300\nHarrison County $419,300\nHendricks County $419,300\nHenry County $419,300\nHoward County $419,300\nHuntington County $419,300\nJackson County $419,300\nJasper County $419,300\nJay County $419,300\nJefferson County $419,300\nJennings County $419,300\nJohnson County $419,300\nKnox County $419,300INDIANA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 28,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nKosciusko County $419,300\nLaGrange County $419,300\nLake County $419,300\nLaPorte County $419,300\nLawrence County $419,300\nMadison County $419,300\nMarion County ineligible\nMarshall County $419,300\nMartin County $419,300\nMiami County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nMorgan County $419,300\nNewton County $419,300\nNoble County $419,300\nOhio County $419,300\nOrange County $419,300\nOwen County $419,300\nParke County $419,300\nPerry County $419,300\nPike County $419,300\nPorter County $419,300\nPosey County $419,300\nPulaski County $419,300\nPutnam County $419,300\nRandolph County $419,300\nRipley County $419,300\nRush County $419,300\nScott County $419,300\nShelby County $419,300\nSpencer County $419,300\nSt. Joseph County $419,300\nStarke County $419,300\nSteuben County $419,300\nSullivan County $419,300\nSwitzerland County $419,300\nTippecanoe County $419,300\nTipton County $419,300\nUnion County $419,300\nVanderburgh County $419,300\nVermillion County $419,300\nVigo County $419,300\nWabash County $419,300\nWarren County $419,300\nWarrick County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 29,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nWashington County $419,300\nWayne County $419,300\nWells County $419,300\nWhite County $419,300\nWhitley County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 30,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdair County $419,300\nAdams County $419,300\nAllamakee County $419,300\nAppanoose County $419,300\nAudubon County $419,300\nBenton County $419,300\nBlack Hawk County $419,300\nBoone County $419,300\nBremer County $419,300\nBuchanan County $419,300\nBuena Vista County $419,300\nButler County $419,300\nCalhoun County $419,300\nCarroll County $419,300\nCass County $419,300\nCedar County $419,300\nCerro Gordo County $419,300\nCherokee County $419,300\nChickasaw County $419,300\nClarke County $419,300\nClay County $419,300\nClayton County $419,300\nClinton County $419,300\nCrawford County $419,300\nDallas County $419,300\nDavis County $419,300\nDecatur County $419,300\nDelaware County $419,300\nDes Moines County $419,300\nDickinson County $419,300\nDubuque County $419,300\nEmmet County $419,300\nFayette County $419,300\nFloyd County $419,300\nFranklin County $419,300\nFremont County $419,300\nGreene County $419,300\nGrundy County $419,300\nGuthrie County $419,300\nHamilton County $419,300\nHancock County $419,300\nHardin County $419,300\nHarrison County $419,300IOWA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 31,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nHenry County $419,300\nHoward County $419,300\nHumboldt County $419,300\nIda County $419,300\nIowa County $419,300\nJackson County $419,300\nJasper County $419,300\nJefferson County $419,300\nJohnson County $419,300\nJones County $419,300\nKeokuk County $419,300\nKossuth County $419,300\nLee County $419,300\nLinn County $419,300\nLouisa County $419,300\nLucas County $419,300\nLyon County $419,300\nMadison County $419,300\nMahaska County $419,300\nMarion County $419,300\nMarshall County $419,300\nMills County $419,300\nMitchell County $419,300\nMonona County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nMuscatine County $419,300\nO'Brien County $419,300\nOsceola County $419,300\nPage County $419,300\nPalo Alto County $419,300\nPlymouth County $419,300\nPocahontas County $419,300\nPolk County $419,300\nPottawattamie County $419,300\nPoweshiek County $419,300\nRinggold County $419,300\nSac County $419,300\nScott County $419,300\nShelby County $419,300\nSioux County $419,300\nStory County $419,300\nTama County $419,300\nTaylor County $419,300\nUnion County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 32,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nVan Buren County $419,300\nWapello County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWebster County $419,300\nWinnebago County $419,300\nWinneshiek County $419,300\nWoodbury County $419,300\nWorth County $419,300\nWright County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 33,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAllen County $419,300\nAnderson County $419,300\nAtchison County $419,300\nBarber County $419,300\nBarton County $419,300\nBourbon County $419,300\nBrown County $419,300\nButler County $419,300\nChase County $419,300\nChautauqua County $419,300\nCherokee County $419,300\nCheyenne County $419,300\nClark County $419,300\nClay County $419,300\nCloud County $419,300\nCoffey County $419,300\nComanche County $419,300\nCowley County $419,300\nCrawford County $419,300\nDecatur County $419,300\nDickinson County $419,300\nDoniphan County $419,300\nDouglas County $419,300\nEdwards County $419,300\nElk County $419,300\nEllis County $419,300\nEllsworth County $419,300\nFinney County $419,300\nFord County $419,300\nFranklin County $419,300\nGeary County $419,300\nGove County $419,300\nGraham County $419,300\nGrant County $419,300\nGray County $419,300\nGreeley County $419,300\nGreenwood County $419,300\nHamilton County $419,300\nHarper County $419,300\nHarvey County $419,300\nHaskell County $419,300\nHodgeman County $419,300\nJackson County $419,300KANSAS\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 34,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nJefferson County $419,300\nJewell County $419,300\nJohnson County $419,300\nKearny County $419,300\nKingman County $419,300\nKiowa County $419,300\nLabette County $419,300\nLane County $419,300\nLeavenworth County $419,300\nLincoln County $419,300\nLinn County $419,300\nLogan County $419,300\nLyon County $419,300\nMarion County $419,300\nMarshall County $419,300\nMcPherson County $419,300\nMeade County $419,300\nMiami County $419,300\nMitchell County $419,300\nMontgomery County $419,300\nMorris County $419,300\nMorton County $419,300\nNemaha County $419,300\nNeosho County $419,300\nNess County $419,300\nNorton County $419,300\nOsage County $419,300\nOsborne County $419,300\nOttawa County $419,300\nPawnee County $419,300\nPhillips County $419,300\nPottawatomie County $419,300\nPratt County $419,300\nRawlins County $419,300\nReno County $419,300\nRepublic County $419,300\nRice County $419,300\nRiley County $419,300\nRooks County $419,300\nRush County $419,300\nRussell County $419,300\nSaline County $419,300\nScott County $419,300\nSedgwick County $419,300\nSeward County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 35,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nShawnee County $419,300\nSheridan County $419,300\nSherman County $419,300\nSmith County $419,300\nStafford County $419,300\nStanton County $419,300\nStevens County $419,300\nSumner County $419,300\nThomas County $419,300\nTrego County $419,300\nWabaunsee County $419,300\nWallace County $419,300\nWashington County $419,300\nWichita County $419,300\nWilson County $419,300\nWoodson County $419,300\nWyandotte County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 36,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdair County $419,300\nAllen County $419,300\nAnderson County $419,300\nBallard County $419,300\nBarren County $419,300\nBath County $419,300\nBell County $419,300\nBoone County $419,300\nBourbon County $419,300\nBoyd County $419,300\nBoyle County $419,300\nBracken County $419,300\nBreathitt County $419,300\nBreckinridge County $419,300\nBullitt County $419,300\nButler County $419,300\nCaldwell County $419,300\nCalloway County $419,300\nCampbell County $419,300\nCarlisle County $419,300\nCarroll County $419,300\nCarter County $419,300\nCasey County $419,300\nChristian County $419,300\nClark County $419,300\nClay County $419,300\nClinton County $419,300\nCrittenden County $419,300\nCumberland County $419,300\nDaviess County $419,300\nEdmonson County $419,300\nElliott County $419,300\nEstill County $419,300\nFayette County ineligible\nFleming County $419,300\nFloyd County $419,300\nFranklin County $419,300\nFulton County $419,300\nGallatin County $419,300\nGarrard County $419,300\nGrant County $419,300\nGraves County $419,300KENTUCKY\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 37,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nGrayson County $419,300\nGreen County $419,300\nGreenup County $419,300\nHancock County $419,300\nHardin County $419,300\nHarlan County $419,300\nHarrison County $419,300\nHart County $419,300\nHenderson County $419,300\nHenry County $419,300\nHickman County $419,300\nHopkins County $419,300\nJackson County $419,300\nJefferson County ineligible\nJessamine County $419,300\nJohnson County $419,300\nKenton County $419,300\nKnott County $419,300\nKnox County $419,300\nLarue County $419,300\nLaurel County $419,300\nLawrence County $419,300\nLee County $419,300\nLeslie County $419,300\nLetcher County $419,300\nLewis County $419,300\nLincoln County $419,300\nLivingston County $419,300\nLogan County $419,300\nLyon County $419,300\nMadison County $419,300\nMagoffin County $419,300\nMarion County $419,300\nMarshall County $419,300\nMartin County $419,300\nMason County $419,300\nMcCracken County $419,300\nMcCreary County $419,300\nMcLean County $419,300\nMeade County $419,300\nMenifee County $419,300\nMercer County $419,300\nMetcalfe County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 38,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMonroe County $419,300\nMontgomery County $419,300\nMorgan County $419,300\nMuhlenberg County $419,300\nNelson County $419,300\nNicholas County $419,300\nOhio County $419,300\nOldham County $419,300\nOwen County $419,300\nOwsley County $419,300\nPendleton County $419,300\nPerry County $419,300\nPike County $419,300\nPowell County $419,300\nPulaski County $419,300\nRobertson County $419,300\nRockcastle County $419,300\nRowan County $419,300\nRussell County $419,300\nScott County $419,300\nShelby County $419,300\nSimpson County $419,300\nSpencer County $419,300\nTaylor County $419,300\nTodd County $419,300\nTrigg County $419,300\nTrimble County $419,300\nUnion County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWebster County $419,300\nWhitley County $419,300\nWolfe County $419,300\nWoodford County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 39,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAcadia Parish $419,300\nAllen Parish $419,300\nAscension Parish $419,300\nAssumption Parish $419,300\nAvoyelles Parish $419,300\nBeauregard Parish $419,300\nBienville Parish $419,300\nBossier Parish $419,300\nCaddo Parish $419,300\nCalcasieu Parish $419,300\nCaldwell Parish $419,300\nCameron Parish $419,300\nCatahoula Parish $419,300\nClaiborne Parish $419,300\nConcordia Parish $419,300\nDe Soto Parish $419,300\nEast Baton Rouge Parish $419,300\nEast Carroll Parish $419,300\nEast Feliciana Parish $419,300\nEvangeline Parish $419,300\nFranklin Parish $419,300\nGrant Parish $419,300\nIberia Parish $419,300\nIberville Parish $419,300\nJackson Parish $419,300\nJefferson Davis Parish $419,300\nJefferson Parish $419,300\nLa Salle Parish $419,300\nLafayette Parish $419,300\nLafourche Parish $419,300\nLincoln Parish $419,300\nLivingston Parish $419,300\nMadison Parish $419,300\nMorehouse Parish $419,300\nNatchitoches Parish $419,300\nOrleans Parish ineligible\nOuachita Parish $419,300\nPlaquemines Parish $419,300\nPointe Coupee Parish $419,300\nRapides Parish $419,300\nRed River Parish $419,300\nRichland Parish $419,300\nSabine Parish $419,300LOUISIANA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 40,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nSt. Bernard Parish $419,300\nSt. Charles Parish $419,300\nSt. Helena Parish $419,300\nSt. James Parish $419,300\nSt. John the Baptist Parish $419,300\nSt. Landry Parish $419,300\nSt. Martin Parish $419,300\nSt. Mary Parish $419,300\nSt. Tammany Parish $419,300\nTangipahoa Parish $419,300\nTensas Parish $419,300\nTerrebonne Parish $419,300\nUnion Parish $419,300\nVermilion Parish $419,300\nVernon Parish $419,300\nWashington Parish $419,300\nWebster Parish $419,300\nWest Baton Rouge Parish $419,300\nWest Carroll Parish $419,300\nWest Feliciana Parish $419,300\nWinn Parish $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 41,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAndroscoggin County $419,300\nAroostook County $419,300\nCumberland County $480,200\nFranklin County $419,300\nHancock County $419,300\nKennebec County $419,300\nKnox County $419,300\nLincoln County $419,300\nOxford County $419,300\nPenobscot County $419,300\nPiscataquis County $419,300\nSagadahoc County $480,200\nSomerset County $419,300\nWaldo County $419,300\nWashington County $419,300\nYork County $480,200MAINE\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 42,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAllegany County $419,300\nAnne Arundel County $585,100\nBaltimore city ineligible\nBaltimore County $585,100\nCalvert County $967,800\nCaroline County $419,300\nCarroll County $585,100\nCecil County $475,600\nCharles County $967,800\nDorchester County $419,300\nFrederick County $967,800\nGarrett County $419,300\nHarford County $585,100\nHoward County $585,100\nKent County $419,300\nMontgomery County $967,800\nPrince George's County $967,800\nQueen Anne's County $585,100\nSomerset County $419,300\nSt. Mary's County $419,300\nTalbot County $419,300\nWashington County $419,300\nWicomico County $419,300\nWorcester County $419,300MARYLAND\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 43,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nBarnstable County $598,000\nBerkshire County $419,300\nBristol County $588,800\nDukes County $967,800\nEssex County $731,400\nFranklin County $419,300\nHampden County $419,300\nHampshire County $419,300\nMiddlesex County $731,400\nNantucket County $967,800\nNorfolk County $731,400\nPlymouth County $731,400\nSuffolk County ineligible\nWorcester County $419,300MASSACHUSETTS\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 44,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAlcona County $419,300\nAlger County $419,300\nAllegan County $419,300\nAlpena County $419,300\nAntrim County $419,300\nArenac County $419,300\nBaraga County $419,300\nBarry County $419,300\nBay County $419,300\nBenzie County $419,300\nBerrien County $419,300\nBranch County $419,300\nCalhoun County $419,300\nCass County $419,300\nCharlevoix County $419,300\nCheboygan County $419,300\nChippewa County $419,300\nClare County $419,300\nClinton County $419,300\nCrawford County $419,300\nDelta County $419,300\nDickinson County $419,300\nEaton County $419,300\nEmmet County $419,300\nGenesee County $419,300\nGladwin County $419,300\nGogebic County $419,300\nGrand Traverse County $419,300\nGratiot County $419,300\nHillsdale County $419,300\nHoughton County $419,300\nHuron County $419,300\nIngham County $419,300\nIonia County $419,300\nIosco County $419,300\nIron County $419,300\nIsabella County $419,300\nJackson County $419,300\nKalamazoo County $419,300\nKalkaska County $419,300\nKent County $419,300\nKeweenaw County $419,300\nLake County $419,300MICHIGAN\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 45,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nLapeer County $419,300\nLeelanau County $419,300\nLenawee County $419,300\nLivingston County $419,300\nLuce County $419,300\nMackinac County $419,300\nMacomb County $419,300\nManistee County $419,300\nMarquette County $419,300\nMason County $419,300\nMecosta County $419,300\nMenominee County $419,300\nMidland County $419,300\nMissaukee County $419,300\nMonroe County $419,300\nMontcalm County $419,300\nMontmorency County $419,300\nMuskegon County $419,300\nNewaygo County $419,300\nOakland County $419,300\nOceana County $419,300\nOgemaw County $419,300\nOntonagon County $419,300\nOsceola County $419,300\nOscoda County $419,300\nOtsego County $419,300\nOttawa County $419,300\nPresque Isle County $419,300\nRoscommon County $419,300\nSaginaw County $419,300\nSanilac County $419,300\nSchoolcraft County $419,300\nShiawassee County $419,300\nSt. Clair County $419,300\nSt. Joseph County $419,300\nTuscola County $419,300\nVan Buren County $419,300\nWashtenaw County $419,300\nWayne County $419,300\nWexford County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 46,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAitkin County $419,300\nAnoka County ineligible\nBecker County $419,300\nBeltrami County $419,300\nBenton County $419,300\nBig Stone County $419,300\nBlue Earth County $419,300\nBrown County $419,300\nCarlton County $419,300\nCarver County $423,200\nCass County $419,300\nChippewa County $419,300\nChisago County $423,200\nClay County $419,300\nClearwater County $419,300\nCook County $419,300\nCottonwood County $419,300\nCrow Wing County $419,300\nDakota County $423,200\nDodge County $419,300\nDouglas County $419,300\nFaribault County $419,300\nFillmore County $419,300\nFreeborn County $419,300\nGoodhue County $419,300\nGrant County $419,300\nHennepin County ineligible\nHouston County $419,300\nHubbard County $419,300\nIsanti County $423,200\nItasca County $419,300\nJackson County $419,300\nKanabec County $419,300\nKandiyohi County $419,300\nKittson County $419,300\nKoochiching County $419,300\nLac qui Parle County $419,300\nLake County $419,300\nLake of the Woods County $419,300\nLe Sueur County $423,200\nLincoln County $419,300\nLyon County $419,300\nMahnomen County $419,300MINNESOTA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 47,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMarshall County $419,300\nMartin County $419,300\nMcLeod County $419,300\nMeeker County $419,300\nMille Lacs County $423,200\nMorrison County $419,300\nMower County $419,300\nMurray County $419,300\nNicollet County $419,300\nNobles County $419,300\nNorman County $419,300\nOlmsted County $419,300\nOtter Tail County $419,300\nPennington County $419,300\nPine County $419,300\nPipestone County $419,300\nPolk County $419,300\nPope County $419,300\nRamsey County ineligible\nRed Lake County $419,300\nRedwood County $419,300\nRenville County $419,300\nRice County $419,300\nRock County $419,300\nRoseau County $419,300\nScott County $419,300\nSherburne County $423,200\nSibley County $423,200\nSt. Louis County $419,300\nStearns County $419,300\nSteele County $419,300\nStevens County $419,300\nSwift County $419,300\nTodd County $419,300\nTraverse County $419,300\nWabasha County $419,300\nWadena County $419,300\nWaseca County $419,300\nWashington County ineligible\nWatonwan County $419,300\nWilkin County $419,300\nWinona County $419,300\nWright County $423,200\nYellow Medicine County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 48,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nAlcorn County $419,300\nAmite County $419,300\nAttala County $419,300\nBenton County $419,300\nBolivar County $419,300\nCalhoun County $419,300\nCarroll County $419,300\nChickasaw County $419,300\nChoctaw County $419,300\nClaiborne County $419,300\nClarke County $419,300\nClay County $419,300\nCoahoma County $419,300\nCopiah County $419,300\nCovington County $419,300\nDeSoto County $419,300\nForrest County $419,300\nFranklin County $419,300\nGeorge County $419,300\nGreene County $419,300\nGrenada County $419,300\nHancock County $419,300\nHarrison County $419,300\nHinds County $419,300\nHolmes County $419,300\nHumphreys County $419,300\nIssaquena County $419,300\nItawamba County $419,300\nJackson County $419,300\nJasper County $419,300\nJefferson County $419,300\nJefferson Davis County $419,300\nJones County $419,300\nKemper County $419,300\nLafayette County $419,300\nLamar County $419,300\nLauderdale County $419,300\nLawrence County $419,300\nLeake County $419,300\nLee County $419,300\nLeflore County $419,300\nLincoln County $419,300MISSISSIPPI\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 49,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nLowndes County $419,300\nMadison County $419,300\nMarion County $419,300\nMarshall County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nNeshoba County $419,300\nNewton County $419,300\nNoxubee County $419,300\nOktibbeha County $419,300\nPanola County $419,300\nPearl River County $419,300\nPerry County $419,300\nPike County $419,300\nPontotoc County $419,300\nPrentiss County $419,300\nQuitman County $419,300\nRankin County $419,300\nScott County $419,300\nSharkey County $419,300\nSimpson County $419,300\nSmith County $419,300\nStone County $419,300\nSunflower County $419,300\nTallahatchie County $419,300\nTate County $419,300\nTippah County $419,300\nTishomingo County $419,300\nTunica County $419,300\nUnion County $419,300\nWalthall County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWebster County $419,300\nWilkinson County $419,300\nWinston County $419,300\nYalobusha County $419,300\nYazoo County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 50,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdair County $419,300\nAndrew County $419,300\nAtchison County $419,300\nAudrain County $419,300\nBarry County $419,300\nBarton County $419,300\nBates County $419,300\nBenton County $419,300\nBollinger County $419,300\nBoone County $419,300\nBuchanan County $419,300\nButler County $419,300\nCaldwell County $419,300\nCallaway County $419,300\nCamden County $419,300\nCape Girardeau County $419,300\nCarroll County $419,300\nCarter County $419,300\nCass County $419,300\nCedar County $419,300\nChariton County $419,300\nChristian County $419,300\nClark County $419,300\nClay County $419,300\nClinton County $419,300\nCole County $419,300\nCooper County $419,300\nCrawford County $419,300\nDade County $419,300\nDallas County $419,300\nDaviess County $419,300\nDeKalb County $419,300\nDent County $419,300\nDouglas County $419,300\nDunklin County $419,300\nFranklin County $419,300\nGasconade County $419,300\nGentry County $419,300\nGreene County $419,300\nGrundy County $419,300\nHarrison County $419,300MISSOURI\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 51,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nHenry County $419,300\nHickory County $419,300\nHolt County $419,300\nHoward County $419,300\nHowell County $419,300\nIron County $419,300\nJackson County $419,300\nJasper County $419,300\nJefferson County $419,300\nJohnson County $419,300\nKnox County $419,300\nLaclede County $419,300\nLafayette County $419,300\nLawrence County $419,300\nLewis County $419,300\nLincoln County $419,300\nLinn County $419,300\nLivingston County $419,300\nMacon County $419,300\nMadison County $419,300\nMaries County $419,300\nMarion County $419,300\nMcDonald County $419,300\nMercer County $419,300\nMiller County $419,300\nMississippi County $419,300\nMoniteau County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nMorgan County $419,300\nNew Madrid County $419,300\nNewton County $419,300\nNodaway County $419,300\nOregon County $419,300\nOsage County $419,300\nOzark County $419,300\nPemiscot County $419,300\nPerry County $419,300\nPettis County $419,300\nPhelps County $419,300\nPike County $419,300\nPlatte County $419,300\nPolk County $419,300\nPulaski County $419,300\nPutnam County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 52,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nRalls County $419,300\nRandolph County $419,300\nRay County $419,300\nReynolds County $419,300\nRipley County $419,300\nSaline County $419,300\nSchuyler County $419,300\nScotland County $419,300\nScott County $419,300\nShannon County $419,300\nShelby County $419,300\nSt. Charles County $419,300\nSt. Clair County $419,300\nSt. Francois County $419,300\nSt. Louis city ineligible\nSt. Louis County ineligible\nSte. Genevieve County $419,300\nStoddard County $419,300\nStone County $419,300\nSullivan County $419,300\nTaney County $419,300\nTexas County $419,300\nVernon County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWebster County $419,300\nWorth County $419,300\nWright County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 53,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nBeaverhead County $419,300\nBig Horn County $419,300\nBlaine County $419,300\nBroadwater County $419,300\nCarbon County $603,500\nCarter County $419,300\nCascade County $419,300\nChouteau County $419,300\nCuster County $419,300\nDaniels County $419,300\nDawson County $419,300\nDeer Lodge County $419,300\nFallon County $419,300\nFergus County $419,300\nFlathead County $458,100\nGallatin County $575,000\nGarfield County $419,300\nGlacier County $419,300\nGolden Valley County $419,300\nGranite County $419,300\nHill County $419,300\nJefferson County $419,300\nJudith Basin County $419,300\nLake County $419,300\nLewis and Clark County $419,300\nLiberty County $419,300\nLincoln County $419,300\nMadison County $419,300\nMcCone County $419,300\nMeagher County $419,300\nMineral County $419,300\nMissoula County $448,000\nMusselshell County $419,300\nPark County $450,800\nPetroleum County $419,300\nPhillips County $419,300\nPondera County $419,300\nPowder River County $419,300\nPowell County $419,300\nPrairie County $419,300\nRavalli County $419,300\nRichland County $419,300\nRoosevelt County $419,300MONTANA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 54,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nRosebud County $419,300\nSanders County $419,300\nSheridan County $419,300\nSilver Bow County $419,300\nStillwater County $603,500\nSweet Grass County $419,300\nTeton County $419,300\nToole County $419,300\nTreasure County $419,300\nValley County $419,300\nWheatland County $419,300\nWibaux County $419,300\nYellowstone County $603,500\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 55,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nAntelope County $419,300\nArthur County $419,300\nBanner County $419,300\nBlaine County $419,300\nBoone County $419,300\nBox Butte County $419,300\nBoyd County $419,300\nBrown County $419,300\nBuffalo County $419,300\nBurt County $419,300\nButler County $419,300\nCass County $419,300\nCedar County $419,300\nChase County $419,300\nCherry County $419,300\nCheyenne County $419,300\nClay County $419,300\nColfax County $419,300\nCuming County $419,300\nCuster County $419,300\nDakota County $419,300\nDawes County $419,300\nDawson County $483,000\nDeuel County $419,300\nDixon County $419,300\nDodge County $419,300\nDouglas County $419,300\nDundy County $419,300\nFillmore County $419,300\nFranklin County $419,300\nFrontier County $419,300\nFurnas County $419,300\nGage County $419,300\nGarden County $419,300\nGarfield County $419,300\nGosper County $483,000\nGrant County $419,300\nGreeley County $419,300\nHall County $419,300\nHamilton County $419,300\nHarlan County $419,300\nHayes County $419,300NEBRASKA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 56,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nHitchcock County $419,300\nHolt County $419,300\nHooker County $419,300\nHoward County $419,300\nJefferson County $419,300\nJohnson County $419,300\nKearney County $419,300\nKeith County $419,300\nKeya Paha County $419,300\nKimball County $419,300\nKnox County $419,300\nLancaster County $419,300\nLincoln County $419,300\nLogan County $419,300\nLoup County $419,300\nMadison County $419,300\nMcPherson County $419,300\nMerrick County $419,300\nMorrill County $419,300\nNance County $419,300\nNemaha County $419,300\nNuckolls County $419,300\nOtoe County $419,300\nPawnee County $419,300\nPerkins County $419,300\nPhelps County $419,300\nPierce County $419,300\nPlatte County $419,300\nPolk County $419,300\nRed Willow County $419,300\nRichardson County $419,300\nRock County $419,300\nSaline County $419,300\nSarpy County $419,300\nSaunders County $419,300\nScotts Bluff County $419,300\nSeward County $419,300\nSheridan County $419,300\nSherman County $419,300\nSioux County $419,300\nStanton County $419,300\nThayer County $419,300\nThomas County $419,300\nThurston County $419,300\nValley County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 57,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nWashington County $419,300\nWayne County $419,300\nWebster County $419,300\nWheeler County $419,300\nYork County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 58,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nCarson City ineligible\nChurchill County $419,300\nClark County $419,300\nDouglas County $575,000\nElko County $419,300\nEsmeralda County $419,300\nEureka County $419,300\nHumboldt County $419,300\nLander County $419,300\nLincoln County $419,300\nLyon County $419,300\nMineral County $419,300\nNye County $419,300\nPershing County $419,300\nStorey County $506,000\nWashoe County $506,000\nWhite Pine County $419,300NEVADA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 59,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nBelknap County $419,300\nCarroll County $419,300\nCheshire County $419,300\nCoos County $419,300\nGrafton County $419,300\nHillsborough County $437,000\nMerrimack County $419,300\nRockingham County $731,400\nStrafford County $731,400\nSullivan County $419,300NEW HAMPSHIRE\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 60,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAtlantic County $419,300\nBergen County ineligible\nBurlington County $475,600\nCamden County $475,600\nCape May County $533,600\nCumberland County $419,300\nEssex County ineligible\nGloucester County $475,600\nHudson County ineligible\nHunterdon County $967,800\nMercer County $419,300\nMiddlesex County $967,800\nMonmouth County $967,800\nMorris County $967,800\nOcean County $967,800\nPassaic County $967,800\nSalem County $475,600\nSomerset County $967,800\nSussex County $967,800\nUnion County ineligible\nWarren County $419,300NEW JERSEY\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 61,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nBernalillo County $419,300\nCatron County $419,300\nChaves County $419,300\nCibola County $419,300\nColfax County $419,300\nCurry County $419,300\nDe Baca County $419,300\nDona Ana County $419,300\nEddy County $419,300\nGrant County $419,300\nGuadalupe County $419,300\nHarding County $419,300\nHidalgo County $419,300\nLea County $419,300\nLincoln County $419,300\nLos Alamos County $553,800\nLuna County $419,300\nMcKinley County $419,300\nMora County $419,300\nOtero County $419,300\nQuay County $419,300\nRio Arriba County $419,300\nRoosevelt County $419,300\nSan Juan County $419,300\nSan Miguel County $419,300\nSandoval County $419,300\nSanta Fe County $433,300\nSierra County $419,300\nSocorro County $419,300\nTaos County $419,300\nTorrance County $419,300\nUnion County $419,300\nValencia County $419,300NEW MEXICO\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 62,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAlbany County $419,300\nAllegany County $419,300\nBronx County ineligible\nBroome County $419,300\nCattaraugus County $419,300\nCayuga County $419,300\nChautauqua County $419,300\nChemung County $419,300\nChenango County $419,300\nClinton County $419,300\nColumbia County $419,300\nCortland County $419,300\nDelaware County $419,300\nDutchess County $581,200\nErie County $419,300\nEssex County $419,300\nFranklin County $419,300\nFulton County $419,300\nGenesee County $419,300\nGreene County $419,300\nHamilton County $419,300\nHerkimer County $419,300\nJefferson County $419,300\nKings County ineligible\nLewis County $419,300\nLivingston County $419,300\nMadison County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nNassau County ineligible\nNew York County ineligible\nNiagara County $419,300\nOneida County $419,300\nOnondaga County $419,300\nOntario County $419,300\nOrange County $581,200\nOrleans County $419,300NEW YORK\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 63,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nOswego County $419,300\nOtsego County $419,300\nPutnam County $967,800\nQueens County ineligible\nRensselaer County $419,300\nRichmond County ineligible\nRockland County $967,800\nSaratoga County $419,300\nSchenectady County $419,300\nSchoharie County $419,300\nSchuyler County $419,300\nSeneca County $419,300\nSt. Lawrence County $419,300\nSteuben County $419,300\nSuffolk County $967,800\nSullivan County $419,300\nTioga County $419,300\nTompkins County $419,300\nUlster County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWestchester County $967,800\nWyoming County $419,300\nYates County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 64,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAlamance County $419,300\nAlexander County $419,300\nAlleghany County $419,300\nAnson County $419,300\nAshe County $419,300\nAvery County $419,300\nBeaufort County $419,300\nBertie County $419,300\nBladen County $419,300\nBrunswick County $419,300\nBuncombe County $419,300\nBurke County $419,300\nCabarrus County $419,300\nCaldwell County $419,300\nCamden County $606,200\nCarteret County $419,300\nCaswell County $419,300\nCatawba County $419,300\nChatham County $506,000\nCherokee County $419,300\nChowan County $419,300\nClay County $419,300\nCleveland County $419,300\nColumbus County $419,300\nCraven County $419,300\nCumberland County $419,300\nCurrituck County $606,200\nDare County $530,800\nDavidson County $419,300\nDavie County $419,300\nDuplin County $419,300\nDurham County $506,000\nEdgecombe County $419,300\nForsyth County $419,300\nFranklin County $424,100\nGaston County $419,300\nGates County $606,200\nGraham County $419,300\nGranville County $506,000\nGreene County $419,300\nGuilford County $419,300\nHalifax County $419,300\nHarnett County $419,300NORTH CAROLINA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 65,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nHaywood County $419,300\nHenderson County $419,300\nHertford County $419,300\nHoke County $419,300\nHyde County $419,300\nIredell County $419,300\nJackson County $419,300\nJohnston County $424,100\nJones County $419,300\nLee County $419,300\nLenoir County $419,300\nLincoln County $419,300\nMacon County $419,300\nMadison County $419,300\nMartin County $419,300\nMcDowell County $419,300\nMecklenburg County $419,300\nMitchell County $419,300\nMontgomery County $419,300\nMoore County $419,300\nNash County $419,300\nNew Hanover County $419,300\nNorthampton County $419,300\nOnslow County $419,300\nOrange County $506,000\nPamlico County $419,300\nPasquotank County $644,000\nPender County $419,300\nPerquimans County $644,000\nPerson County $506,000\nPitt County $419,300\nPolk County $419,300\nRandolph County $419,300\nRichmond County $419,300\nRobeson County $419,300\nRockingham County $419,300\nRowan County $419,300\nRutherford County $419,300\nSampson County $419,300\nScotland County $419,300\nStanly County $419,300\nStokes County $419,300\nSurry County $419,300\nSwain County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 66,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nTransylvania County $419,300\nTyrrell County $419,300\nUnion County $419,300\nVance County $419,300\nWake County $424,100\nWarren County $419,300\nWashington County $419,300\nWatauga County $419,300\nWayne County $419,300\nWilkes County $419,300\nWilson County $419,300\nYadkin County $419,300\nYancey County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 67,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nBarnes County $419,300\nBenson County $419,300\nBillings County $419,300\nBottineau County $419,300\nBowman County $419,300\nBurke County $419,300\nBurleigh County $419,300\nCass County $419,300\nCavalier County $419,300\nDickey County $419,300\nDivide County $419,300\nDunn County $419,300\nEddy County $419,300\nEmmons County $419,300\nFoster County $419,300\nGolden Valley County $419,300\nGrand Forks County $419,300\nGrant County $419,300\nGriggs County $419,300\nHettinger County $419,300\nKidder County $419,300\nLaMoure County $419,300\nLogan County $419,300\nMcHenry County $419,300\nMcIntosh County $419,300\nMcKenzie County $419,300\nMcLean County $419,300\nMercer County $419,300\nMorton County $419,300\nMountrail County $419,300\nNelson County $419,300\nOliver County $419,300\nPembina County $419,300\nPierce County $419,300\nRamsey County $419,300\nRansom County $419,300\nRenville County $419,300\nRichland County $419,300\nRolette County $419,300\nSargent County $419,300\nSheridan County $419,300\nSioux County $419,300NORTH DAKOTA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 68,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nSlope County $419,300\nStark County $419,300\nSteele County $419,300\nStutsman County $419,300\nTowner County $419,300\nTraill County $419,300\nWalsh County $419,300\nWard County $419,300\nWells County $419,300\nWilliams County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 69,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nAllen County $419,300\nAshland County $419,300\nAshtabula County $419,300\nAthens County $419,300\nAuglaize County $419,300\nBelmont County $419,300\nBrown County $419,300\nButler County $419,300\nCarroll County $419,300\nChampaign County $419,300\nClark County $419,300\nClermont County $419,300\nClinton County $419,300\nColumbiana County $419,300\nCoshocton County $419,300\nCrawford County $419,300\nCuyahoga County ineligible\nDarke County $419,300\nDefiance County $419,300\nDelaware County $455,400\nErie County $419,300\nFairfield County $455,400\nFayette County $419,300\nFranklin County $455,400\nFulton County $419,300\nGallia County $419,300\nGeauga County $419,300\nGreene County $419,300\nGuernsey County $419,300\nHamilton County $419,300\nHancock County $419,300\nHardin County $419,300\nHarrison County $419,300\nHenry County $419,300\nHighland County $419,300\nHocking County $455,400\nHolmes County $419,300\nHuron County $419,300\nJackson County $419,300\nJefferson County $419,300\nKnox County $419,300\nLake County $419,300OHIO\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 70,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nLawrence County $419,300\nLicking County $455,400\nLogan County $419,300\nLorain County $419,300\nLucas County $419,300\nMadison County $455,400\nMahoning County $419,300\nMarion County $419,300\nMedina County $419,300\nMeigs County $419,300\nMercer County $419,300\nMiami County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nMorgan County $419,300\nMorrow County $455,400\nMuskingum County $419,300\nNoble County $419,300\nOttawa County $419,300\nPaulding County $419,300\nPerry County $455,400\nPickaway County $455,400\nPike County $419,300\nPortage County $419,300\nPreble County $419,300\nPutnam County $419,300\nRichland County $419,300\nRoss County $419,300\nSandusky County $419,300\nScioto County $419,300\nSeneca County $419,300\nShelby County $419,300\nStark County $419,300\nSummit County ineligible\nTrumbull County $419,300\nTuscarawas County $419,300\nUnion County $455,400\nVan Wert County $419,300\nVinton County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWilliams County $419,300\nWood County $419,300\nWyandot County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 71,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdair County $419,300\nAlfalfa County $419,300\nAtoka County $419,300\nBeaver County $419,300\nBeckham County $419,300\nBlaine County $419,300\nBryan County $419,300\nCaddo County $419,300\nCanadian County $419,300\nCarter County $419,300\nCherokee County $419,300\nChoctaw County $419,300\nCimarron County $419,300\nCleveland County $419,300\nCoal County $419,300\nComanche County $419,300\nCotton County $419,300\nCraig County $419,300\nCreek County $419,300\nCuster County $419,300\nDelaware County $419,300\nDewey County $419,300\nEllis County $419,300\nGarfield County $419,300\nGarvin County $419,300\nGrady County $419,300\nGrant County $419,300\nGreer County $419,300\nHarmon County $419,300\nHarper County $419,300\nHaskell County $419,300\nHughes County $419,300\nJackson County $419,300\nJefferson County $419,300\nJohnston County $419,300\nKay County $419,300\nKingfisher County $419,300\nKiowa County $419,300\nLatimer County $419,300\nLe Flore County $419,300\nLincoln County $419,300\nLogan County $419,300\nLove County $419,300OKLAHOMA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 72,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMajor County $419,300\nMarshall County $419,300\nMayes County $419,300\nMcClain County $419,300\nMcCurtain County $419,300\nMcIntosh County $419,300\nMurray County $419,300\nMuskogee County $419,300\nNoble County $419,300\nNowata County $419,300\nOkfuskee County $419,300\nOklahoma County $419,300\nOkmulgee County $419,300\nOsage County $419,300\nOttawa County $419,300\nPawnee County $419,300\nPayne County $419,300\nPittsburg County $419,300\nPontotoc County $419,300\nPottawatomie County $419,300\nPushmataha County $419,300\nRoger Mills County $419,300\nRogers County $419,300\nSeminole County $419,300\nSequoyah County $419,300\nStephens County $419,300\nTexas County $419,300\nTillman County $419,300\nTulsa County $419,300\nWagoner County $419,300\nWashington County $419,300\nWashita County $419,300\nWoods County $419,300\nWoodward County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 73,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nBaker County $419,300\nBenton County $478,400\nClackamas County $556,600\nClatsop County $448,900\nColumbia County $556,600\nCoos County $419,300\nCrook County $419,300\nCurry County $419,300\nDeschutes County $570,400\nDouglas County $419,300\nGilliam County $419,300\nGrant County $419,300\nHarney County $419,300\nHood River County $609,900\nJackson County $419,300\nJefferson County $419,300\nJosephine County $419,300\nKlamath County $419,300\nLake County $419,300\nLane County $419,300\nLincoln County $419,300\nLinn County $419,300\nMalheur County $419,300\nMarion County $419,300\nMorrow County $419,300\nMultnomah County $556,600\nPolk County $419,300\nSherman County $419,300\nTillamook County $419,300\nUmatilla County $419,300\nUnion County $419,300\nWallowa County $419,300\nWasco County $419,300\nWashington County $556,600\nWheeler County $419,300\nYamhill County $556,600OREGON\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 74,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nAllegheny County $419,300\nArmstrong County $419,300\nBeaver County $419,300\nBedford County $419,300\nBerks County $419,300\nBlair County $419,300\nBradford County $419,300\nBucks County $475,600\nButler County $419,300\nCambria County $419,300\nCameron County $419,300\nCarbon County $419,300\nCentre County $419,300\nChester County $475,600\nClarion County $419,300\nClearfield County $419,300\nClinton County $419,300\nColumbia County $419,300\nCrawford County $419,300\nCumberland County $419,300\nDauphin County $419,300\nDelaware County $475,600\nElk County $419,300\nErie County $419,300\nFayette County $419,300\nForest County $419,300\nFranklin County $419,300\nFulton County $419,300\nGreene County $419,300\nHuntingdon County $419,300\nIndiana County $419,300\nJefferson County $419,300\nJuniata County $419,300\nLackawanna County $419,300\nLancaster County $419,300\nLawrence County $419,300\nLebanon County $419,300\nLehigh County $419,300\nLuzerne County $419,300\nLycoming County $419,300\nMcKean County $419,300\nMercer County $419,300PENNSYLVANIA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 75,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMifflin County $419,300\nMonroe County $419,300\nMontgomery County $475,600\nMontour County $419,300\nNorthampton County $419,300\nNorthumberland County $419,300\nPerry County $419,300\nPhiladelphia County ineligible\nPike County $967,800\nPotter County $419,300\nSchuylkill County $419,300\nSnyder County $419,300\nSomerset County $419,300\nSullivan County $419,300\nSusquehanna County $419,300\nTioga County $419,300\nUnion County $419,300\nVenango County $419,300\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWestmoreland County $419,300\nWyoming County $419,300\nYork County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 76,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdjuntas Municipio $419,300\nAguada Municipio $419,300\nAguadilla Municipio $419,300\nAguas Buenas Municipio $552,000\nAibonito Municipio $552,000\nAñasco Municipio $419,300\nArecibo Municipio $419,300\nArroyo Municipio $419,300\nBarceloneta Municipio $552,000\nBarranquitas Municipio $552,000\nBayamón Municipio $552,000\nCabo Rojo Municipio $419,300\nCaguas Municipio $552,000\nCamuy Municipio $419,300\nCanóvanas Municipio $552,000\nCarolina Municipio $552,000\nCataño Municipio ineligible\nCayey Municipio $552,000\nCeiba Municipio $552,000\nCiales Municipio $552,000\nCidra Municipio $552,000\nCoamo Municipio $419,300\nComerío Municipio $552,000\nCorozal Municipio $552,000\nCulebra Municipio $425,900\nDorado Municipio $552,000\nFajardo Municipio $552,000\nFlorida Municipio $552,000\nGuánica Municipio $419,300\nGuayama Municipio $419,300\nGuayanilla Municipio $419,300\nGuaynabo Municipio $552,000\nGurabo Municipio $552,000\nHatillo Municipio $419,300\nHormigueros Municipio $419,300\nHumacao Municipio $552,000\nIsabela Municipio $419,300\nJayuya Municipio $419,300\nJuana Díaz Municipio $419,300\nJuncos Municipio $552,000\nLajas Municipio $419,300\nLares Municipio $419,300PUERTO RICO\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 77,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nLas Marías Municipio $419,300\nLas Piedras Municipio $552,000\nLoíza Municipio $552,000\nLuquillo Municipio $552,000\nManatí Municipio $552,000\nMaricao Municipio $419,300\nMaunabo Municipio $552,000\nMayagüez Municipio $419,300\nMoca Municipio $419,300\nMorovis Municipio $552,000\nNaguabo Municipio $552,000\nNaranjito Municipio $552,000\nOrocovis Municipio $552,000\nPatillas Municipio $419,300\nPeñuelas Municipio $419,300\nPonce Municipio $419,300\nQuebradillas Municipio $419,300\nRincón Municipio $419,300\nRío Grande Municipio $552,000\nSabana Grande Municipio $419,300\nSalinas Municipio $419,300\nSan Germán Municipio $419,300\nSan Juan Municipio ineligible\nSan Lorenzo Municipio $552,000\nSan Sebastián Municipio $419,300\nSanta Isabel Municipio $419,300\nToa Alta Municipio $552,000\nToa Baja Municipio $552,000\nTrujillo Alto Municipio $552,000\nUtuado Municipio $419,300\nVega Alta Municipio $552,000\nVega Baja Municipio $552,000\nVieques Municipio $419,300\nVillalba Municipio $419,300\nYabucoa Municipio $552,000\nYauco Municipio $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 78,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nBristol County ineligible\nKent County $588,800\nNewport County $588,800\nProvidence County $588,800\nWashington County $588,800RHODE ISLAND\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 79,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAbbeville County $419,300\nAiken County $419,300\nAllendale County $419,300\nAnderson County $419,300\nBamberg County $419,300\nBarnwell County $419,300\nBeaufort County $487,600\nBerkeley County $506,000\nCalhoun County $419,300\nCharleston County $506,000\nCherokee County $419,300\nChester County $419,300\nChesterfield County $419,300\nClarendon County $419,300\nColleton County $419,300\nDarlington County $419,300\nDillon County $419,300\nDorchester County $506,000\nEdgefield County $419,300\nFairfield County $419,300\nFlorence County $419,300\nGeorgetown County $419,300\nGreenville County $419,300\nGreenwood County $419,300\nHampton County $419,300\nHorry County $419,300\nJasper County $487,600\nKershaw County $419,300\nLancaster County $419,300\nLaurens County $419,300\nLee County $419,300\nLexington County $419,300\nMarion County $419,300\nMarlboro County $419,300\nMcCormick County $419,300\nNewberry County $419,300\nOconee County $419,300\nOrangeburg County $419,300\nPickens County $419,300\nRichland County $419,300SOUTH CAROLINA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 80,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nSaluda County $419,300\nSpartanburg County $419,300\nSumter County $419,300\nUnion County $419,300\nWilliamsburg County $419,300\nYork County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 81,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAurora County $419,300\nBeadle County $419,300\nBennett County $419,300\nBon Homme County $419,300\nBrookings County $419,300\nBrown County $419,300\nBrule County $419,300\nBuffalo County $419,300\nButte County $419,300\nCampbell County $419,300\nCharles Mix County $419,300\nClark County $419,300\nClay County $419,300\nCodington County $419,300\nCorson County $419,300\nCuster County $419,300\nDavison County $419,300\nDay County $419,300\nDeuel County $419,300\nDewey County $419,300\nDouglas County $419,300\nEdmunds County $419,300\nFall River County $419,300\nFaulk County $419,300\nGrant County $419,300\nGregory County $419,300\nHaakon County $419,300\nHamlin County $419,300\nHand County $419,300\nHanson County $419,300\nHarding County $419,300\nHughes County $419,300\nHutchinson County $419,300\nHyde County $419,300\nJackson County $419,300\nJerauld County $419,300\nJones County $419,300\nKingsbury County $419,300\nLake County $419,300\nLawrence County $433,300\nLincoln County $419,300\nLyman County $419,300SOUTH DAKOTA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 82,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMarshall County $419,300\nMcCook County $419,300\nMcPherson County $419,300\nMeade County $419,300\nMellette County $419,300\nMiner County $419,300\nMinnehaha County $419,300\nMoody County $419,300\nOglala Lakota County $419,300\nPennington County $419,300\nPerkins County $419,300\nPotter County $419,300\nRoberts County $419,300\nSanborn County $419,300\nSpink County $419,300\nStanley County $419,300\nSully County $419,300\nTodd County $419,300\nTripp County $419,300\nTurner County $419,300\nUnion County $419,300\nWalworth County $419,300\nYankton County $419,300\nZiebach County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 83,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAnderson County $419,300\nBedford County $419,300\nBenton County $419,300\nBledsoe County $419,300\nBlount County $419,300\nBradley County $419,300\nCampbell County $419,300\nCannon County $791,200\nCarroll County $419,300\nCarter County $419,300\nCheatham County $791,200\nChester County $419,300\nClaiborne County $419,300\nClay County $419,300\nCocke County $419,300\nCoffee County $419,300\nCrockett County $419,300\nCumberland County $419,300\nDavidson County $791,200\nDecatur County $419,300\nDeKalb County $419,300\nDickson County $791,200\nDyer County $419,300\nFayette County $419,300\nFentress County $419,300\nFranklin County $419,300\nGibson County $419,300\nGiles County $419,300\nGrainger County $419,300\nGreene County $419,300\nGrundy County $419,300\nHamblen County $419,300\nHamilton County $419,300\nHancock County $419,300\nHardeman County $419,300\nHardin County $419,300\nHawkins County $419,300\nHaywood County $419,300\nHenderson County $419,300\nHenry County $419,300\nHickman County $427,800\nHouston County $419,300\nHumphreys County $419,300TENNESSEE\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 84,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nJackson County $419,300\nJefferson County $419,300\nJohnson County $419,300\nKnox County $419,300\nLake County $419,300\nLauderdale County $419,300\nLawrence County $419,300\nLewis County $419,300\nLincoln County $419,300\nLoudon County $419,300\nMacon County $712,000\nMadison County $419,300\nMarion County $419,300\nMarshall County $419,300\nMaury County $712,000\nMcMinn County $419,300\nMcNairy County $791,200\nMeigs County $419,300\nMonroe County $419,300\nMontgomery County $419,300\nMoore County $419,300\nMorgan County $419,300\nObion County $419,300\nOverton County $419,300\nPerry County $419,300\nPickett County $419,300\nPolk County $419,300\nPutnam County $419,300\nRhea County $419,300\nRoane County $419,300\nRobertson County $791,200\nRutherford County $791,200\nScott County $419,300\nSequatchie County $419,300\nSevier County $419,300\nShelby County $419,300\nSmith County $791,200\nStewart County $419,300\nSullivan County $419,300\nSumner County $791,200\nTipton County $419,300\nTrousdale County $791,200\nUnicoi County $419,300\nUnion County $419,300\nVan Buren County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 85,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nWarren County $419,300\nWashington County $419,300\nWayne County $419,300\nWeakley County $419,300\nWhite County $419,300\nWilliamson County $791,200\nWilson County $791,200\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 86,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAnderson County $419,300\nAndrews County $419,300\nAngelina County $419,300\nAransas County $419,300\nArcher County $419,300\nArmstrong County $419,300\nAtascosa County $446,200\nAustin County $419,300\nBailey County $419,300\nBandera County $446,200\nBastrop County $457,200\nBaylor County $419,300\nBee County $419,300\nBell County $419,300\nBexar County $446,200\nBlanco County $419,300\nBorden County $419,300\nBosque County $419,300\nBowie County $419,300\nBrazoria County $419,300\nBrazos County $419,300\nBrewster County $419,300\nBriscoe County $419,300\nBrooks County $419,300\nBrown County $419,300\nBurleson County $419,300\nBurnet County $419,300\nCaldwell County $457,200\nCalhoun County $419,300\nCallahan County $419,300\nCameron County $419,300\nCamp County $419,300\nCarson County $419,300\nCass County $419,300\nCastro County $419,300\nChambers County $419,300\nCherokee County $419,300\nChildress County $419,300\nClay County $419,300\nCochran County $419,300\nCoke County $419,300\nColeman County $419,300\nCollin County $450,800TEXAS\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 87,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nCollingsworth County $419,300\nColorado County $419,300\nComal County $446,200\nComanche County $419,300\nConcho County $419,300\nCooke County $419,300\nCoryell County $419,300\nCottle County $419,300\nCrane County $419,300\nCrockett County $419,300\nCrosby County $419,300\nCulberson County $419,300\nDallam County $419,300\nDallas County $450,800\nDawson County $419,300\nDeaf Smith County $419,300\nDelta County $419,300\nDenton County $450,800\nDeWitt County $419,300\nDickens County $419,300\nDimmit County $419,300\nDonley County $419,300\nDuval County $419,300\nEastland County $419,300\nEctor County $419,300\nEdwards County $419,300\nEl Paso County $419,300\nEllis County $425,000\nErath County $419,300\nFalls County $419,300\nFannin County $419,300\nFayette County $419,300\nFisher County $419,300\nFloyd County $419,300\nFoard County $419,300\nFort Bend County $419,300\nFranklin County $419,300\nFreestone County $419,300\nFrio County $419,300\nGaines County $419,300\nGalveston County $419,300\nGarza County $419,300\nGillespie County $419,300\nGlasscock County $419,300\nGoliad County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 88,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nGonzales County $419,300\nGray County $419,300\nGrayson County $419,300\nGregg County $419,300\nGrimes County $419,300\nGuadalupe County $446,200\nHale County $419,300\nHall County $419,300\nHamilton County $419,300\nHansford County $419,300\nHardeman County $419,300\nHardin County $419,300\nHarris County $419,300\nHarrison County $419,300\nHartley County $419,300\nHaskell County $419,300\nHays County $457,200\nHemphill County $419,300\nHenderson County $419,300\nHidalgo County $419,300\nHill County $419,300\nHockley County $419,300\nHood County $419,300\nHopkins County $419,300\nHouston County $419,300\nHoward County $419,300\nHudspeth County $419,300\nHunt County $450,800\nHutchinson County $419,300\nIrion County $419,300\nJack County $419,300\nJackson County $419,300\nJasper County $419,300\nJeff Davis County $419,300\nJefferson County $419,300\nJim Hogg County $419,300\nJim Wells County $419,300\nJohnson County $450,800\nJones County $419,300\nKarnes County $419,300\nKaufman County $450,800\nKendall County $446,200\nKenedy County $419,300\nKent County $419,300\nKerr County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 89,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nKimble County $419,300\nKing County $419,300\nKinney County $419,300\nKleberg County $419,300\nKnox County $419,300\nLa Salle County $419,300\nLamar County $419,300\nLamb County $419,300\nLampasas County $419,300\nLavaca County $419,300\nLee County $419,300\nLeon County $419,300\nLiberty County $419,300\nLimestone County $419,300\nLipscomb County $419,300\nLive Oak County $419,300\nLlano County $419,300\nLoving County $419,300\nLubbock County $419,300\nLynn County $419,300\nMadison County $419,300\nMarion County $419,300\nMartin County $419,300\nMason County $419,300\nMatagorda County $419,300\nMaverick County $419,300\nMcCulloch County $419,300\nMcLennan County $419,300\nMcMullen County $419,300\nMedina County $446,200\nMenard County $419,300\nMidland County $419,300\nMilam County $419,300\nMills County $419,300\nMitchell County $419,300\nMontague County $419,300\nMontgomery County $419,300\nMoore County $419,300\nMorris County $419,300\nMotley County $419,300\nNacogdoches County $419,300\nNavarro County $419,300\nNewton County $419,300\nNolan County $419,300\nNueces County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 90,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nOchiltree County $419,300\nOldham County $419,300\nOrange County $419,300\nPalo Pinto County $419,300\nPanola County $419,300\nParker County $450,800\nParmer County $419,300\nPecos County $419,300\nPolk County $419,300\nPotter County $419,300\nPresidio County $419,300\nRains County $419,300\nRandall County $419,300\nReagan County $419,300\nReal County $419,300\nRed River County $419,300\nReeves County $419,300\nRefugio County $419,300\nRoberts County $419,300\nRobertson County $419,300\nRockwall County $450,800\nRunnels County $419,300\nRusk County $419,300\nSabine County $419,300\nSan Augustine County $419,300\nSan Jacinto County $419,300\nSan Patricio County $419,300\nSan Saba County $419,300\nSchleicher County $419,300\nScurry County $419,300\nShackelford County $419,300\nShelby County $419,300\nSherman County $419,300\nSmith County $419,300\nSomervell County $419,300\nStarr County $419,300\nStephens County $419,300\nSterling County $419,300\nStonewall County $419,300\nSutton County $419,300\nSwisher County $419,300\nTarrant County $450,800\nTaylor County $419,300\nTerrell County $419,300\nTerry County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 91,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nThrockmorton County $419,300\nTitus County $419,300\nTom Green County $419,300\nTravis County $457,200\nTrinity County $419,300\nTyler County $419,300\nUpshur County $419,300\nUpton County $419,300\nUvalde County $419,300\nVal Verde County $419,300\nVan Zandt County $419,300\nVictoria County $419,300\nWalker County $419,300\nWaller County $419,300\nWard County $419,300\nWashington County $419,300\nWebb County $419,300\nWharton County $419,300\nWheeler County $419,300\nWichita County $419,300\nWilbarger County $419,300\nWillacy County $419,300\nWilliamson County $457,200\nWilson County $446,200\nWinkler County $419,300\nWise County $450,800\nWood County $419,300\nYoakum County $419,300\nYoung County $419,300\nZapata County $419,300\nZavala County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 92,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nBeaver County $419,300\nBox Elder County $595,200\nCache County $595,200\nCarbon County $419,300\nDaggett County $419,300\nDavis County ineligible\nDuchesne County $419,300\nEmery County $419,300\nGarfield County $419,300\nGrand County $567,600\nIron County $419,300\nJuab County $481,100\nKane County $419,300\nMillard County $419,300\nMorgan County $595,200\nPiute County $419,300\nRich County $463,600\nSalt Lake County ineligible\nSan Juan County $419,300\nSanpete County $419,300\nSevier County $419,300\nSummit County $931,000\nTooele County $503,200\nUintah County $419,300\nUtah County $481,100\nWasatch County $931,000\nWashington County $534,000\nWayne County $797,600\nWeber County ineligibleUTAH\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 93,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAddison County $419,300\nBennington County $419,300\nCaledonia County $419,300\nChittenden County $460,000\nEssex County $419,300\nFranklin County $460,000\nGrand Isle County $460,000\nLamoille County $419,300\nOrange County $419,300\nOrleans County $419,300\nRutland County $419,300\nWashington County $419,300\nWindham County $419,300\nWindsor County $419,300VERMONT\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 94,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nSt. Croix $419,300\nSt. John $891,400\nSt. Thomas $538,200VIRGIN ISLANDS\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 95,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAccomack County $419,300\nAlbemarle County $473,800\nAlexandria city ineligible\nAlleghany County $419,300\nAmelia County $539,100\nAmherst County $419,300\nAppomattox County $419,300\nArlington County ineligible\nAugusta County $419,300\nBath County $419,300\nBedford City ineligible\nBedford County $419,300\nBland County $419,300\nBotetourt County $419,300\nBristol city ineligible\nBrunswick County $419,300\nBuchanan County $419,300\nBuckingham County $419,300\nCampbell County $419,300\nCaroline County $428,700\nCarroll County $419,300\nCharles City County $539,100\nCharlotte County $419,300\nCharlottesville city ineligible\nChesapeake city ineligible\nChesterfield County $539,100\nClarke County $967,800\nColonial Heights city ineligible\nCraig County $419,300\nCulpeper County $967,800\nCumberland County $419,300\nDanville city ineligible\nDickenson County $419,300\nDinwiddie County $539,100\nEssex County $419,300\nFairfax city ineligible\nFairfax County ineligible\nFalls Church city ineligible\nFauquier County $967,800\nFloyd County $419,300\nFluvanna County $473,800\nFranklin County $419,300\nFrederick County $419,300VIRGINIA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 96,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nFredericksburg city ineligible\nGiles County $419,300\nGloucester County $606,200\nGoochland County $539,100\nGrayson County $419,300\nGreene County $473,800\nGreensville County $419,300\nHalifax County $419,300\nHampton city ineligible\nHanover County $539,100\nHarrisonburg city ineligible\nHenrico County $539,100\nHenry County $419,300\nHighland County $419,300\nHopewell city ineligible\nIsle of Wight County $606,200\nJames City County $606,200\nKing and Queen County $539,100\nKing George County $419,300\nKing William County $539,100\nLancaster County $419,300\nLee County $419,300\nLoudoun County $967,800\nLouisa County $419,300\nLunenburg County $419,300\nLynchburg city ineligible\nMadison County $967,800\nManassas city ineligible\nManassas Park city ineligible\nMathews County $606,200\nMecklenburg County $419,300\nMiddlesex County $419,300\nMontgomery County $419,300\nNelson County $473,800\nNew Kent County $539,100\nNewport News city ineligible\nNorfolk city ineligible\nNorthampton County $419,300\nNorthumberland County $419,300\nNottoway County $419,300\nOrange County $419,300\nPage County $419,300\nPatrick County $419,300\nPetersburg city ineligible\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 97,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nPittsylvania County $419,300\nPoquoson city ineligible\nPortsmouth city ineligible\nPowhatan County $539,100\nPrince Edward County $419,300\nPrince George County $539,100\nPrince William County $967,800\nPulaski County $419,300\nRappahannock County $967,800\nRichmond city ineligible\nRichmond County $419,300\nRoanoke city ineligible\nRoanoke County $419,300\nRockbridge County $419,300\nRockingham County $419,300\nRussell County $419,300\nSalem city ineligible\nScott County $419,300\nShenandoah County $419,300\nSmyth County $419,300\nSouthampton County $606,200\nSpotsylvania County $967,800\nStafford County $967,800\nStaunton city ineligible\nSurry County $419,300\nSussex County $539,100\nTazewell County $419,300\nWarren County $967,800\nWashington County $419,300\nWestmoreland County $419,300\nWise County $419,300\nWythe County $419,300\nYork County $606,200\nBuena Vista city $419,300\nCovington city $419,300\nEmporia city $419,300\nFranklin city $606,200\nGalax city $419,300\nLexington city $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 98,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nMartinsville city $419,300\nNorton city $419,300\nRadford city $419,300\nSuffolk city ineligible\nVirginia Beach city ineligible\nWaynesboro city ineligible\nWilliamsburg city ineligible\nWinchester city ineligible\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 99,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nAsotin County $419,300\nBenton County $419,300\nChelan County $437,000\nClallam County $419,300\nClark County $556,600\nColumbia County $419,300\nCowlitz County $419,300\nDouglas County $437,000\nFerry County $419,300\nFranklin County $419,300\nGarfield County $419,300\nGrant County $419,300\nGrays Harbor County $419,300\nIsland County $483,000\nJefferson County $419,300\nKing County $829,800\nKitsap County $460,000\nKittitas County $419,300\nKlickitat County $419,300\nLewis County $419,300\nLincoln County $419,300\nMason County $419,300\nOkanogan County $419,300\nPacific County $419,300\nPend Oreille County $419,300\nPierce County $829,800\nSan Juan County $419,300\nSkagit County $450,800\nSkamania County $556,600\nSnohomish County $829,800\nSpokane County $419,300\nStevens County $419,300\nThurston County $446,200\nWahkiakum County $419,300\nWalla Walla County $419,300\nWhatcom County $506,000\nWhitman County $463,600\nYakima County $419,300WASHINGTON\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 100,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nBarbour County $419,300\nBerkeley County $419,300\nBoone County $419,300\nBraxton County $419,300\nBrooke County $419,300\nCabell County $419,300\nCalhoun County $419,300\nClay County $419,300\nDoddridge County $419,300\nFayette County $419,300\nGilmer County $419,300\nGrant County $419,300\nGreenbrier County $419,300\nHampshire County $419,300\nHancock County $419,300\nHardy County $419,300\nHarrison County $419,300\nJackson County $419,300\nJefferson County $967,800\nKanawha County $419,300\nLewis County $419,300\nLincoln County $419,300\nLogan County $419,300\nMarion County $419,300\nMarshall County $419,300\nMason County $419,300\nMcDowell County $419,300\nMercer County $419,300\nMineral County $419,300\nMingo County $419,300\nMonongalia County $419,300\nMonroe County $419,300\nMorgan County $419,300\nNicholas County $419,300\nOhio County $419,300\nPendleton County $419,300\nPleasants County $419,300\nPocahontas County $419,300\nPreston County $419,300\nPutnam County $419,300\nRaleigh County $419,300\nRandolph County $419,300\nRitchie County $419,300WEST VIRGINIA\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 101,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nRoane County $419,300\nSummers County $419,300\nTaylor County $419,300\nTucker County $419,300\nTyler County $419,300\nUpshur County $419,300\nWayne County $419,300\nWebster County $419,300\nWetzel County $419,300\nWirt County $419,300\nWood County $419,300\nWyoming County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 102,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAdams County $419,300\nAshland County $419,300\nBarron County $419,300\nBayfield County $419,300\nBrown County $419,300\nBuffalo County $419,300\nBurnett County $419,300\nCalumet County $419,300\nChippewa County $419,300\nClark County $419,300\nColumbia County $419,300\nCrawford County $419,300\nDane County $419,300\nDodge County $419,300\nDoor County $419,300\nDouglas County $419,300\nDunn County $419,300\nEau Claire County $419,300\nFlorence County $419,300\nFond du Lac County $419,300\nForest County $419,300\nGrant County $419,300\nGreen County $419,300\nGreen Lake County $419,300\nIowa County $419,300\nIron County $419,300\nJackson County $419,300\nJefferson County $419,300\nJuneau County $419,300\nKenosha County $419,300\nKewaunee County $419,300\nLa Crosse County $419,300\nLafayette County $419,300\nLanglade County $419,300\nLincoln County $419,300\nManitowoc County $419,300\nMarathon County $419,300\nMarinette County $419,300\nMarquette County $419,300\nMenominee County $419,300\nMilwaukee County ineligible\nMonroe County $419,300\nOconto County $419,300WISCONSIN\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 103,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nOneida County $419,300\nOutagamie County $419,300\nOzaukee County $419,300\nPepin County $419,300\nPierce County $423,200\nPolk County $419,300\nPortage County $419,300\nPrice County $419,300\nRacine County $419,300\nRichland County $419,300\nRock County $419,300\nRusk County $419,300\nSauk County $423,200\nSawyer County $419,300\nShawano County $419,300\nSheboygan County $419,300\nSt. Croix County $419,300\nTaylor County $419,300\nTrempealeau County $419,300\nVernon County $419,300\nVilas County $419,300\nWalworth County $419,300\nWashburn County $419,300\nWashington County $419,300\nWaukesha County $419,300\nWaupaca County $419,300\nWaushara County $419,300\nWinnebago County $419,300\nWood County $419,300\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 104,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAlbany County $419,300\nBig Horn County $419,300\nCampbell County $419,300\nCarbon County $419,300\nConverse County $419,300\nCrook County $419,300\nFremont County $419,300\nGoshen County $419,300\nHot Springs County $419,300\nJohnson County $419,300\nLaramie County $419,300\nLincoln County $419,300\nNatrona County $419,300\nNiobrara County $419,300\nPark County $419,300\nPlatte County $419,300\nSheridan County $419,300\nSublette County $472,000\nSweetwater County $419,300\nTeton County $967,800\nUinta County $419,300\nWashakie County $419,300\nWeston County $419,300WYOMING\nArea Loan Limits Single Family Housing Direct"
+    },
+    {
+      "page": 105,
+      "content": "County or Equivalent Limit Effective 3-7-2025\nAmerican Samoa $419,300\nCounty or Equivalent Limit Effective 3-7-2025\nGuam $450,800\nCounty or Equivalent Limit Effective 3-7-2025\nNorthern Mariana Islands $423,200NORTHERN MARIANA ISLANDSGUAMAMERICAN SAMOA\nArea Loan Limits Single Family Housing Direct"
+    }
+  ]
+}

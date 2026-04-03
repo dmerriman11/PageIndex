@@ -119,7 +119,7 @@ def toc_detector_single_page(content, model=None):
     response = llm_completion(model=model, prompt=prompt)
     # print('response', response)
     json_content = extract_json(response)    
-    return json_content['toc_detected']
+    return str(json_content.get('toc_detected', 'no')).lower()
 
 
 def check_if_toc_extraction_is_complete(content, toc, model=None):
