@@ -1,0 +1,583 @@
+{
+  "type": "pdf",
+  "path": "D:\\Source Code\\lemur-pageindex\\pageindex-engine\\workspace\\uploads\\44454157-d710-4070-84c7-811e0259b71f\\a6c83ab2-1b1b-41b6-bfac-f99205ca59b3.pdf",
+  "doc_name": "a6c83ab2-1b1b-41b6-bfac-f99205ca59b3.pdf",
+  "doc_description": "",
+  "page_count": 47,
+  "structure": [
+    {
+      "title": "Pages 1-8",
+      "node_id": "0000",
+      "start_index": 1,
+      "end_index": 8,
+      "summary": "",
+      "nodes": [
+        {
+          "title": "Page 1",
+          "node_id": "0001",
+          "start_index": 1,
+          "end_index": 1,
+          "summary": ""
+        },
+        {
+          "title": "Page 2",
+          "node_id": "0002",
+          "start_index": 2,
+          "end_index": 2,
+          "summary": ""
+        },
+        {
+          "title": "Page 3",
+          "node_id": "0003",
+          "start_index": 3,
+          "end_index": 3,
+          "summary": ""
+        },
+        {
+          "title": "Page 4",
+          "node_id": "0004",
+          "start_index": 4,
+          "end_index": 4,
+          "summary": ""
+        },
+        {
+          "title": "Page 5",
+          "node_id": "0005",
+          "start_index": 5,
+          "end_index": 5,
+          "summary": ""
+        },
+        {
+          "title": "Page 6",
+          "node_id": "0006",
+          "start_index": 6,
+          "end_index": 6,
+          "summary": ""
+        },
+        {
+          "title": "Page 7",
+          "node_id": "0007",
+          "start_index": 7,
+          "end_index": 7,
+          "summary": ""
+        },
+        {
+          "title": "Page 8",
+          "node_id": "0008",
+          "start_index": 8,
+          "end_index": 8,
+          "summary": ""
+        }
+      ]
+    },
+    {
+      "title": "Pages 9-16",
+      "node_id": "0009",
+      "start_index": 9,
+      "end_index": 16,
+      "summary": "",
+      "nodes": [
+        {
+          "title": "Page 9",
+          "node_id": "0010",
+          "start_index": 9,
+          "end_index": 9,
+          "summary": ""
+        },
+        {
+          "title": "Page 10",
+          "node_id": "0011",
+          "start_index": 10,
+          "end_index": 10,
+          "summary": ""
+        },
+        {
+          "title": "Page 11",
+          "node_id": "0012",
+          "start_index": 11,
+          "end_index": 11,
+          "summary": ""
+        },
+        {
+          "title": "Page 12",
+          "node_id": "0013",
+          "start_index": 12,
+          "end_index": 12,
+          "summary": ""
+        },
+        {
+          "title": "Page 13",
+          "node_id": "0014",
+          "start_index": 13,
+          "end_index": 13,
+          "summary": ""
+        },
+        {
+          "title": "Page 14",
+          "node_id": "0015",
+          "start_index": 14,
+          "end_index": 14,
+          "summary": ""
+        },
+        {
+          "title": "Page 15",
+          "node_id": "0016",
+          "start_index": 15,
+          "end_index": 15,
+          "summary": ""
+        },
+        {
+          "title": "Page 16",
+          "node_id": "0017",
+          "start_index": 16,
+          "end_index": 16,
+          "summary": ""
+        }
+      ]
+    },
+    {
+      "title": "Pages 17-24",
+      "node_id": "0018",
+      "start_index": 17,
+      "end_index": 24,
+      "summary": "",
+      "nodes": [
+        {
+          "title": "Page 17",
+          "node_id": "0019",
+          "start_index": 17,
+          "end_index": 17,
+          "summary": ""
+        },
+        {
+          "title": "Page 18",
+          "node_id": "0020",
+          "start_index": 18,
+          "end_index": 18,
+          "summary": ""
+        },
+        {
+          "title": "Page 19",
+          "node_id": "0021",
+          "start_index": 19,
+          "end_index": 19,
+          "summary": ""
+        },
+        {
+          "title": "Page 20",
+          "node_id": "0022",
+          "start_index": 20,
+          "end_index": 20,
+          "summary": ""
+        },
+        {
+          "title": "Page 21",
+          "node_id": "0023",
+          "start_index": 21,
+          "end_index": 21,
+          "summary": ""
+        },
+        {
+          "title": "Page 22",
+          "node_id": "0024",
+          "start_index": 22,
+          "end_index": 22,
+          "summary": ""
+        },
+        {
+          "title": "Page 23",
+          "node_id": "0025",
+          "start_index": 23,
+          "end_index": 23,
+          "summary": ""
+        },
+        {
+          "title": "Page 24",
+          "node_id": "0026",
+          "start_index": 24,
+          "end_index": 24,
+          "summary": ""
+        }
+      ]
+    },
+    {
+      "title": "Pages 25-32",
+      "node_id": "0027",
+      "start_index": 25,
+      "end_index": 32,
+      "summary": "",
+      "nodes": [
+        {
+          "title": "Page 25",
+          "node_id": "0028",
+          "start_index": 25,
+          "end_index": 25,
+          "summary": ""
+        },
+        {
+          "title": "Page 26",
+          "node_id": "0029",
+          "start_index": 26,
+          "end_index": 26,
+          "summary": ""
+        },
+        {
+          "title": "Page 27",
+          "node_id": "0030",
+          "start_index": 27,
+          "end_index": 27,
+          "summary": ""
+        },
+        {
+          "title": "Page 28",
+          "node_id": "0031",
+          "start_index": 28,
+          "end_index": 28,
+          "summary": ""
+        },
+        {
+          "title": "Page 29",
+          "node_id": "0032",
+          "start_index": 29,
+          "end_index": 29,
+          "summary": ""
+        },
+        {
+          "title": "Page 30",
+          "node_id": "0033",
+          "start_index": 30,
+          "end_index": 30,
+          "summary": ""
+        },
+        {
+          "title": "Page 31",
+          "node_id": "0034",
+          "start_index": 31,
+          "end_index": 31,
+          "summary": ""
+        },
+        {
+          "title": "Page 32",
+          "node_id": "0035",
+          "start_index": 32,
+          "end_index": 32,
+          "summary": ""
+        }
+      ]
+    },
+    {
+      "title": "Pages 33-40",
+      "node_id": "0036",
+      "start_index": 33,
+      "end_index": 40,
+      "summary": "",
+      "nodes": [
+        {
+          "title": "Page 33",
+          "node_id": "0037",
+          "start_index": 33,
+          "end_index": 33,
+          "summary": ""
+        },
+        {
+          "title": "Page 34",
+          "node_id": "0038",
+          "start_index": 34,
+          "end_index": 34,
+          "summary": ""
+        },
+        {
+          "title": "Page 35",
+          "node_id": "0039",
+          "start_index": 35,
+          "end_index": 35,
+          "summary": ""
+        },
+        {
+          "title": "Page 36",
+          "node_id": "0040",
+          "start_index": 36,
+          "end_index": 36,
+          "summary": ""
+        },
+        {
+          "title": "Page 37",
+          "node_id": "0041",
+          "start_index": 37,
+          "end_index": 37,
+          "summary": ""
+        },
+        {
+          "title": "Page 38",
+          "node_id": "0042",
+          "start_index": 38,
+          "end_index": 38,
+          "summary": ""
+        },
+        {
+          "title": "Page 39",
+          "node_id": "0043",
+          "start_index": 39,
+          "end_index": 39,
+          "summary": ""
+        },
+        {
+          "title": "Page 40",
+          "node_id": "0044",
+          "start_index": 40,
+          "end_index": 40,
+          "summary": ""
+        }
+      ]
+    },
+    {
+      "title": "Pages 41-47",
+      "node_id": "0045",
+      "start_index": 41,
+      "end_index": 47,
+      "summary": "",
+      "nodes": [
+        {
+          "title": "Page 41",
+          "node_id": "0046",
+          "start_index": 41,
+          "end_index": 41,
+          "summary": ""
+        },
+        {
+          "title": "Page 42",
+          "node_id": "0047",
+          "start_index": 42,
+          "end_index": 42,
+          "summary": ""
+        },
+        {
+          "title": "Page 43",
+          "node_id": "0048",
+          "start_index": 43,
+          "end_index": 43,
+          "summary": ""
+        },
+        {
+          "title": "Page 44",
+          "node_id": "0049",
+          "start_index": 44,
+          "end_index": 44,
+          "summary": ""
+        },
+        {
+          "title": "Page 45",
+          "node_id": "0050",
+          "start_index": 45,
+          "end_index": 45,
+          "summary": ""
+        },
+        {
+          "title": "Page 46",
+          "node_id": "0051",
+          "start_index": 46,
+          "end_index": 46,
+          "summary": ""
+        },
+        {
+          "title": "Page 47",
+          "node_id": "0052",
+          "start_index": 47,
+          "end_index": 47,
+          "summary": ""
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "content": ""
+    },
+    {
+      "page": 2,
+      "content": ""
+    },
+    {
+      "page": 3,
+      "content": ""
+    },
+    {
+      "page": 4,
+      "content": ""
+    },
+    {
+      "page": 5,
+      "content": ""
+    },
+    {
+      "page": 6,
+      "content": ""
+    },
+    {
+      "page": 7,
+      "content": ""
+    },
+    {
+      "page": 8,
+      "content": ""
+    },
+    {
+      "page": 9,
+      "content": ""
+    },
+    {
+      "page": 10,
+      "content": ""
+    },
+    {
+      "page": 11,
+      "content": ""
+    },
+    {
+      "page": 12,
+      "content": ""
+    },
+    {
+      "page": 13,
+      "content": ""
+    },
+    {
+      "page": 14,
+      "content": ""
+    },
+    {
+      "page": 15,
+      "content": ""
+    },
+    {
+      "page": 16,
+      "content": ""
+    },
+    {
+      "page": 17,
+      "content": ""
+    },
+    {
+      "page": 18,
+      "content": ""
+    },
+    {
+      "page": 19,
+      "content": ""
+    },
+    {
+      "page": 20,
+      "content": ""
+    },
+    {
+      "page": 21,
+      "content": ""
+    },
+    {
+      "page": 22,
+      "content": ""
+    },
+    {
+      "page": 23,
+      "content": ""
+    },
+    {
+      "page": 24,
+      "content": ""
+    },
+    {
+      "page": 25,
+      "content": ""
+    },
+    {
+      "page": 26,
+      "content": ""
+    },
+    {
+      "page": 27,
+      "content": ""
+    },
+    {
+      "page": 28,
+      "content": ""
+    },
+    {
+      "page": 29,
+      "content": ""
+    },
+    {
+      "page": 30,
+      "content": ""
+    },
+    {
+      "page": 31,
+      "content": ""
+    },
+    {
+      "page": 32,
+      "content": ""
+    },
+    {
+      "page": 33,
+      "content": ""
+    },
+    {
+      "page": 34,
+      "content": ""
+    },
+    {
+      "page": 35,
+      "content": ""
+    },
+    {
+      "page": 36,
+      "content": ""
+    },
+    {
+      "page": 37,
+      "content": ""
+    },
+    {
+      "page": 38,
+      "content": ""
+    },
+    {
+      "page": 39,
+      "content": ""
+    },
+    {
+      "page": 40,
+      "content": ""
+    },
+    {
+      "page": 41,
+      "content": ""
+    },
+    {
+      "page": 42,
+      "content": ""
+    },
+    {
+      "page": 43,
+      "content": ""
+    },
+    {
+      "page": 44,
+      "content": ""
+    },
+    {
+      "page": 45,
+      "content": ""
+    },
+    {
+      "page": 46,
+      "content": ""
+    },
+    {
+      "page": 47,
+      "content": ""
+    }
+  ],
+  "id": "17559f07-188b-4f3b-902a-bdece7d6aa84"
+}

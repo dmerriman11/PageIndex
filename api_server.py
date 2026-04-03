@@ -25,6 +25,7 @@ import json
 import time
 import asyncio
 import shutil
+import re
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional, List
@@ -210,6 +211,14 @@ class QueryRequest(BaseModel):
     query: str
     library_ids: Optional[List[str]] = None   # None = search all
     top_pages: Optional[int] = 3
+
+
+STOP_WORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "by", "can", "could", "do", "does",
+    "for", "from", "how", "i", "in", "into", "is", "it", "of", "on", "or", "that",
+    "the", "their", "this", "to", "what", "when", "where", "which", "who", "why",
+    "with", "you", "your",
+}
 
 # ────────────────────────────────────────────────────────────────────────────
 # Health
@@ -469,10 +478,15 @@ def rag_query(req: QueryRequest):
     Reason-based RAG query using PageIndex.
     Searches indexed documents and returns an answer with source references.
     """
+    query = (req.query or "").strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="Query is required.")
+
     target_ids = req.library_ids or list(LIBRARIES.keys())
     if not target_ids:
         raise HTTPException(status_code=400, detail="No libraries available. Upload documents first.")
 
+    top_pages = max(1, min(req.top_pages or 3, 6))
     start_ts = time.time()
     results = []
     errors = []
@@ -501,7 +515,7 @@ def rag_query(req: QueryRequest):
 
                 # Simple reasoning-based retrieval:
                 # Find the most relevant section titles by inspecting the tree
-                relevant_pages = _find_relevant_pages(structure, req.query, client, pi_doc_id, req.top_pages)
+                relevant_pages = _find_relevant_pages(structure, query, client, pi_doc_id, top_pages)
 
                 results.append({
                     "libraryId": lib_id,
@@ -515,25 +529,31 @@ def rag_query(req: QueryRequest):
 
     latency_ms = int((time.time() - start_ts) * 1000)
     status = "success" if results else ("error" if errors else "warning")
+    sources = _build_sources(results, query)
+    answer = _compose_answer(query, sources)
+    trace = _build_trace(results)
 
     # Log the query
     primary_lib_id = target_ids[0] if target_ids else ""
     primary_lib_name = LIBRARIES.get(primary_lib_id, {}).get("name", "") if primary_lib_id else ""
     log_entry = {
         "id": str(uuid.uuid4()),
-        "query": req.query,
+        "query": query,
         "library_id": primary_lib_id,
         "library_name": primary_lib_name,
         "latency_ms": latency_ms,
         "status": status,
         "ts": start_ts,
-        "result_count": len(results),
+        "result_count": len(sources) or len(results),
     }
     QUERY_LOGS.append(log_entry)
     save_logs(QUERY_LOGS)
 
     return {
-        "query": req.query,
+        "query": query,
+        "answer": answer,
+        "sources": sources,
+        "trace": trace,
         "results": results,
         "errors": errors,
         "latencyMs": latency_ms,
@@ -587,15 +607,11 @@ def _find_relevant_pages(structure, query: str, client: PageIndexClient, doc_id:
 
     # Score sections by keyword overlap with query (simple heuristic for local)
     # In production, the LLM would reason over the tree structure
-    query_words = set(query.lower().split())
-    stop_words = {"what", "is", "the", "a", "an", "of", "in", "for", "how", "are",
-                  "does", "do", "can", "i", "to", "and", "or", "with", "on"}
-    query_terms = query_words - stop_words
+    query_terms = set(_extract_query_terms(query))
 
     def score_section(section):
         text = (section["title"] + " " + section.get("summary", "")).lower()
-        text_words = set(text.split())
-        overlap = len(query_terms & text_words)
+        overlap = _score_text(text, query_terms)
         # Prefer deeper (more specific) sections, penalize broad parent sections
         depth_bonus = section.get("depth", 0) * 0.5
         is_parent_penalty = -1 if section.get("is_parent") else 0
@@ -619,19 +635,143 @@ def _find_relevant_pages(structure, query: str, client: PageIndexClient, doc_id:
             content = client.get_page_content(doc_id, page_range)
             page_results.append({
                 "title": section["title"],
-                "pages": f"{start}-{end}",
+                "pages": page_range,
                 "summary": section.get("summary", ""),
                 "content": content[:2000] if content else "",
+                "score": score_section(section),
             })
         except Exception as e:
             page_results.append({
                 "title": section["title"],
-                "pages": f"{start}-{end}",
+                "pages": page_range,
                 "summary": section.get("summary", ""),
                 "content": f"[Could not retrieve content: {e}]",
+                "score": score_section(section),
             })
 
     return page_results
+
+
+def _extract_query_terms(query: str) -> list[str]:
+    return [
+        term
+        for term in re.findall(r"[a-z0-9]+", query.lower())
+        if term not in STOP_WORDS and len(term) > 1
+    ]
+
+
+def _score_text(text: str, query_terms) -> int:
+    haystack = (text or "").lower()
+    return sum(1 for term in query_terms if term in haystack)
+
+
+def _truncate_text(text: str, max_chars: int = 320) -> str:
+    cleaned = re.sub(r"\s+", " ", (text or "")).strip()
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return cleaned[: max_chars - 3].rstrip() + "..."
+
+
+def _build_excerpt(content: str, query: str, max_chars: int = 320) -> str:
+    cleaned = re.sub(r"\s+", " ", (content or "")).strip()
+    if not cleaned:
+        return ""
+
+    query_terms = _extract_query_terms(query)
+    segments = [segment.strip() for segment in re.split(r"(?<=[.!?])\s+", cleaned) if segment.strip()]
+    best_segment = ""
+    best_score = -1
+
+    for segment in segments:
+        score = _score_text(segment, query_terms)
+        if score > best_score:
+            best_score = score
+            best_segment = segment
+
+    if best_segment:
+        return _truncate_text(best_segment, max_chars)
+
+    if query_terms:
+        lowered = cleaned.lower()
+        offsets = [lowered.find(term) for term in query_terms if lowered.find(term) != -1]
+        if offsets:
+            start = max(0, min(offsets) - 120)
+            return _truncate_text(cleaned[start:start + max_chars], max_chars)
+
+    return _truncate_text(cleaned, max_chars)
+
+
+def _build_sources(results: list, query: str) -> list:
+    sources = []
+
+    for result in results:
+        for page in result.get("pages", []):
+            excerpt = _build_excerpt(page.get("content", ""), query)
+            sources.append({
+                "libraryId": result.get("libraryId", ""),
+                "libraryName": result.get("libraryName", ""),
+                "documentId": result.get("documentId", ""),
+                "fileName": result.get("fileName", ""),
+                "sectionTitle": page.get("title", "") or "Relevant section",
+                "pageRange": page.get("pages", ""),
+                "summary": page.get("summary", ""),
+                "excerpt": excerpt,
+                "score": page.get("score", 0),
+            })
+
+    sources.sort(
+        key=lambda item: (
+            item.get("score", 0),
+            len(item.get("excerpt", "")),
+        ),
+        reverse=True,
+    )
+    return sources[:12]
+
+
+def _build_trace(results: list) -> list:
+    trace = []
+    for result in results[:8]:
+        trace.append({
+            "libraryId": result.get("libraryId", ""),
+            "libraryName": result.get("libraryName", ""),
+            "documentId": result.get("documentId", ""),
+            "fileName": result.get("fileName", ""),
+            "sections": [
+                {
+                    "title": page.get("title", "") or "Relevant section",
+                    "pageRange": page.get("pages", ""),
+                    "summary": page.get("summary", ""),
+                }
+                for page in result.get("pages", [])[:5]
+            ],
+        })
+    return trace
+
+
+def _compose_answer(query: str, sources: list) -> str:
+    if not sources:
+        return (
+            "No grounded matches were found in the selected libraries. "
+            "Try a narrower question, select a different library, or upload more source material."
+        )
+
+    lines = [
+        f"Best matches for '{query}':",
+        "",
+    ]
+
+    for index, source in enumerate(sources[:3], start=1):
+        location = source.get("fileName", "Untitled document")
+        section = source.get("sectionTitle", "Relevant section")
+        page_range = source.get("pageRange", "")
+        excerpt = source.get("excerpt") or source.get("summary") or "No excerpt available."
+        lines.append(f"{index}. {location} | {section} | pages {page_range}")
+        lines.append(excerpt)
+        lines.append("")
+
+    lines.append("Review the cited excerpts below to validate the final answer.")
+    return "\n".join(lines).strip()
 
 # ────────────────────────────────────────────────────────────────────────────
 # Query Logs
