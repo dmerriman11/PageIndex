@@ -118,5 +118,15 @@
     "status": "success",
     "ts": 1775319639.6010265,
     "result_count": 12
+  },
+  {
+    "id": "52464db9-9a1c-4d52-bc2a-57629be8ede5",
+    "query": "what was the NOVA communication for October 2025",
+    "library_id": "7226463e-3cab-40af-8915-6c978f87fd61",
+    "library_name": "NOVA Communication",
+    "latency_ms": 14,
+    "status": "success",
+    "ts": 1775319707.4977832,
+    "result_count": 12
   }
 ]
