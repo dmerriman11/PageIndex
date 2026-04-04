@@ -101,6 +101,118 @@ The PageIndex service is available as a ChatGPT-style [chat platform](https://ch
 
 ---
 
+# 🔌 API Guide For Library And Document Tag Scoping
+
+The Lemur integration adds metadata-aware routing on top of PageIndex so you can inspect library tags and document tags before you query. The recommended flow is:
+
+1. Search libraries by keyword.
+2. Inspect a chosen library's tags and document metadata.
+3. Send `library_ids` to `/api/query` to keep retrieval scoped to the right collection.
+
+## 1. Search libraries by keyword
+
+Use `GET /api/libraries?search=...` to find likely libraries first.
+
+```bash
+curl -s "http://localhost:7777/api/libraries?search=HOPER" \
+  -H "X-API-Key: <your_api_key>"
+```
+
+Example response fields:
+
+```json
+[
+  {
+    "id": "library-id",
+    "name": "NOVA Products 2026",
+    "tags": ["HOPER", "government", "training"],
+    "searchScore": 24,
+    "keywordMatches": ["hoper"]
+  }
+]
+```
+
+Use:
+- `tags` to confirm the library is labeled for the topic you want.
+- `searchScore` and `keywordMatches` to understand why the library matched.
+
+## 2. Inspect document tags inside a library
+
+Use `GET /api/libraries/{library_id}` to inspect document-level metadata before querying.
+
+```bash
+curl -s "http://localhost:7777/api/libraries/library-id" \
+  -H "X-API-Key: <your_api_key>"
+```
+
+Relevant response fields:
+
+```json
+{
+  "id": "library-id",
+  "name": "NOVA Products 2026",
+  "tags": ["HOPER", "government", "training"],
+  "metadata": {
+    "libraryTags": ["HOPER", "government", "training"]
+  },
+  "documents": {
+    "doc-id": {
+      "fileName": "HOPER Quick Reference Guide.pdf",
+      "metadata": {
+        "displayTags": ["HOPER", "HOPER Quick Reference"],
+        "keywords": ["HOPER", "HOPER Quick Reference"],
+        "sourceRelativePath": "Resources/HOPER (FHA) Program/Training/HOPER Quick Reference Guide.pdf"
+      },
+      "metadataTerms": ["hoper", "quick", "reference", "fha"]
+    }
+  }
+}
+```
+
+Use:
+- `tags` and `metadata.libraryTags` for library-wide scope.
+- `documents[*].metadata.displayTags` for the clean title-based tags shown in the UI.
+- `documents[*].metadata.keywords` and `documents[*].metadataTerms` for additional retrieval terms.
+- `documents[*].metadata.sourceRelativePath` when the folder path itself carries product meaning.
+
+## 3. Query a narrowed set of libraries
+
+Once you identify the right library, pass its ID into `/api/query`.
+
+```bash
+curl -s "http://localhost:7777/api/query" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <your_api_key>" \
+  -d '{
+    "query": "tell me about the HOPER program",
+    "library_ids": ["library-id"],
+    "top_pages": 3
+  }'
+```
+
+If you omit `library_ids`, the API will auto-target libraries and return the matched library list in `targetLibraries`:
+
+```json
+{
+  "query": "tell me about the HOPER program",
+  "targetLibraries": [
+    {
+      "libraryId": "library-id",
+      "libraryName": "NOVA Products 2026",
+      "score": 24,
+      "keywordMatches": ["hoper"]
+    }
+  ]
+}
+```
+
+Recommended usage:
+- Use `GET /api/libraries?search=<keyword>` when the user query includes a strong program, lender, or product phrase.
+- Use `GET /api/libraries/{id}` when you need to validate document-level tags before querying.
+- Use `POST /api/query` with `library_ids` once the tag inspection confirms the correct scope.
+
+---
+
 # 🌲 PageIndex Tree Structure
 
 PageIndex can transform lengthy PDF documents into a semantic **tree structure**, similar to a _"table of contents"_ but optimized for use with Large Language Models (LLMs). It's ideal for: financial reports, regulatory filings, academic textbooks, legal or technical manuals, and any document that exceeds LLM context limits.

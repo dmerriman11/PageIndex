@@ -182,9 +182,10 @@ def _read_pdf_pages_with_pymupdf(path: str) -> list[dict]:
     return pages
 
 
-def index_local_document(file_path: str) -> dict:
+def index_local_document(file_path: str, metadata: dict | None = None) -> dict:
     resolved_path = os.path.abspath(os.path.expanduser(file_path))
     extension = Path(resolved_path).suffix.lower()
+    metadata = metadata or {}
 
     if extension == ".pdf":
         try:
@@ -200,6 +201,7 @@ def index_local_document(file_path: str) -> dict:
             "doc_name": Path(resolved_path).name,
             "doc_description": _clip_text(first_text, 360),
             "page_count": len(pages),
+            "metadata": metadata,
             "structure": _build_pdf_structure(pages),
             "pages": pages,
         }
@@ -213,6 +215,7 @@ def index_local_document(file_path: str) -> dict:
             "doc_name": Path(resolved_path).name,
             "doc_description": _clip_text(text, 360),
             "line_count": len(lines),
+            "metadata": metadata,
             "structure": _build_md_structure(lines),
         }
 
@@ -243,6 +246,7 @@ def index_local_document(file_path: str) -> dict:
             "doc_name": Path(resolved_path).name,
             "doc_description": _clip_text(text, 360),
             "line_count": len(lines),
+            "metadata": metadata,
             "structure": _build_md_structure(lines),
         }
 
@@ -257,6 +261,7 @@ def index_local_document(file_path: str) -> dict:
             "doc_name": Path(resolved_path).name,
             "doc_description": _clip_text(text, 360),
             "line_count": len(lines),
+            "metadata": metadata,
             "structure": _build_md_structure(lines),
         }
 

@@ -1,132 +1,22 @@
 [
   {
-    "id": "20f6820c-288a-4519-bd66-74431999fbc3",
-    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 376,
-    "status": "success",
-    "ts": 1775273707.0829432,
-    "result_count": 12
-  },
-  {
-    "id": "437160c0-8844-4a3e-a7cb-3627d208babf",
-    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 201,
-    "status": "success",
-    "ts": 1775274340.394646,
-    "result_count": 12
-  },
-  {
-    "id": "e63fb931-8dd0-4a2d-8992-1f85059a1586",
-    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 201,
-    "status": "success",
-    "ts": 1775274584.4309242,
-    "result_count": 12
-  },
-  {
-    "id": "607c9d3c-a8a5-4484-83ee-6c7a9e6fcdce",
-    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 299,
-    "status": "success",
-    "ts": 1775274855.4397593,
-    "result_count": 12
-  },
-  {
-    "id": "621ec8c9-0e05-4e48-b08e-8d7aefe09dac",
-    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 204,
-    "status": "success",
-    "ts": 1775316036.6599598,
-    "result_count": 12
-  },
-  {
-    "id": "39a03809-2fb6-4f50-b267-43b08a303eac",
-    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 1463,
-    "status": "success",
-    "ts": 1775318166.08027,
-    "result_count": 12
-  },
-  {
-    "id": "19444d44-a52e-45fe-a52a-8baf9423f0ff",
-    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
-    "library_id": "44454157-d710-4070-84c7-811e0259b71f",
+    "id": "c1ec6564-2d8c-4df4-ae04-edbf65728683",
+    "query": "A veteran is looking to purchase a manufactured home in Arizona. According to the 2025 PennyMac VA Manufactured Home product profile, what are the specific requirements for the 'Engineered Foundation' and the minimum credit score (FICO) required for a high-balance loan?",
+    "library_id": "0b5df7dc-eb6f-404b-9ac5-cec9297ef5e2",
     "library_name": "VA",
-    "latency_ms": 19,
+    "latency_ms": 10,
     "status": "success",
-    "ts": 1775318923.6719222,
+    "ts": 1775343226.170678,
     "result_count": 12
   },
   {
-    "id": "761eb659-4720-43ef-9c59-0d110a6fb4c6",
-    "query": "what are the loan requirements for a USDA loan?",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 108,
+    "id": "2a831890-5e71-42b4-a54d-88595c2b85b1",
+    "query": "A veteran is looking to purchase a manufactured home in Arizona. According to the 2025 PennyMac VA Manufactured Home product profile, what are the specific requirements for the 'Engineered Foundation' and the minimum credit score (FICO) required for a high-balance loan?",
+    "library_id": "e52d72ad-152f-41ea-8497-f8b19878d472",
+    "library_name": "PennyMac",
+    "latency_ms": 28,
     "status": "success",
-    "ts": 1775318942.7169816,
-    "result_count": 12
-  },
-  {
-    "id": "c84e48ca-fcb7-4fc3-b60c-e7b517bc7c48",
-    "query": "what is the county loan limit for a USDA in Pima County Arizona",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 45,
-    "status": "success",
-    "ts": 1775319075.1985607,
-    "result_count": 12
-  },
-  {
-    "id": "b6e000f9-0535-47f4-a2b3-316ecdd1f4b3",
-    "query": "whats the difference between USDA loan and a VA loan",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 53,
-    "status": "success",
-    "ts": 1775319104.5221663,
-    "result_count": 12
-  },
-  {
-    "id": "9c9f57f4-3ec4-46fa-ab97-eef56fbb3775",
-    "query": "whats the difference between USDA loan and a VA loan",
-    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
-    "library_name": "USDA",
-    "latency_ms": 120,
-    "status": "success",
-    "ts": 1775319639.6006908,
-    "result_count": 12
-  },
-  {
-    "id": "b41cefe8-f693-45cd-898b-ad583eb3be5e",
-    "query": "whats the difference between USDA loan and a VA loan",
-    "library_id": "44454157-d710-4070-84c7-811e0259b71f",
-    "library_name": "VA",
-    "latency_ms": 131,
-    "status": "success",
-    "ts": 1775319639.6010265,
-    "result_count": 12
-  },
-  {
-    "id": "52464db9-9a1c-4d52-bc2a-57629be8ede5",
-    "query": "what was the NOVA communication for October 2025",
-    "library_id": "7226463e-3cab-40af-8915-6c978f87fd61",
-    "library_name": "NOVA Communication",
-    "latency_ms": 14,
-    "status": "success",
-    "ts": 1775319707.4977832,
+    "ts": 1775343226.1700625,
     "result_count": 12
   }
 ]

@@ -47,7 +47,7 @@ class PageIndexClient:
         if self.workspace:
             self._load_workspace()
 
-    def index(self, file_path: str, mode: str = "auto") -> str:
+    def index(self, file_path: str, mode: str = "auto", metadata: dict | None = None) -> str:
         """Index a document. Returns a document_id."""
         # Persist a canonical absolute path so workspace reloads do not
         # reinterpret caller-relative paths against the workspace directory.
@@ -60,7 +60,7 @@ class PageIndexClient:
             raise ValueError(f"Unsupported indexing mode: {mode}")
 
         print(f"Indexing locally: {file_path}")
-        document = index_local_document(file_path)
+        document = index_local_document(file_path, metadata=metadata)
         document["id"] = doc_id
         self.documents[doc_id] = document
 
@@ -77,6 +77,7 @@ class PageIndexClient:
             'doc_name': doc.get('doc_name', ''),
             'doc_description': doc.get('doc_description', ''),
             'path': doc.get('path', ''),
+            'metadata': doc.get('metadata', {}),
         }
         if doc.get('type') == 'pdf':
             entry['page_count'] = doc.get('page_count')
