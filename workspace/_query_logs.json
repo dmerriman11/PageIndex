@@ -58,5 +58,65 @@
     "status": "success",
     "ts": 1775318166.08027,
     "result_count": 12
+  },
+  {
+    "id": "19444d44-a52e-45fe-a52a-8baf9423f0ff",
+    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
+    "library_id": "44454157-d710-4070-84c7-811e0259b71f",
+    "library_name": "VA",
+    "latency_ms": 19,
+    "status": "success",
+    "ts": 1775318923.6719222,
+    "result_count": 12
+  },
+  {
+    "id": "761eb659-4720-43ef-9c59-0d110a6fb4c6",
+    "query": "what are the loan requirements for a USDA loan?",
+    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
+    "library_name": "USDA",
+    "latency_ms": 108,
+    "status": "success",
+    "ts": 1775318942.7169816,
+    "result_count": 12
+  },
+  {
+    "id": "c84e48ca-fcb7-4fc3-b60c-e7b517bc7c48",
+    "query": "what is the county loan limit for a USDA in Pima County Arizona",
+    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
+    "library_name": "USDA",
+    "latency_ms": 45,
+    "status": "success",
+    "ts": 1775319075.1985607,
+    "result_count": 12
+  },
+  {
+    "id": "b6e000f9-0535-47f4-a2b3-316ecdd1f4b3",
+    "query": "whats the difference between USDA loan and a VA loan",
+    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
+    "library_name": "USDA",
+    "latency_ms": 53,
+    "status": "success",
+    "ts": 1775319104.5221663,
+    "result_count": 12
+  },
+  {
+    "id": "9c9f57f4-3ec4-46fa-ab97-eef56fbb3775",
+    "query": "whats the difference between USDA loan and a VA loan",
+    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
+    "library_name": "USDA",
+    "latency_ms": 120,
+    "status": "success",
+    "ts": 1775319639.6006908,
+    "result_count": 12
+  },
+  {
+    "id": "b41cefe8-f693-45cd-898b-ad583eb3be5e",
+    "query": "whats the difference between USDA loan and a VA loan",
+    "library_id": "44454157-d710-4070-84c7-811e0259b71f",
+    "library_name": "VA",
+    "latency_ms": 131,
+    "status": "success",
+    "ts": 1775319639.6010265,
+    "result_count": 12
   }
 ]
