@@ -1,0 +1,55 @@
+{
+  "type": "msg",
+  "path": "D:\\Source Code\\lemur-pageindex\\pageindex-engine\\workspace\\uploads\\7226463e-3cab-40af-8915-6c978f87fd61\\cfaaabc2-f757-434b-9fa2-a729c05efeba.msg",
+  "doc_name": "cfaaabc2-f757-434b-9fa2-a729c05efeba.msg",
+  "doc_description": "Subject: NCM-P-2025-08-01 New Non-QM Investor: Arc Home LLC From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-08-01 11:00:55-07:00 ANNOUNCEMENT SUMMARY Interest in Non-QM loan products has grown rapidly. With that, Capital Markets is excited to add another player to our Non-QM product range: Arc Home LLC...",
+  "line_count": 361,
+  "structure": [
+    {
+      "title": "Lines 1-80",
+      "node_id": "0000",
+      "line_num": 1,
+      "start_index": 1,
+      "end_index": 80,
+      "summary": "Subject: NCM-P-2025-08-01 New Non-QM Investor: Arc Home LLC From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-08-01 11:00:55-07:00 ANNOUNCEMENT SUMMARY Interest in Non-QM loan products has grown rapidly. With that, Capital Markets is...",
+      "text": "Subject: NCM-P-2025-08-01 New Non-QM Investor: Arc Home LLC\nFrom: Nova Capital Markets <capitalmarkets@novahomeloans.com>\nDate: 2025-08-01 11:00:55-07:00\n\n\n\nANNOUNCEMENT SUMMARY\n\nInterest in Non-QM loan products has grown rapidly. With that, Capital Markets is excited to add another player to our Non-QM product range:  Arc Home LLC <https://novahomeloans.sharepoint.com/:f:/s/Home/ElDoq9cjnU1En55SFzIimswBQyCNW-HztfM7HCO17agLSA?e=8x7qpX> . Arc offers a similar product offering to our current Non-QM investors, but with parameters that accommodate an expanded variety of scenarios, and with competitive pricing.              \n\nChannel: Banked\n\nProduct Type: Non-QM\n\n Guidelines <https://novahomeloans.sharepoint.com/:f:/s/Home/EudfywAeJH9ClLGeeVRHqqEBzOR8Tmpd4DbuONRmOR8H0Q?e=xfajN5> \n\n Marketing <https://novahomeloans.sharepoint.com/:f:/s/Home/EgtPWwC5nYlOj778FQBFbcIBqdOMgon43K0XlWGm3ynqXg?e=tZbBy7>      \n\n \n\nPRODUCT HIGHLIGHTS\n\n*\tNon-QM\n\n\t*\t1-year Full doc, Bank Statement, CPA P&L, 1099, Asset Utilization and Asset Qualifier \n\t*\tUp to $3.0 MM, 90% LTV, 660+ FICO\n\t*\t“Clean Slate” permits 1x30 housing history OR derogatory credit \n\n*\tDSCR\n\n\t*\tUp to $3M, up to 80% LTV, down to 0.75 DSCR ratio, 640+ FICO \n\t*\tRural properties permitted\n\t*\tForeign Nationals permitted (up to $1.5MM, 70% LTV)\n\n*\tOther highlights: \n\n\t*\tLLCs permitted: terms and conditions apply\n\t*\tForward facing Scenario <https://externalapps.ahl100.com:8443/Auth/LendingQb2/Login?ReturnUrl=%2FDealDesks%2FScenarioRequest>  and Income Analysis <https://externalapps.ahl100.com:8443/Auth/LendingQb2/Login?ReturnUrl=%2FDealDesks%2FIncomeAnalysisRequest>  support (register using the links)\n\nPRICING COLOR\n\nScenario\n\n\tDSCR 1.000\n\nLoan Amount: $220K\n\n\tRate\n\nDeephaven\n\nBayview\n\nNewFi\n\nARC\n\nLTV: 70\n\n\t6.500\n\n\t94.640\n\n\t95.526\n\nState: AZ\n\n\t6.625\n\n96.295\n\n95.203\n\n\t96.057\n\nProperty Type: SFR\n\n\t6.750\n\n96.805"
+    },
+    {
+      "title": "Lines 81-160",
+      "node_id": "0001",
+      "line_num": 81,
+      "start_index": 81,
+      "end_index": 160,
+      "summary": "95.765 95.390 96.588 Occupancy: NOO 6.875 97.274 96.328 96.140 97.338 Transaction: Pur 7.000 97.735 96.890 96.890 97.838 Credit Score: 770 7.125 98.165 97.390 97.640 98.338 DSCR = 1.000 7.250 97.890 98.265 98.776 Lock Term: 27 days 7.375 98.390 98.270 99.213...",
+      "text": "95.765\n\n95.390\n\n96.588\n\nOccupancy: NOO\n\n\t6.875\n\n97.274\n\n96.328\n\n96.140\n\n97.338\n\nTransaction: Pur\n\n\t7.000\n\n97.735\n\n96.890\n\n96.890\n\n97.838\n\nCredit Score:  770\n\n\t7.125\n\n98.165\n\n97.390\n\n97.640\n\n98.338\n\nDSCR = 1.000\n\n\t7.250\n\n\t97.890\n\n98.265\n\n98.776\n\nLock Term:  27 days\n\n\t7.375\n\n\t98.390\n\n98.270\n\n99.213\n\n\t\t7.500\n\n\t98.859\n\n98.270\n\n99.588\n\n\t\t7.625\n\n\t99.270\n\n98.270\n\n99.963\n\n\t\t7.750"
+    },
+    {
+      "title": "Lines 161-240",
+      "node_id": "0002",
+      "line_num": 161,
+      "start_index": 161,
+      "end_index": 240,
+      "summary": "99.270 98.270 100.338 7.875 99.270 98.270 100.713 8.000 99.270 98.270 101.057 8.125 99.270 98.270 101.270 8.250 99.270 98.270 101.270 Scenario 1 Yr Bank Statement Loan Amount: $500K Rate Deephaven Bayview NewFi ARC LTV: 75% 6.250 96.091 96.113 State: AZ 6.375...",
+      "text": "99.270\n\n98.270\n\n100.338\n\n\t\t7.875\n\n\t99.270\n\n98.270\n\n100.713\n\n\t\t8.000\n\n\t99.270\n\n98.270\n\n101.057\n\n\t\t8.125\n\n\t99.270\n\n98.270\n\n101.270\n\n\t\t8.250\n\n \n\n99.270\n\n98.270\n\n101.270\n\n \n\nScenario\n\n\t1 Yr Bank Statement\n\nLoan Amount:  $500K\n\n\tRate\n\nDeephaven\n\nBayview\n\nNewFi\n\nARC\n\nLTV:  75%\n\n\t6.250\n\n\t\t96.091\n\n96.113\n\nState: AZ\n\n\t6.375\n\n\t95.422\n\n96.705\n\n96.613\n\nProperty Type:  SFR\n\n\t6.500"
+    },
+    {
+      "title": "Lines 241-320",
+      "node_id": "0003",
+      "line_num": 241,
+      "start_index": 241,
+      "end_index": 320,
+      "summary": "96.047 97.289 97.832 Occupancy: OO 6.625 97.970 96.672 97.864 98.301 Transaction: Pur 6.750 98.470 97.297 98.423 98.769 Credit Score: 750 6.875 98.970 97.922 98.967 99.488 DTI = 20 7.000 98.484 99.504 99.926 Bank Statemen = 1Yr 7.125 99.720 98.984 100.036...",
+      "text": "96.047\n\n97.289\n\n97.832\n\nOccupancy:  OO\n\n\t6.625\n\n97.970\n\n96.672\n\n97.864\n\n98.301\n\nTransaction:  Pur\n\n\t6.750\n\n98.470\n\n97.297\n\n98.423\n\n98.769\n\nCredit Score:  750\n\n\t6.875\n\n98.970\n\n97.922\n\n98.967\n\n99.488\n\nDTI =  20\n\n\t7.000\n\n\t98.484\n\n99.504\n\n99.926\n\nBank Statemen = 1Yr\n\n\t7.125\n\n99.720\n\n98.984\n\n100.036\n\n100.301\n\nLock Term:  27\n\n\t7.250\n\n100.033\n\n99.422\n\n100.551\n\n100.676\n\n\t\t7.375\n\n100.345"
+    },
+    {
+      "title": "Lines 321-361",
+      "node_id": "0004",
+      "line_num": 321,
+      "start_index": 321,
+      "end_index": 361,
+      "summary": "99.828 101.051 101.051 7.500 100.170 101.551 101.420 7.625 100.170 102.051 101.420 ATTACHMENTS * Marketing materials ** For NOVA Home Loans Internal Distribution Only ** Contact Us: Scenario Desk <mailto:Scenariodesk@novahomeloans.com> Lock Desk...",
+      "text": "99.828\n\n101.051\n\n101.051\n\n\t\t7.500\n\n\t100.170\n\n101.551\n\n101.420\n\n\t\t7.625\n\n\t100.170\n\n102.051\n\n101.420\n\nATTACHMENTS\n\n*\tMarketing materials\n\n** For NOVA Home Loans Internal Distribution Only **\n\nContact Us: \n\nScenario Desk <mailto:Scenariodesk@novahomeloans.com>         Lock Desk <mailto:lock.desk@novahomeloans.com>         Product Department <mailto:productdept@novahomeloans.com>"
+    }
+  ],
+  "id": "f8eb2907-e582-42a9-b25f-50166b3bb15c"
+}

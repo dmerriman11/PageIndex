@@ -1,0 +1,55 @@
+{
+  "type": "msg",
+  "path": "D:\\Source Code\\lemur-pageindex\\pageindex-engine\\workspace\\uploads\\7226463e-3cab-40af-8915-6c978f87fd61\\5d9f5619-d6db-4de1-aa52-56fb33bbf288.msg",
+  "doc_name": "5d9f5619-d6db-4de1-aa52-56fb33bbf288.msg",
+  "doc_description": "Subject: NCM-P-2025-07-30 New Investor; Champions Funding From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-07-30 12:32:11-07:00 ANNOUNCEMENT SUMMARY Capital Markets is excited to announce the launch of a new brokered partner: Champions Funding! Champions Funding specializes in innovative Non-QM programs designed to address the gaps...",
+  "line_count": 332,
+  "structure": [
+    {
+      "title": "Lines 1-80",
+      "node_id": "0000",
+      "line_num": 1,
+      "start_index": 1,
+      "end_index": 80,
+      "summary": "Subject: NCM-P-2025-07-30 New Investor; Champions Funding From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-07-30 12:32:11-07:00 ANNOUNCEMENT SUMMARY Capital Markets is excited to announce the launch of a new brokered partner: Champions...",
+      "text": "Subject: NCM-P-2025-07-30 New Investor; Champions Funding\nFrom: Nova Capital Markets <capitalmarkets@novahomeloans.com>\nDate: 2025-07-30 12:32:11-07:00\n\n\n\nANNOUNCEMENT SUMMARY\n\nCapital Markets is excited to announce the launch of a new brokered partner: Champions Funding!  Champions Funding specializes in innovative Non-QM programs designed to address the gaps in today’s mortgage market, with a strong focus on serving credit-worthy, underserved borrowers. Their commitment to modernized underwriting and quick turn times makes them a standout partner.  Champions is best known for their flagship No Ratio program: a mission-driven product tailored for diverse and underbanked communities.  This unique offering requires no income or employment verification, making it an ideal solution for borrowers who may not qualify through traditional means.  We’re thrilled that NOVA loan officers now have access to this exclusive program.\n\n \n\nPRODUCT HIGHLIGHTS: \n\n \n\n*\tNo Ratio – No Income or Employment Verification (state restrictions apply)\n\n\t*\tPrimary or Second Home\n\n\t\t*\tLoan amounts up to $2M\n\t\t*\t80% LTV\n\t\t*\tFICO as low as 660\n\t\t*\tFirst-time homebuyers welcome\n\t\t*\tUse 100% Cash-Out as reserves for up to 50% LTV\n\n*\tITIN\n\n\t*\tAlt-Doc\n\n\t\t*\tPurchase, R/T, and Cash Out options\n\t\t*\tUp to 85% LTV (Purchase & R/T) and 75% LTV (Cash-out)\n\t\t*\tFICO as low as 660\n\t\t*\tCan use alternative credit to meet tradeline requirements\n\n\t*\tDSCR\n\n\t\t*\tUp to 80% LTV (DSCR > 1.0)\n\t\t*\tShort-term rentals allowed\n\t\t*\tFICO as low as 660\n\n*\tDSCR\n\n\t*\tRatios down to 0.75, and No Ratio options available\n\t*\tLoan amounts up to $3M\n\t*\tFirst time investors are eligible\n\t*\tQualifying income for DSCR can include Asset Depletion\n\t*\tCan use the higher of actual rent or 1007 rent schedule\n\n*\tOther Owner Occupied and 2nd Home Products\n\n\t*\t12-month Bank Statements (first page only)\n\t*\t12-month Bank Statements – use 75% of deposits as income\n\t*\tP&L Only – No Bank Statement needed\n\t*\tForeign National – Foreign Income or Asset Depletion (2nd homes only)\n\t*\tTexas Cash-Out 50(a)(6)\n\nPRICING COLOR:\n\n \n\n*\t**Both BPC and LPC are permitted with Champions; both must be 2.5%.  This 2.5% broker compensation is NOT included in the below rate stacks\n\n \n\n \n\nScenario\n\n\tDSCR\n\nLoan Amount:  350,000\n\n\tRate\n\nBayview\n\nDeephaven\n\n**Champions"
+    },
+    {
+      "title": "Lines 81-160",
+      "node_id": "0001",
+      "line_num": 81,
+      "start_index": 81,
+      "end_index": 160,
+      "summary": "LTV: 70% 7.375 94.518 94.323 98.125 State: AZ 7.500 95.018 94.753 98.500 Property Type: SFR 7.625 95.518 95.155 98.875 Occupancy: Investment 7.750 95.987 95.514 99.250 DSCR: 0.750 Ratio 7.875 96.425 95.827 99.625 FICO: 730 8.000 96.862 96.202 99.875 DTI: 40...",
+      "text": "LTV:  70%\n\n\t7.375\n\n94.518\n\n94.323\n\n 98.125\n\nState: AZ\n\n\t7.500\n\n95.018\n\n94.753\n\n 98.500\n\nProperty Type:  SFR\n\n\t7.625\n\n95.518\n\n95.155\n\n 98.875\n\nOccupancy:  Investment\n\n\t7.750\n\n95.987\n\n95.514\n\n 99.250\n\nDSCR: 0.750 Ratio\n\n\t7.875\n\n96.425\n\n95.827\n\n 99.625\n\nFICO: 730\n\n\t8.000\n\n96.862\n\n96.202\n\n99.875 \n\nDTI: 40\n\n\t8.125\n\n97.268\n\n96.507\n\n100 \n\nLock Term:  30\n\n\t8.250\n\n97.643\n\n96.811"
+    },
+    {
+      "title": "Lines 161-240",
+      "node_id": "0002",
+      "line_num": 161,
+      "start_index": 161,
+      "end_index": 240,
+      "summary": "Prepayment Type: None 8.375 97.956 97.108 Scenario Bank Statement 1yr Business Loan Amount: 350,000 Rate Bayview Deephaven **Champions LTV: 70% 7.125 97.614 96.975 98.750 State: AZ 7.250 98.052 97.288 99.125 Property Type: SFR 7.375 98.458 97.600 99.500...",
+      "text": "Prepayment Type: None\n\n\t8.375\n\n97.956\n\n97.108\n\n \n\n \n\nScenario\n\n\tBank Statement 1yr Business\n\nLoan Amount:  350,000\n\n\tRate\n\nBayview\n\nDeephaven\n\n**Champions\n\nLTV:  70%\n\n\t7.125\n\n97.614\n\n96.975\n\n 98.750\n\nState: AZ\n\n\t7.250\n\n98.052\n\n97.288\n\n 99.125\n\nProperty Type:  SFR\n\n\t7.375\n\n98.458\n\n97.600\n\n 99.500\n\nOccupancy:  Investment\n\n\t7.500\n\n98.675\n\n97.900\n\n 99.875\n\nBank Statement: 1yr Business\n\n\t7.625\n\n98.675\n\n98.175\n\n100 \n\nFICO: 730\n\n\t7.750"
+    },
+    {
+      "title": "Lines 241-320",
+      "node_id": "0003",
+      "line_num": 241,
+      "start_index": 241,
+      "end_index": 320,
+      "summary": "98.675 98.450 DTI: 40 7.875 98.675 98.725 Lock Term: 30 7.990 98.675 98.975 Prepayment Type: None IMPORTANT NOTES: * Please refer to the following landing page for Champions Funding guidelines, matrices, and marketing flyers. * Champions Funding...",
+      "text": "98.675\n\n98.450\n\n \n\nDTI: 40\n\n\t7.875\n\n98.675\n\n98.725\n\n \n\nLock Term:  30\n\n\t7.990\n\n98.675\n\n98.975\n\n \n\nPrepayment Type: None\n\n\t \n\n \n\n \n\n \n\n \n\n \n\nIMPORTANT NOTES:\n\n\t*\tPlease refer to the following landing page for Champions Funding guidelines, matrices, and marketing flyers. \n\n\t\t*\t Champions Funding <https://novahomeloans.sharepoint.com/:f:/s/Home/Ei5Br2bcXPlJhKJffhM6UF0BcRDnSbiarGa3pCt3oEIabQ?e=nIbyeq> \n\n\t*\tTraining Webinar scheduled for tomorrow (7/31/2025) @ 9:00AM AZ\n\nAE CONTACT:\n\nPatty Kennedy\n\nAccount Executive\n\nCell: (310) 962-3513\n\nPatty.Kennedy@champstpo.com <mailto:Patty.Kennedy@champstpo.com> \n\n \n\nATTACHMENTS: \n\n*\tProduct Matrices Linked Here <https://champions-funding.webflow.io/programs> \n*\tMarketing Flyers\n\n \n\nFor Underwriting inquiries, contact Scenario Desk <mailto:Scenariodesk@novahomeloans.com>  \n\n \n\nFor Product inquiries, contact Product <mailto:Productdept@novahomeloans.com> \n\n \n\nFor Pricing inquiries, contact Lock Desk <mailto:lock.desk@novahomeloans.com>"
+    },
+    {
+      "title": "Lines 321-332",
+      "node_id": "0004",
+      "line_num": 321,
+      "start_index": 321,
+      "end_index": 332,
+      "summary": "** For NOVA Home Loans Internal Distribution Only ** To find additional information, follow this path: NOVANet > Capital Markets <https://novahomeloans.sharepoint.com/sites/Home/SitePages/Capital-Markets.aspx>",
+      "text": "** For NOVA Home Loans Internal Distribution Only **\n\nTo find additional information, follow this path: NOVANet > Capital Markets <https://novahomeloans.sharepoint.com/sites/Home/SitePages/Capital-Markets.aspx>"
+    }
+  ],
+  "id": "f0e3df4b-a351-4396-abd9-d512c1034e57"
+}

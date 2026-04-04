@@ -1,0 +1,184 @@
+{
+  "type": "pdf",
+  "path": "D:\\Source Code\\lemur-pageindex\\pageindex-engine\\workspace\\uploads\\c4240246-d62e-4424-b7d0-1d3a6d701cc6\\757d86c4-0612-42d4-8810-c9771dd7f5ae.pdf",
+  "doc_name": "757d86c4-0612-42d4-8810-c9771dd7f5ae.pdf",
+  "doc_description": "",
+  "page_count": 14,
+  "structure": [
+    {
+      "title": "Pages 1-8",
+      "node_id": "0000",
+      "start_index": 1,
+      "end_index": 8,
+      "summary": "",
+      "nodes": [
+        {
+          "title": "Page 1",
+          "node_id": "0001",
+          "start_index": 1,
+          "end_index": 1,
+          "summary": ""
+        },
+        {
+          "title": "Page 2",
+          "node_id": "0002",
+          "start_index": 2,
+          "end_index": 2,
+          "summary": ""
+        },
+        {
+          "title": "Page 3",
+          "node_id": "0003",
+          "start_index": 3,
+          "end_index": 3,
+          "summary": ""
+        },
+        {
+          "title": "Page 4",
+          "node_id": "0004",
+          "start_index": 4,
+          "end_index": 4,
+          "summary": ""
+        },
+        {
+          "title": "Page 5",
+          "node_id": "0005",
+          "start_index": 5,
+          "end_index": 5,
+          "summary": ""
+        },
+        {
+          "title": "Page 6",
+          "node_id": "0006",
+          "start_index": 6,
+          "end_index": 6,
+          "summary": ""
+        },
+        {
+          "title": "Page 7",
+          "node_id": "0007",
+          "start_index": 7,
+          "end_index": 7,
+          "summary": ""
+        },
+        {
+          "title": "Page 8",
+          "node_id": "0008",
+          "start_index": 8,
+          "end_index": 8,
+          "summary": ""
+        }
+      ]
+    },
+    {
+      "title": "Pages 9-14",
+      "node_id": "0009",
+      "start_index": 9,
+      "end_index": 14,
+      "summary": "",
+      "nodes": [
+        {
+          "title": "Page 9",
+          "node_id": "0010",
+          "start_index": 9,
+          "end_index": 9,
+          "summary": ""
+        },
+        {
+          "title": "Page 10",
+          "node_id": "0011",
+          "start_index": 10,
+          "end_index": 10,
+          "summary": ""
+        },
+        {
+          "title": "Page 11",
+          "node_id": "0012",
+          "start_index": 11,
+          "end_index": 11,
+          "summary": ""
+        },
+        {
+          "title": "Page 12",
+          "node_id": "0013",
+          "start_index": 12,
+          "end_index": 12,
+          "summary": ""
+        },
+        {
+          "title": "Page 13",
+          "node_id": "0014",
+          "start_index": 13,
+          "end_index": 13,
+          "summary": ""
+        },
+        {
+          "title": "Page 14",
+          "node_id": "0015",
+          "start_index": 14,
+          "end_index": 14,
+          "summary": ""
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "content": ""
+    },
+    {
+      "page": 2,
+      "content": ""
+    },
+    {
+      "page": 3,
+      "content": ""
+    },
+    {
+      "page": 4,
+      "content": ""
+    },
+    {
+      "page": 5,
+      "content": ""
+    },
+    {
+      "page": 6,
+      "content": ""
+    },
+    {
+      "page": 7,
+      "content": ""
+    },
+    {
+      "page": 8,
+      "content": ""
+    },
+    {
+      "page": 9,
+      "content": ""
+    },
+    {
+      "page": 10,
+      "content": ""
+    },
+    {
+      "page": 11,
+      "content": ""
+    },
+    {
+      "page": 12,
+      "content": ""
+    },
+    {
+      "page": 13,
+      "content": ""
+    },
+    {
+      "page": 14,
+      "content": ""
+    }
+  ],
+  "id": "3811cd55-e4a7-4888-a93c-6d65a2d6abc1"
+}

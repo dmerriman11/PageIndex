@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "de2ee9a2-c5a9-43d7-8205-f0d145a29de4",
+    "query": "Can the projected rental income from Unit B be used to offset the proposed PITI and lower the Debt-to-Income (DTI) ratio, considering the borrower is a first-time homebuyer with zero prior landlord experience for a VA loan?",
+    "library_id": "32aa9a6c-a91b-4967-af4d-c7f5ab50c6f8",
+    "library_name": "USDA",
+    "latency_ms": 390,
+    "status": "success",
+    "ts": 1775272464.049299,
+    "result_count": 12
+  }
+]

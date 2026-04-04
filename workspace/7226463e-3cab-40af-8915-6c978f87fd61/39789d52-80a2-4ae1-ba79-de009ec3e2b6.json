@@ -1,0 +1,19 @@
+{
+  "type": "msg",
+  "path": "D:\\Source Code\\lemur-pageindex\\pageindex-engine\\workspace\\uploads\\7226463e-3cab-40af-8915-6c978f87fd61\\d2c68ac3-be61-4bcd-ad95-5b12881c10f8.msg",
+  "doc_name": "d2c68ac3-be61-4bcd-ad95-5b12881c10f8.msg",
+  "doc_description": "Subject: NCM-P-2025-04-30 Rate Alert For Float Downs From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-04-30 13:17:00-07:00 ANNOUNCEMENT SUMMARY Polly Rate Alert Strategies: Did you know: You can use Polly’s rate alert functions to monitor float down opportunities on already locked files? After locking, reprice the file and set a rate...",
+  "line_count": 36,
+  "structure": [
+    {
+      "title": "Lines 1-36",
+      "node_id": "0000",
+      "line_num": 1,
+      "start_index": 1,
+      "end_index": 36,
+      "summary": "Subject: NCM-P-2025-04-30 Rate Alert For Float Downs From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-04-30 13:17:00-07:00 ANNOUNCEMENT SUMMARY Polly Rate Alert Strategies: Did you know: You can use Polly’s rate alert functions to...",
+      "text": "Subject: NCM-P-2025-04-30 Rate Alert For Float Downs\nFrom: Nova Capital Markets <capitalmarkets@novahomeloans.com>\nDate: 2025-04-30 13:17:00-07:00\n\n\n\nANNOUNCEMENT SUMMARY\n\n \n\nPolly Rate Alert Strategies:\n\n \n\nDid you know:  You can use Polly’s rate alert functions to monitor float down opportunities on already locked files?  After locking, reprice the file and set a rate alert for a lower rate and target price.  If current market meets this target price and rate, a notification will be sent 30 minutes after market open, or 30 minutes after market close indicating you should review for a float down.  Standard float down requirements still apply, including selection of the float down option at initial lock.  The Rate Alert will be tied to the initial lock period you selected, so you will need to confirm float down 60 day pricing with lock desk.  Best Effort locks will be subject to the float down policy of the investor and may not be available in all cases. For more information about rate triggers, review NCM-P-02-26 Polly Rate Alerts (attached).\n\n \n\nSelect the “Create Rate Alert” option on your locked loan in Polly, and fill out the highlighted fields:\n\n\n\n \n\n\n\n \n\nFOR MORE INFORMATION… \n\n*\tFor Underwriting inquiries, contact Jumbo Underwriting (jumbodelegatedunderwriting@novahomeloans.com <mailto:jumbodelegatedunderwriting@novahomeloans.com> ) \n*\tFor Product inquiries, contact Product (ProductDept@novahomeloans.com <mailto:ProductDept@novahomeloans.com> ) \n*\tFor Pricing inquiries, contact Lock Desk (lock.desk@novahomeloans.com <mailto:lock.desk@novahomeloans.com> )"
+    }
+  ],
+  "id": "39789d52-80a2-4ae1-ba79-de009ec3e2b6"
+}

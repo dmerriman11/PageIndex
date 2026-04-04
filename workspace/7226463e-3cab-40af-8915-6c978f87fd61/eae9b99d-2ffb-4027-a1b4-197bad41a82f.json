@@ -1,0 +1,19 @@
+{
+  "type": "msg",
+  "path": "D:\\Source Code\\lemur-pageindex\\pageindex-engine\\workspace\\uploads\\7226463e-3cab-40af-8915-6c978f87fd61\\8ed89999-f297-408a-aa03-03a393a0021c.msg",
+  "doc_name": "8ed89999-f297-408a-aa03-03a393a0021c.msg",
+  "doc_description": "Subject: NCM-P-2025-11-25 FHFA Announces Conforming Loan Limits for 2026 From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-11-25 12:39:36-07:00 ANNOUNCEMENT SUMMARY The Federal Housing Finance Agency (FHFA) today announced the conforming loan limits (CLLs) for conventional mortgages to be acquired by Fannie Mae and Freddie Mac (the...",
+  "line_count": 53,
+  "structure": [
+    {
+      "title": "Lines 1-53",
+      "node_id": "0000",
+      "line_num": 1,
+      "start_index": 1,
+      "end_index": 53,
+      "summary": "Subject: NCM-P-2025-11-25 FHFA Announces Conforming Loan Limits for 2026 From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-11-25 12:39:36-07:00 ANNOUNCEMENT SUMMARY The Federal Housing Finance Agency (FHFA) today announced the...",
+      "text": "Subject: NCM-P-2025-11-25 FHFA Announces Conforming Loan Limits for 2026\nFrom: Nova Capital Markets <capitalmarkets@novahomeloans.com>\nDate: 2025-11-25 12:39:36-07:00\n\n\n\nANNOUNCEMENT SUMMARY\n\nThe Federal Housing Finance Agency (FHFA) today announced the conforming loan limits (CLLs) for conventional mortgages to be acquired by Fannie Mae and Freddie Mac (the Enterprises) in 2026. In most of the United States, the 2026 CLL value for one-unit properties will be $832,750, an increase of $26,250 from $806,500 in 2025.  \n\n \n\nOne-Unit Limit\n\nTwo-Unit Limit\n\nThree-Unit Limit\n\nFour-Unit Limit\n\n$832,750\n\n$1,066,250\n\n$1,288,800\n\n$1,601,750\n\n \n\nIMPORTANT NOTES\n\n*\tCounties with a limit greater than the National Baseline ($832,750) are “High Balance” counties, with the higher limit allowed using High Balance programs. The attached excel spreadsheet contains all 2026 limits by county. \n*\tThe national conforming limit has been updated in Polly for standard (non-High Balance) counties and is available for locks effective immediately.\n*\tHigh balance counties will become available following Polly’s official product release.  Prior to the product release, the new High Balance county limit can be referenced in the attached excel document.\n*\tA follow-up announcement will be issued in the coming days advising when High Balance county limits have been updated in Polly.\n\n \n\nATTACHMENTS\n\n*\tCounty Loan Limit List Excel Spreadsheet\n*\tFHFA Announcement\n*\tMarketing Materials\n\n** For NOVA Home Loans Internal Distribution Only **\n\nContact Us:\n\nScenario Desk <mailto:Scenariodesk@novahomeloans.com>         Lock Desk <mailto:lock.desk@novahomeloans.com>         Product Department <mailto:productdept@novahomeloans.com>"
+    }
+  ],
+  "id": "eae9b99d-2ffb-4027-a1b4-197bad41a82f"
+}

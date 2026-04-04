@@ -1,0 +1,19 @@
+{
+  "type": "msg",
+  "path": "D:\\Source Code\\lemur-pageindex\\pageindex-engine\\workspace\\uploads\\7226463e-3cab-40af-8915-6c978f87fd61\\4af63967-f67d-40b1-b99f-dcce1c519728.msg",
+  "doc_name": "4af63967-f67d-40b1-b99f-dcce1c519728.msg",
+  "doc_description": "Subject: NCM-P-2025-02-26 Polly Rate Alerts From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-02-26 09:02:47-07:00 ANNOUNCEMENT SUMMARY Rate Alerts are now available in Polly. Polly now has functionality to allow you to set a notification if a rate hits a specified price. Rate Alert triggers can be set up for any unlocked file or loan...",
+  "line_count": 73,
+  "structure": [
+    {
+      "title": "Lines 1-73",
+      "node_id": "0000",
+      "line_num": 1,
+      "start_index": 1,
+      "end_index": 73,
+      "summary": "Subject: NCM-P-2025-02-26 Polly Rate Alerts From: Nova Capital Markets <capitalmarkets@novahomeloans.com> Date: 2025-02-26 09:02:47-07:00 ANNOUNCEMENT SUMMARY Rate Alerts are now available in Polly. Polly now has functionality to allow you to set a...",
+      "text": "Subject: NCM-P-2025-02-26 Polly Rate Alerts\nFrom: Nova Capital Markets <capitalmarkets@novahomeloans.com>\nDate: 2025-02-26 09:02:47-07:00\n\n\n\nANNOUNCEMENT SUMMARY\n\n \n\nRate Alerts are now available in Polly.  \n\nPolly now has functionality to allow you to set a notification if a rate hits a specified price.  Rate Alert triggers can be set up for any unlocked file or loan scenario.  Simply set up your scenario how you would want it to be quoted (lock period and programs, etc.), and select “Create Rate Alert” from the Bell icon at the top of the loan scenario.\n\n \n\n\n\n \n\nHeaders on the left will reflect the search criteria you have selected for the scenario.  All fields on the right will need to be filled out in order to save the scenario and are the basis for what will trigger a notification.  Please make sure to verify the email address you wish the rate trigger to be sent to, only one email can be used so you may need to set up multiple triggers if you wish to send to a borrower and receive the trigger in your personal or team email.  Note: current max expiration date is 90 days from trigger creation.  Triggers may not fire if expiration date is over 90 days out from time of creation.  \n\n \n\n\n\n \n\nOnce the trigger conditions are met, the trigger email will go out one time, either 30 minutes after market open or 30 minutes after market closed.   If you would like additional notifications after the conditions have been satisfied, you will need to create a new alert.\n\n \n\n\n\nRate Alerts can be managed on the Rate Alerts page within Polly.  \n\n \n\n\n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\nFOR MORE INFORMATION… \n\n*\tPlease contact lock desk\n*\tReview attached PDF\n\n** For NOVA Home Loans Internal Distribution Only **\n\nTo find additional information, follow this path: NOVANet > Capital Markets <https://novahomeloans.sharepoint.com/sites/Home/SitePages/Capital-Markets.aspx>"
+    }
+  ],
+  "id": "822c0d05-f088-4f9c-8316-833ac935b7ed"
+}

@@ -15,6 +15,7 @@ Endpoints:
   DELETE /api/libraries/{library_id}     — delete a library
   POST   /api/libraries/{library_id}/documents  — upload & index a document
   DELETE /api/libraries/{library_id}/documents/{doc_id}  — remove document
+    GET    /api/libraries/{library_id}/documents/{doc_id}/download  — download source document
   POST   /api/query                      — RAG query across one or more libraries
   GET    /api/health                     — health check
   GET    /api/admin/dashboard            — dashboard KPI data (for the UI)
@@ -41,6 +42,7 @@ load_dotenv()
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 # Ensure pageindex package is importable from the repo root
@@ -304,6 +306,12 @@ class CreateLibraryRequest(BaseModel):
     description: Optional[str] = ""
     group: Optional[str] = "Default"
     tags: Optional[List[str]] = []
+
+class UpdateLibraryRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    group: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 class QueryRequest(BaseModel):
     query: str
@@ -637,6 +645,22 @@ def get_library(library_id: str):
         raise HTTPException(status_code=404, detail="Library not found")
     return lib
 
+@app.patch("/api/libraries/{library_id}", dependencies=[Depends(require_api_key)])
+def update_library(library_id: str, req: UpdateLibraryRequest):
+    lib = LIBRARIES.get(library_id)
+    if not lib:
+        raise HTTPException(status_code=404, detail="Library not found")
+    if req.name is not None:
+        lib["name"] = req.name
+    if req.description is not None:
+        lib["description"] = req.description
+    if req.group is not None:
+        lib["group"] = {"name": req.group, "slug": req.group.lower().replace(" ", "-")}
+    if req.tags is not None:
+        lib["tags"] = req.tags
+    save_libraries(LIBRARIES)
+    return lib
+
 @app.delete("/api/libraries/{library_id}", dependencies=[Depends(require_api_key)])
 def delete_library(library_id: str):
     if library_id not in LIBRARIES:
@@ -667,8 +691,8 @@ async def upload_document(
 
     # Validate file type
     ext = Path(file.filename).suffix.lower()
-    if ext not in [".pdf", ".md", ".markdown"]:
-        raise HTTPException(status_code=400, detail="Only PDF and Markdown files are supported")
+    if ext not in [".pdf", ".md", ".markdown", ".eml", ".msg"]:
+        raise HTTPException(status_code=400, detail="Only PDF, Markdown, and email files (.eml, .msg) are supported")
 
     # Save uploaded file
     doc_id = str(uuid.uuid4())
@@ -761,6 +785,38 @@ def delete_document(library_id: str, doc_id: str):
 
     save_libraries(LIBRARIES)
     return {"status": "deleted"}
+
+
+@app.get("/api/libraries/{library_id}/documents/{doc_id}/download", dependencies=[Depends(require_api_key)])
+def download_document(library_id: str, doc_id: str):
+    if library_id not in LIBRARIES:
+        raise HTTPException(status_code=404, detail="Library not found")
+
+    docs = LIBRARIES[library_id]["documents"]
+    if doc_id not in docs:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    doc = docs[doc_id]
+    file_path_value = doc.get("filePath")
+    if not isinstance(file_path_value, str) or not file_path_value.strip():
+        raise HTTPException(status_code=404, detail="Source document file is unavailable")
+
+    resolved_path = Path(file_path_value).resolve()
+    uploads_root = UPLOADS_DIR.resolve()
+
+    # Keep downloads constrained to managed uploads.
+    if uploads_root not in resolved_path.parents:
+        raise HTTPException(status_code=403, detail="Document path is outside managed uploads")
+
+    if not resolved_path.exists() or not resolved_path.is_file():
+        raise HTTPException(status_code=404, detail="Source document file is unavailable")
+
+    download_name = doc.get("fileName") if isinstance(doc.get("fileName"), str) else resolved_path.name
+    return FileResponse(
+        path=str(resolved_path),
+        media_type="application/octet-stream",
+        filename=download_name,
+    )
 
 # ────────────────────────────────────────────────────────────────────────────
 # RAG Query
