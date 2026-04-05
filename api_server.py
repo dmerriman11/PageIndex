@@ -36,7 +36,10 @@ import re
 import hashlib
 import secrets
 import ipaddress
+import queue
 import threading
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
@@ -164,6 +167,13 @@ def get_model():
 MODEL = get_model()
 PROCESSING_MODE = "local"
 print(f"[PageIndex API] Processing mode: {PROCESSING_MODE}")
+
+# ────────────────────────────────────────────────────────────────────────────
+# PocketBase storage
+# ────────────────────────────────────────────────────────────────────────────
+from pb_storage import get_pb, PBClient, POCKETBASE_URL  # noqa: E402
+
+QUERY_LOGS_MAX = 1000
 
 
 def _safe_print(message: str):
@@ -403,9 +413,43 @@ def _load_json_object(path: Path, label: str) -> dict:
 
 
 def _write_json_atomic(path: Path, payload: str):
-    temp_path = path.with_name(f"{path.name}.tmp")
-    temp_path.write_text(payload, encoding="utf-8")
-    os.replace(temp_path, path)
+    # Uses a cross-process exclusive lock file so that concurrent OS-level processes
+    # (uvicorn --workers N) never race on writes.  O_CREAT|O_EXCL is atomic on both
+    # Windows and Unix — only the winning process gets a file descriptor back.
+    #
+    # NOTE: We write *directly* to the target (not via temp→rename) because on Windows
+    # os.replace() requires every reader to have opened the destination with
+    # FILE_SHARE_DELETE — Python's built-in open() does NOT set that flag, so rename
+    # always raises WinError 5 when any reader is active.  A direct open('w') is
+    # compatible with concurrent open('r') handles and is safe here because the lock
+    # already serialises all writers.
+    lock_path = path.with_suffix(".lock")
+    deadline = time.monotonic() + 30.0
+    while True:
+        try:
+            lfd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+            os.close(lfd)
+            break  # lock acquired
+        except FileExistsError:
+            # Remove stale lock left by a crashed process (> 30 s old)
+            try:
+                if time.time() - os.path.getmtime(str(lock_path)) > 30:
+                    try:
+                        os.unlink(str(lock_path))
+                    except OSError:
+                        pass
+            except OSError:
+                pass
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"Timed out waiting for write lock on {path.name}")
+            time.sleep(0.05)
+    try:
+        path.write_text(payload, encoding="utf-8")
+    finally:
+        try:
+            os.unlink(str(lock_path))
+        except OSError:
+            pass
 
 
 def _read_workspace_document(doc_json_path: Path) -> Optional[dict]:
@@ -588,10 +632,60 @@ def load_libraries() -> dict:
     return _recover_libraries_from_workspace()
 
 
+# ── Write-behind save queue ──────────────────────────────────────────────────
+# save_libraries() serialises state to JSON (fast, done under the caller's lock)
+# then hands the payload to a background daemon thread for the slow I/O
+# (file writes + PocketBase HTTP). This means STATE_LOCK is never held during I/O,
+# so concurrent read requests are never blocked while a document is being indexed.
+
+_SAVE_QUEUE: queue.Queue = queue.Queue()
+_SAVE_SENTINEL = object()  # signals the worker to shut down
+
+
+def _save_worker():
+    """Drain _SAVE_QUEUE, coalesce bursts, then serialize + persist in the
+    background.  json.dumps runs here — NEVER inside STATE_LOCK."""
+    while True:
+        snapshot = _SAVE_QUEUE.get()
+        if snapshot is _SAVE_SENTINEL:
+            break
+        # Drain any additional queued snapshots — keep only the latest
+        try:
+            while True:
+                snapshot = _SAVE_QUEUE.get_nowait()
+        except queue.Empty:
+            pass
+
+        # Serialize outside STATE_LOCK — this is the slow step for large dicts
+        try:
+            payload = json.dumps(snapshot, indent=2, ensure_ascii=False)
+        except Exception as exc:
+            _safe_print(f"[PageIndex API] Failed to serialize libraries: {exc}")
+            continue
+
+        try:
+            _write_json_atomic(LIBRARIES_INDEX, payload)
+            _write_json_atomic(LIBRARIES_BACKUP_INDEX, payload)
+        except Exception as exc:
+            _safe_print(f"[PageIndex API] Failed to write libraries to disk: {exc}")
+        try:
+            get_pb().save_all_libraries(snapshot)
+        except Exception as exc:
+            _safe_print(f"[PageIndex API] PocketBase save_all_libraries failed: {exc}")
+
+
+_save_thread = threading.Thread(target=_save_worker, name="save-worker", daemon=True)
+_save_thread.start()
+
+
 def save_libraries(libs: dict):
-    payload = json.dumps(libs, indent=2, ensure_ascii=False)
-    _write_json_atomic(LIBRARIES_INDEX, payload)
-    _write_json_atomic(LIBRARIES_BACKUP_INDEX, payload)
+    """Enqueue a shallow snapshot of the libraries dict for background
+    persistence.  Must be called while STATE_LOCK is held so the snapshot is
+    internally consistent.  Returns immediately — no I/O or serialization
+    happens on the calling thread."""
+    # Shallow-copy so the worker has a stable reference even if the caller
+    # mutates LIBRARIES immediately after releasing STATE_LOCK.
+    _SAVE_QUEUE.put({k: v for k, v in libs.items()})
 
 def load_logs() -> list:
     if LOGS_FILE.exists():
@@ -618,6 +712,10 @@ def load_api_keys() -> dict:
 
 def save_api_keys(keys: dict):
     API_KEYS_FILE.write_text(json.dumps(keys, indent=2, ensure_ascii=False), encoding="utf-8")
+    try:
+        get_pb().save_all_api_keys(keys)
+    except Exception as exc:
+        _safe_print(f"[PageIndex API] PocketBase save_all_api_keys failed: {exc}")
 
 
 def _hash_api_key(raw_key: str) -> str:
@@ -717,6 +815,48 @@ STATE_LOCK = threading.RLock()
 SYNC_THREADS: dict[str, threading.Thread] = {}
 FOLDER_MONITOR_THREAD: Optional[threading.Thread] = None
 
+# ────────────────────────────────────────────────────────────────────────────
+# PocketBase log helpers (replace former Valkey helpers)
+# ────────────────────────────────────────────────────────────────────────────
+
+def _pb_push_log_sync(entry: dict) -> None:
+    """Push a query log entry to PocketBase (with disk fallback)."""
+    try:
+        get_pb().push_log(entry)
+    except Exception:
+        with STATE_LOCK:
+            current = load_logs()
+            current.append(entry)
+            save_logs(current)
+
+
+def _pb_get_logs_sync(limit: int = 1000) -> list:
+    """Read recent query logs from PocketBase (with disk fallback)."""
+    try:
+        return get_pb().get_logs(limit)
+    except Exception:
+        return load_logs()[-limit:]
+
+
+def _pb_clear_logs_sync() -> None:
+    """Delete all query log entries."""
+    try:
+        get_pb().clear_logs()
+    except Exception:
+        pass
+    with STATE_LOCK:
+        save_logs([])
+
+
+# PocketBase connection check
+try:
+    if get_pb().is_healthy():
+        _safe_print(f"[PageIndex API] PocketBase connected at {POCKETBASE_URL}")
+    else:
+        _safe_print("[PageIndex API] PocketBase not reachable — using file fallback for logs")
+except Exception as _pb_err:
+    _safe_print(f"[PageIndex API] PocketBase unavailable ({_pb_err}) — using file fallback for logs")
+
 libraries_changed = False
 for library in LIBRARIES.values():
     libraries_changed = _normalize_library_record(library) or libraries_changed
@@ -744,14 +884,22 @@ if API_KEYS:
         save_api_keys(API_KEYS)
 
 def get_client(library_id: str) -> PageIndexClient:
-    if library_id not in CLIENTS:
-        lib_workspace = WORKSPACE_DIR / library_id
-        lib_workspace.mkdir(parents=True, exist_ok=True)
-        CLIENTS[library_id] = PageIndexClient(
-            model=MODEL,
-            workspace=str(lib_workspace),
-        )
-    return CLIENTS[library_id]
+    # Fast path: already exists (no lock needed for a read of CLIENTS)
+    existing = CLIENTS.get(library_id)
+    if existing is not None:
+        return existing
+
+    # Slow path: create outside the lock so mkdir + constructor never block
+    # request handlers waiting for STATE_LOCK.
+    lib_workspace = WORKSPACE_DIR / library_id
+    lib_workspace.mkdir(parents=True, exist_ok=True)
+    new_client = PageIndexClient(model=MODEL, workspace=str(lib_workspace))
+
+    with STATE_LOCK:
+        # Double-check: another thread may have raced us here.
+        if library_id not in CLIENTS:
+            CLIENTS[library_id] = new_client
+        return CLIENTS[library_id]
 
 
 def _create_library_record(
@@ -1137,29 +1285,43 @@ def _build_document_metadata(
 
 
 def _refresh_document_metadata(library_id: str):
+    # Step 1: snapshot under lock (fast — just dict copies)
     with STATE_LOCK:
         library = LIBRARIES.get(library_id)
         if not library:
             return
+        lib_snap = dict(library)
+        lib_snap["documents"] = {k: dict(v) for k, v in library.get("documents", {}).items()}
 
+    # Step 2: compute metadata OUTSIDE the lock (pure CPU — never blocks requests)
+    library_metadata, library_metadata_terms = _build_library_metadata(lib_snap)
+    doc_updates: dict = {}
+    for doc_id, doc_snap in lib_snap["documents"].items():
+        metadata, metadata_terms = _build_document_metadata(lib_snap, doc_snap)
+        doc_updates[doc_id] = (metadata, metadata_terms)
+
+    # Step 3: write back under lock (fast — only dict assignments + enqueue)
+    with STATE_LOCK:
+        library = LIBRARIES.get(library_id)
+        if not library:
+            return
         changed = False
-        library_metadata, library_metadata_terms = _build_library_metadata(library)
         if library.get("metadata") != library_metadata:
             library["metadata"] = library_metadata
             changed = True
         if library.get("metadataTerms") != library_metadata_terms:
             library["metadataTerms"] = library_metadata_terms
             changed = True
-
-        for document in library.get("documents", {}).values():
-            metadata, metadata_terms = _build_document_metadata(library, document)
+        for doc_id, (metadata, metadata_terms) in doc_updates.items():
+            document = library.get("documents", {}).get(doc_id)
+            if document is None:
+                continue
             if document.get("metadata") != metadata:
                 document["metadata"] = metadata
                 changed = True
             if document.get("metadataTerms") != metadata_terms:
                 document["metadataTerms"] = metadata_terms
                 changed = True
-
         if changed:
             save_libraries(LIBRARIES)
 
@@ -1464,15 +1626,35 @@ def _index_document(library_id: str, doc_id: str, file_path: str):
                 _delete_index_workspace_document(client, pageindex_doc_id)
                 return
 
-            if previous_pageindex_doc_id and previous_pageindex_doc_id != pageindex_doc_id:
-                _delete_index_workspace_document(client, previous_pageindex_doc_id)
-
-            metadata, metadata_terms = _build_document_metadata(
-                library,
-                document,
-                indexed_document=indexed_document,
-                structure_nodes=structure_nodes,
+            # Capture the old pageindex doc id and a snapshot for metadata
+            # computation — both of which happen OUTSIDE the lock below.
+            stale_pageindex_doc_id = (
+                previous_pageindex_doc_id
+                if previous_pageindex_doc_id and previous_pageindex_doc_id != pageindex_doc_id
+                else None
             )
+            doc_snap = dict(document)
+            lib_snap = dict(library)
+            lib_snap["documents"] = {k: dict(v) for k, v in library.get("documents", {}).items()}
+
+        # Delete stale index entry and build metadata OUTSIDE the lock so
+        # disk I/O and CPU computation never block concurrent requests.
+        if stale_pageindex_doc_id:
+            _delete_index_workspace_document(client, stale_pageindex_doc_id)
+
+        metadata, metadata_terms = _build_document_metadata(
+            lib_snap,
+            doc_snap,
+            indexed_document=indexed_document,
+            structure_nodes=structure_nodes,
+        )
+
+        with STATE_LOCK:
+            library = LIBRARIES.get(library_id)
+            document = library.get("documents", {}).get(doc_id) if library else None
+            if not library or not document:
+                return
+
             library["total_chunks"] = max(0, library.get("total_chunks", 0) - previous_chunks + chunks)
             document.update({
                 "status": "indexed",
@@ -1492,14 +1674,19 @@ def _index_document(library_id: str, doc_id: str, file_path: str):
 
     except Exception as e:
         _safe_print(f"[PageIndex API] Indexing failed for doc {doc_id}: {e}")
+
+        # Clean up stale index entry OUTSIDE the lock.
+        if previous_pageindex_doc_id:
+            try:
+                _delete_index_workspace_document(get_client(library_id), previous_pageindex_doc_id)
+            except Exception:
+                pass
+
         with STATE_LOCK:
             library = LIBRARIES.get(library_id)
             document = library.get("documents", {}).get(doc_id) if library else None
             if not library or not document:
                 return
-
-            if previous_pageindex_doc_id:
-                _delete_index_workspace_document(get_client(library_id), previous_pageindex_doc_id)
 
             library["total_chunks"] = max(0, library.get("total_chunks", 0) - previous_chunks)
             document["status"] = "error"
@@ -1705,7 +1892,36 @@ def _folder_monitor_loop():
 # FastAPI App
 # ────────────────────────────────────────────────────────────────────────────
 
-app = FastAPI(title="PageIndex RAG API", version="1.0.0")
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    global FOLDER_MONITOR_THREAD
+
+    # Run startup metadata refresh in a background thread so the server is
+    # immediately ready to handle requests rather than blocking until all
+    # library documents have had their metadata recomputed.
+    def _startup_refresh():
+        for library_id in list(LIBRARIES.keys()):
+            _refresh_document_metadata(library_id)
+
+    startup_refresh_thread = threading.Thread(
+        target=_startup_refresh,
+        name="startup-metadata-refresh",
+        daemon=True,
+    )
+    startup_refresh_thread.start()
+
+    if not (FOLDER_MONITOR_THREAD and FOLDER_MONITOR_THREAD.is_alive()):
+        FOLDER_MONITOR_THREAD = threading.Thread(
+            target=_folder_monitor_loop,
+            name="folder-monitor-loop",
+            daemon=True,
+        )
+        FOLDER_MONITOR_THREAD.start()
+
+    yield
+
+
+app = FastAPI(title="PageIndex RAG API", version="1.0.0", lifespan=_lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -1714,22 +1930,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def start_folder_monitor():
-    global FOLDER_MONITOR_THREAD
-    for library_id in list(LIBRARIES.keys()):
-        _refresh_document_metadata(library_id)
-    if FOLDER_MONITOR_THREAD and FOLDER_MONITOR_THREAD.is_alive():
-        return
-
-    FOLDER_MONITOR_THREAD = threading.Thread(
-        target=_folder_monitor_loop,
-        name="folder-monitor-loop",
-        daemon=True,
-    )
-    FOLDER_MONITOR_THREAD.start()
 
 # ────────────── Pydantic models ───────────────
 
@@ -1937,9 +2137,9 @@ def health():
 # ────────────────────────────────────────────────────────────────────────────
 
 @app.get("/api/admin/dashboard")
-def dashboard():
+async def dashboard():
     """Return KPI data for the frontend dashboard widget."""
-    logs = QUERY_LOGS
+    logs = await asyncio.to_thread(_pb_get_logs_sync, QUERY_LOGS_MAX)
     now = time.time()
     now_dt = datetime.fromtimestamp(now, tz=timezone.utc)
 
@@ -2335,6 +2535,9 @@ def delete_library(library_id: str):
             del CLIENTS[library_id]
         save_libraries(LIBRARIES)
 
+    # Explicitly remove from PocketBase (save_all_libraries only upserts)
+    get_pb().delete_library(library_id)
+
     lib_workspace = WORKSPACE_DIR / library_id
     if lib_workspace.exists():
         shutil.rmtree(lib_workspace, ignore_errors=True)
@@ -2343,6 +2546,32 @@ def delete_library(library_id: str):
         shutil.rmtree(uploads_workspace, ignore_errors=True)
     return {"status": "deleted"}
 
+
+@app.delete("/api/libraries", dependencies=[Depends(require_api_key)])
+def delete_all_libraries():
+    """Delete every library and all associated documents."""
+    with STATE_LOCK:
+        library_ids = list(LIBRARIES.keys())
+        LIBRARIES.clear()
+        for lid in library_ids:
+            if lid in CLIENTS:
+                del CLIENTS[lid]
+        save_libraries(LIBRARIES)
+
+    # Explicitly remove each PocketBase record (save_all_libraries only upserts)
+    pb = get_pb()
+    pb.delete_all_libraries()
+
+    for lid in library_ids:
+        lib_workspace = WORKSPACE_DIR / lid
+        if lib_workspace.exists():
+            shutil.rmtree(lib_workspace, ignore_errors=True)
+        uploads_workspace = UPLOADS_DIR / lid
+        if uploads_workspace.exists():
+            shutil.rmtree(uploads_workspace, ignore_errors=True)
+
+    return {"status": "deleted", "count": len(library_ids)}
+
 # ────────────────────────────────────────────────────────────────────────────
 # Document upload & indexing
 # ────────────────────────────────────────────────────────────────────────────
@@ -2350,7 +2579,6 @@ def delete_library(library_id: str):
 @app.post("/api/libraries/{library_id}/documents", dependencies=[Depends(require_api_key)])
 async def upload_document(
     library_id: str,
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
 ):
     """Upload a PDF or Markdown file and index it with PageIndex."""
@@ -2392,8 +2620,14 @@ async def upload_document(
         _refresh_library_sync_status(LIBRARIES[library_id])
         save_libraries(LIBRARIES)
 
-    # Run indexing in background
-    background_tasks.add_task(_index_document, library_id, doc_id, str(file_path))
+    # Kick off indexing in its own daemon thread so it never occupies a slot
+    # in FastAPI's shared thread pool (which would starve request handlers).
+    threading.Thread(
+        target=_index_document,
+        args=(library_id, doc_id, str(file_path)),
+        name=f"index-{doc_id[:8]}",
+        daemon=True,
+    ).start()
 
     return {
         "documentId": doc_id,
@@ -2514,10 +2748,11 @@ def _extract_chat_query(req: ChatRequest) -> str:
 
 
 @app.post("/api/query", dependencies=[Depends(require_api_key_strict)])
-def rag_query(req: QueryRequest):
+async def rag_query(req: QueryRequest):
     """
     Reason-based RAG query using PageIndex.
     Searches indexed documents and returns an answer with source references.
+    All target libraries are queried concurrently via asyncio.gather.
     """
     query = (req.query or "").strip()
     if not query:
@@ -2570,18 +2805,16 @@ def rag_query(req: QueryRequest):
     top_pages = max(1, min(req.top_pages or 3, 6))
     query_terms = _extract_query_terms(query)
     start_ts = time.time()
-    results = []
-    errors = []
 
-    for lib_id in target_ids:
+    async def _query_library(lib_id: str) -> tuple[list, list]:
         lib = LIBRARIES.get(lib_id)
         if not lib:
-            continue
+            return [], []
         if _library_document_metadata_outdated(lib):
-            _refresh_document_metadata(lib_id)
+            await asyncio.to_thread(_refresh_document_metadata, lib_id)
             lib = LIBRARIES.get(lib_id)
             if not lib:
-                continue
+                return [], []
 
         client = get_client(lib_id)
         indexed_docs = {
@@ -2589,9 +2822,8 @@ def rag_query(req: QueryRequest):
             for doc_id, doc in lib.get("documents", {}).items()
             if doc.get("status") == "indexed" and doc.get("pageindexDocId")
         }
-
         if not indexed_docs:
-            continue
+            return [], []
 
         scored_docs = []
         for doc_id, doc in indexed_docs.items():
@@ -2608,23 +2840,19 @@ def rag_query(req: QueryRequest):
         )
 
         docs_with_doc_metadata_hits = [item for item in scored_docs if item[2]["docScore"] > 0]
-        if docs_with_doc_metadata_hits:
-            candidate_docs = docs_with_doc_metadata_hits[:12]
-        else:
-            candidate_docs = scored_docs
+        candidate_docs = docs_with_doc_metadata_hits[:12] if docs_with_doc_metadata_hits else scored_docs
 
+        lib_results: list = []
+        lib_errors: list = []
         for doc_id, doc, scope in candidate_docs:
             pi_doc_id = doc["pageindexDocId"]
             try:
-                # Get document structure (tree index)
-                structure_json = client.get_document_structure(pi_doc_id)
+                structure_json = await asyncio.to_thread(client.get_document_structure, pi_doc_id)
                 structure = json.loads(structure_json)
-
-                # Simple reasoning-based retrieval:
-                # Find the most relevant section titles by inspecting the tree
-                relevant_pages = _find_relevant_pages(structure, query, client, pi_doc_id, top_pages)
-
-                results.append({
+                relevant_pages = await asyncio.to_thread(
+                    _find_relevant_pages, structure, query, client, pi_doc_id, top_pages
+                )
+                lib_results.append({
                     "libraryId": lib_id,
                     "libraryName": lib["name"],
                     "documentId": doc_id,
@@ -2634,7 +2862,25 @@ def rag_query(req: QueryRequest):
                     "pages": relevant_pages,
                 })
             except Exception as e:
-                errors.append({"libraryId": lib_id, "documentId": doc_id, "error": str(e)})
+                lib_errors.append({"libraryId": lib_id, "documentId": doc_id, "error": str(e)})
+
+        return lib_results, lib_errors
+
+    # Fan out to all target libraries concurrently
+    outcomes = await asyncio.gather(
+        *[_query_library(lib_id) for lib_id in target_ids],
+        return_exceptions=True,
+    )
+
+    results: list = []
+    errors: list = []
+    for outcome in outcomes:
+        if isinstance(outcome, Exception):
+            errors.append({"error": str(outcome)})
+        else:
+            lib_results, lib_errors = outcome
+            results.extend(lib_results)
+            errors.extend(lib_errors)
 
     latency_ms = int((time.time() - start_ts) * 1000)
     status = "success" if results else ("error" if errors else "warning")
@@ -2642,7 +2888,6 @@ def rag_query(req: QueryRequest):
     answer = _compose_answer(query, sources)
     trace = _build_trace(results)
 
-    # Log the query
     primary_lib_id = target_ids[0] if target_ids else ""
     primary_lib_name = LIBRARIES.get(primary_lib_id, {}).get("name", "") if primary_lib_id else ""
     log_entry = {
@@ -2655,8 +2900,7 @@ def rag_query(req: QueryRequest):
         "ts": start_ts,
         "result_count": len(sources) or len(results),
     }
-    QUERY_LOGS.append(log_entry)
-    save_logs(QUERY_LOGS)
+    await asyncio.to_thread(_pb_push_log_sync, log_entry)
 
     return {
         "query": query,
@@ -2672,7 +2916,7 @@ def rag_query(req: QueryRequest):
 
 
 @app.post("/api/chat", dependencies=[Depends(require_api_key_strict)])
-def rag_chat(req: ChatRequest):
+async def rag_chat(req: ChatRequest):
     query_text = _extract_chat_query(req)
     if not query_text:
         raise HTTPException(
@@ -2680,7 +2924,7 @@ def rag_chat(req: ChatRequest):
             detail="Chat payload must include `query`, `message`, `prompt`, or a user message in `messages`.",
         )
 
-    query_result = rag_query(
+    query_result = await rag_query(
         QueryRequest(
             query=query_text,
             library_ids=req.library_ids,
@@ -2915,10 +3159,11 @@ def _compose_answer(query: str, sources: list) -> str:
 # ────────────────────────────────────────────────────────────────────────────
 
 @app.get("/api/logs")
-def get_logs(limit: int = 100):
-    logs = sorted(QUERY_LOGS, key=lambda x: -x.get("ts", 0))[:limit]
+async def get_logs(limit: int = 100):
+    all_logs = await asyncio.to_thread(_pb_get_logs_sync, QUERY_LOGS_MAX)
+    logs = sorted(all_logs, key=lambda x: -x.get("ts", 0))[:limit]
     query_counts = {}
-    for entry in QUERY_LOGS:
+    for entry in all_logs:
         normalized_query = str(entry.get("query", "")).strip().lower()
         if not normalized_query:
             continue
@@ -2940,10 +3185,8 @@ def get_logs(limit: int = 100):
     ]
 
 @app.delete("/api/logs")
-def clear_logs():
-    global QUERY_LOGS
-    QUERY_LOGS.clear()
-    save_logs(QUERY_LOGS)
+async def clear_logs():
+    await asyncio.to_thread(_pb_clear_logs_sync)
     return {"status": "cleared"}
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -3103,4 +3346,4 @@ async def restore_backup(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api_server:app", host="0.0.0.0", port=7777)
+    uvicorn.run("api_server:app", host="0.0.0.0", port=7777, workers=1)

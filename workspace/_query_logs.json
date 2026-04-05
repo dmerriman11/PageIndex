@@ -1,52 +1,22 @@
 [
   {
-    "id": "c1ec6564-2d8c-4df4-ae04-edbf65728683",
-    "query": "A veteran is looking to purchase a manufactured home in Arizona. According to the 2025 PennyMac VA Manufactured Home product profile, what are the specific requirements for the 'Engineered Foundation' and the minimum credit score (FICO) required for a high-balance loan?",
-    "library_id": "0b5df7dc-eb6f-404b-9ac5-cec9297ef5e2",
-    "library_name": "VA",
-    "latency_ms": 10,
-    "status": "success",
-    "ts": 1775343226.170678,
-    "result_count": 12
-  },
-  {
-    "id": "2a831890-5e71-42b4-a54d-88595c2b85b1",
-    "query": "A veteran is looking to purchase a manufactured home in Arizona. According to the 2025 PennyMac VA Manufactured Home product profile, what are the specific requirements for the 'Engineered Foundation' and the minimum credit score (FICO) required for a high-balance loan?",
-    "library_id": "e52d72ad-152f-41ea-8497-f8b19878d472",
-    "library_name": "PennyMac",
-    "latency_ms": 28,
-    "status": "success",
-    "ts": 1775343226.1700625,
-    "result_count": 12
-  },
-  {
-    "id": "1234e2d7-7fa3-4384-bff2-8c0acb921bd5",
-    "query": "tell me the program that PennyMac offers for borrowers with a credit score of 620",
-    "library_id": "e52d72ad-152f-41ea-8497-f8b19878d472",
-    "library_name": "PennyMac",
-    "latency_ms": 101,
-    "status": "success",
-    "ts": 1775349044.8273275,
-    "result_count": 12
-  },
-  {
-    "id": "6dcd8175-9340-4b64-8b08-137033d089c8",
-    "query": "tell me the program that Penny Mac offers for borrowers with a credit score of 620",
-    "library_id": "e52d72ad-152f-41ea-8497-f8b19878d472",
-    "library_name": "PennyMac",
-    "latency_ms": 27,
-    "status": "success",
-    "ts": 1775350308.7386954,
-    "result_count": 12
-  },
-  {
-    "id": "8a2288a8-76ba-43e4-ac2a-4456d6026eb1",
+    "id": "58cd84dc-883b-4997-8d81-50234f992baf",
     "query": "tell me the program that Penny offers for borrowers with a credit score of 620",
-    "library_id": "e52d72ad-152f-41ea-8497-f8b19878d472",
+    "library_id": "fe823637-baa5-4ab2-8ed6-5791de3a2266",
     "library_name": "PennyMac",
-    "latency_ms": 2,
+    "latency_ms": 19,
     "status": "success",
-    "ts": 1775350325.3727863,
+    "ts": 1775411476.7975686,
+    "result_count": 12
+  },
+  {
+    "id": "70188e4d-67da-475c-b1fd-a041df89eac1",
+    "query": "What is the program details for AMerihome IRRRL",
+    "library_id": "41d4db46-9f7c-4a09-957e-a6209089bfb3",
+    "library_name": "Amerihome",
+    "latency_ms": 22,
+    "status": "success",
+    "ts": 1775411532.4274018,
     "result_count": 12
   }
 ]

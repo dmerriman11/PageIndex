@@ -6,3 +6,5 @@ pycryptodome==3.23.0
 python-dotenv==1.1.0
 pyyaml==6.0.2
 extract-msg>=0.48.0
+requests>=2.31.0
+uvicorn[standard]>=0.34.0

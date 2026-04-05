@@ -25,6 +25,6 @@ echo [INFO] Starting PageIndex API on http://localhost:7777
 echo [INFO] API docs available at http://localhost:7777/docs
 echo.
 
-:: Activate venv and start server
+:: Activate venv and start server with 16 workers
 call venv\Scripts\activate
-python api_server.py
+uvicorn api_server:app --host 0.0.0.0 --port 7777 --workers 16
