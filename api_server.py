@@ -3208,7 +3208,19 @@ def _build_sources(results: list, query: str) -> list:
         ),
         reverse=True,
     )
-    return sources[:12]
+    trimmed = sources[:12]
+
+    # Normalize raw scores → 0.0–1.0 confidence
+    if trimmed:
+        max_score = max(s.get("score", 0) for s in trimmed)
+        for s in trimmed:
+            raw = s.get("score", 0)
+            if max_score > 0:
+                s["confidence"] = round(raw / max_score, 3)
+            else:
+                s["confidence"] = 0.0
+
+    return trimmed
 
 
 def _build_trace(results: list) -> list:
