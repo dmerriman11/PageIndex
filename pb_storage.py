@@ -219,7 +219,7 @@ class PBClient:
     def get_logs(self, limit: int = 1000) -> list:
         records = self.list_records(
             "query_logs",
-            sort="-ts,-created",
+            sort="-ts",
             per_page=min(limit, 500),
         )
         logs: list = []

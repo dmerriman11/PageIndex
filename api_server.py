@@ -39,6 +39,7 @@ import ipaddress
 import queue
 import threading
 import asyncio
+import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
@@ -47,7 +48,7 @@ from typing import Optional, List
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Depends, Header, Request
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -815,6 +816,16 @@ STATE_LOCK = threading.RLock()
 SYNC_THREADS: dict[str, threading.Thread] = {}
 FOLDER_MONITOR_THREAD: Optional[threading.Thread] = None
 
+# ISO timestamp of last PocketBase VACUUM/optimize run.
+_OPTIMIZE_TS_FILE = WORKSPACE_DIR / "_last_optimized.txt"
+def _load_last_optimized() -> Optional[str]:
+    try:
+        ts = _OPTIMIZE_TS_FILE.read_text(encoding="utf-8").strip()
+        return ts if ts else None
+    except Exception:
+        return None
+_LAST_OPTIMIZED_AT: Optional[str] = _load_last_optimized()
+
 # ────────────────────────────────────────────────────────────────────────────
 # PocketBase log helpers (replace former Valkey helpers)
 # ────────────────────────────────────────────────────────────────────────────
@@ -823,7 +834,8 @@ def _pb_push_log_sync(entry: dict) -> None:
     """Push a query log entry to PocketBase (with disk fallback)."""
     try:
         get_pb().push_log(entry)
-    except Exception:
+    except Exception as exc:
+        _safe_print(f"[PageIndex API] PocketBase push_log failed ({exc}) — falling back to disk")
         with STATE_LOCK:
             current = load_logs()
             current.append(entry)
@@ -834,7 +846,8 @@ def _pb_get_logs_sync(limit: int = 1000) -> list:
     """Read recent query logs from PocketBase (with disk fallback)."""
     try:
         return get_pb().get_logs(limit)
-    except Exception:
+    except Exception as exc:
+        _safe_print(f"[PageIndex API] PocketBase get_logs failed ({exc}) — falling back to disk")
         return load_logs()[-limit:]
 
 
@@ -1715,6 +1728,7 @@ def _upsert_monitored_document(library_id: str, doc_id: str, source_descriptor: 
             "filePath": str(managed_path),
             "fileSize": source_descriptor["fileSize"],
             "status": "indexing",
+            "indexingStartedAt": _utcnow_iso(),
             "uploadedAt": document.get("uploadedAt") or _utcnow_iso(),
             "sourceType": "folder",
             "sourcePath": source_descriptor["sourcePath"],
@@ -2137,9 +2151,15 @@ def health():
 # ────────────────────────────────────────────────────────────────────────────
 
 @app.get("/api/admin/dashboard")
-async def dashboard():
-    """Return KPI data for the frontend dashboard widget."""
-    logs = await asyncio.to_thread(_pb_get_logs_sync, QUERY_LOGS_MAX)
+def dashboard():
+    """Return KPI data for the frontend dashboard widget.
+
+    This is a sync ``def`` on purpose: it contains blocking disk I/O
+    (``os.walk``, ``stat``) and CPU log crunching.  FastAPI automatically
+    runs sync handlers in its thread-pool, which keeps the async event
+    loop free for concurrent request processing.
+    """
+    logs = _pb_get_logs_sync(QUERY_LOGS_MAX)
     now = time.time()
     now_dt = datetime.fromtimestamp(now, tz=timezone.utc)
 
@@ -2225,6 +2245,20 @@ async def dashboard():
             status = doc.get("status")
             if status != "indexing":
                 continue
+            # Estimate progress from elapsed time + file size.
+            # Cap at 90% so the bar never reaches 100% until truly done.
+            progress: Optional[int] = None
+            started_at_str = doc.get("indexingStartedAt") or doc.get("uploadedAt")
+            if started_at_str:
+                try:
+                    started_dt = datetime.fromisoformat(started_at_str)
+                    elapsed_s = max(0, (datetime.now(timezone.utc) - started_dt).total_seconds())
+                    file_size = doc.get("fileSize") or 0
+                    # Rough estimate: ~30s per MB, min 30s, max 300s
+                    estimated_s = max(30.0, min(300.0, 30.0 + (file_size / (1024 * 1024)) * 30.0))
+                    progress = min(90, max(5, int((elapsed_s / estimated_s) * 100)))
+                except Exception:
+                    pass
             queue_items.append(
                 {
                     "id": doc_id,
@@ -2232,17 +2266,22 @@ async def dashboard():
                     "libraryName": library.get("name", "Unknown library"),
                     "fileName": doc.get("fileName", "Untitled"),
                     "status": "processing",
-                    "progress": None,
+                    "progress": progress,
                 }
             )
 
     used_bytes = 0
     try:
-        for root, _, files in os.walk(UPLOADS_DIR):
-            for file_name in files:
-                file_path = Path(root) / file_name
-                if file_path.exists():
-                    used_bytes += file_path.stat().st_size
+        for scan_dir in (WORKSPACE_DIR, Path(__file__).parent / "pb_data"):
+            if not scan_dir.exists():
+                continue
+            for root, _, files in os.walk(scan_dir):
+                for file_name in files:
+                    file_path = Path(root) / file_name
+                    try:
+                        used_bytes += file_path.stat().st_size
+                    except OSError:
+                        pass
     except Exception:
         used_bytes = 0
 
@@ -2266,9 +2305,72 @@ async def dashboard():
         "storage": {
             "usedBytes": used_bytes,
             "limitBytes": max(1, limit_bytes),
-            "lastOptimizedAt": None,
+            "lastOptimizedAt": _LAST_OPTIMIZED_AT,
             "optimizeRecommended": optimize_recommended,
         },
+    }
+
+
+@app.post("/api/admin/storage/optimize")
+def optimize_storage():
+    """VACUUM the PocketBase SQLite databases and recalculate used bytes.
+
+    Sync ``def`` so SQLite VACUUM and os.walk run in the thread pool,
+    not on the async event loop.
+    """
+    global _LAST_OPTIMIZED_AT
+
+    pb_data_dir = Path(__file__).parent / "pb_data"
+    db_files = [pb_data_dir / "data.db", pb_data_dir / "auxiliary.db"]
+
+    bytes_before = 0
+    bytes_after = 0
+
+    for db_path in db_files:
+        if not db_path.exists():
+            continue
+        try:
+            bytes_before += db_path.stat().st_size
+            # VACUUM rewrites the database file in-place, reclaiming deleted pages.
+            conn = sqlite3.connect(str(db_path))
+            try:
+                conn.execute("VACUUM")
+                conn.commit()
+            finally:
+                conn.close()
+            bytes_after += db_path.stat().st_size
+        except Exception as exc:
+            _safe_print(f"[PageIndex API] VACUUM failed for {db_path.name}: {exc}")
+
+    freed_bytes = max(0, bytes_before - bytes_after)
+
+    # Recalculate total storage usage (same dirs as dashboard)
+    used_bytes = 0
+    try:
+        for scan_dir in (WORKSPACE_DIR, pb_data_dir):
+            if not scan_dir.exists():
+                continue
+            for root, _, files in os.walk(scan_dir):
+                for file_name in files:
+                    fp = Path(root) / file_name
+                    try:
+                        used_bytes += fp.stat().st_size
+                    except OSError:
+                        pass
+    except Exception:
+        pass
+
+    _LAST_OPTIMIZED_AT = _utcnow_iso()
+    try:
+        _OPTIMIZE_TS_FILE.write_text(_LAST_OPTIMIZED_AT, encoding="utf-8")
+    except Exception:
+        pass
+
+    return {
+        "success": True,
+        "freedBytes": freed_bytes,
+        "usedBytes": used_bytes,
+        "lastOptimizedAt": _LAST_OPTIMIZED_AT,
     }
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -2594,11 +2696,11 @@ async def upload_document(
     # Save uploaded file
     doc_id = str(uuid.uuid4())
     upload_path = UPLOADS_DIR / library_id
-    upload_path.mkdir(parents=True, exist_ok=True)
+    await asyncio.to_thread(upload_path.mkdir, parents=True, exist_ok=True)
     file_path = upload_path / f"{doc_id}{ext}"
 
     content = await file.read()
-    file_path.write_bytes(content)
+    await asyncio.to_thread(file_path.write_bytes, content)
 
     # Register the document as "indexing" immediately
     with STATE_LOCK:
@@ -2608,6 +2710,7 @@ async def upload_document(
             "filePath": str(file_path),
             "fileSize": len(content),
             "status": "indexing",
+            "indexingStartedAt": _utcnow_iso(),
             "uploadedAt": _utcnow_iso(),
             "sourceType": "upload",
             "sourcePath": None,
