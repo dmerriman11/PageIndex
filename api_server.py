@@ -18,9 +18,12 @@ Endpoints:
     GET    /api/libraries/{library_id}/documents/{doc_id}/download  — download source document
   POST   /api/query                      — RAG query across one or more libraries
   GET    /api/health                     — health check
-  GET    /api/admin/dashboard            — dashboard KPI data (for the UI)
   GET    /api/logs                       — query log history
   DELETE /api/logs                       — clear logs
+  GET    /api/backups                    — list available backups
+  POST   /api/backups                    — create a manual backup
+  GET    /api/backups/{backup_id}/download — download a backup archive
+  DELETE /api/backups/{backup_id}        — delete a backup
 """
 
 import os
@@ -62,6 +65,9 @@ LOGS_FILE = WORKSPACE_DIR / "_query_logs.json"
 API_KEYS_FILE = WORKSPACE_DIR / "_api_keys.json"
 UPLOADS_DIR = WORKSPACE_DIR / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+BACKUPS_DIR = WORKSPACE_DIR / "_backups"
+BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+BACKUP_RETENTION_DAYS = 7
 SUPPORTED_SOURCE_EXTENSIONS = {".pdf", ".md", ".markdown", ".eml", ".msg"}
 DEFAULT_FOLDER_POLLING_INTERVAL_MINUTES = 5
 ALLOWED_FOLDER_POLLING_INTERVAL_MINUTES = {1, 5, 10, 60}
@@ -2939,6 +2945,157 @@ def clear_logs():
     QUERY_LOGS.clear()
     save_logs(QUERY_LOGS)
     return {"status": "cleared"}
+
+# ────────────────────────────────────────────────────────────────────────────
+# Backups
+# ────────────────────────────────────────────────────────────────────────────
+
+def _create_backup(label: str = "manual") -> dict:
+    """Create a zip snapshot of _libraries.json and _query_logs.json."""
+    ts = datetime.now(tz=timezone.utc)
+    backup_id = ts.strftime("%Y%m%d_%H%M%S") + f"_{label}"
+    zip_path = BACKUPS_DIR / f"{backup_id}.zip"
+
+    import zipfile
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        if LIBRARIES_INDEX.exists():
+            zf.write(LIBRARIES_INDEX, "_libraries.json")
+        if LOGS_FILE.exists():
+            zf.write(LOGS_FILE, "_query_logs.json")
+        if API_KEYS_FILE.exists():
+            zf.write(API_KEYS_FILE, "_api_keys.json")
+
+    size_bytes = zip_path.stat().st_size
+    return {
+        "id": backup_id,
+        "label": label,
+        "createdAt": ts.isoformat(),
+        "sizeBytes": size_bytes,
+    }
+
+
+def _prune_old_backups():
+    """Delete backups older than BACKUP_RETENTION_DAYS, keeping at least the newest one."""
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=BACKUP_RETENTION_DAYS)
+    backups = sorted(BACKUPS_DIR.glob("*.zip"), key=lambda p: p.stat().st_mtime)
+    # Always keep the newest backup regardless of age
+    for backup in backups[:-1]:
+        try:
+            mtime = datetime.fromtimestamp(backup.stat().st_mtime, tz=timezone.utc)
+            if mtime < cutoff:
+                backup.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
+def _backup_scheduler():
+    """Run a nightly backup at 02:00 local time in a background thread."""
+    import calendar
+    while True:
+        now = datetime.now()
+        # Next 02:00
+        next_run = now.replace(hour=2, minute=0, second=0, microsecond=0)
+        if next_run <= now:
+            next_run = next_run + timedelta(days=1)
+        sleep_seconds = (next_run - now).total_seconds()
+        time.sleep(sleep_seconds)
+        try:
+            _create_backup("nightly")
+            _prune_old_backups()
+        except Exception as exc:
+            _safe_print(f"[PageIndex API] Nightly backup failed: {exc}")
+
+
+_backup_thread = threading.Thread(target=_backup_scheduler, daemon=True, name="backup-scheduler")
+_backup_thread.start()
+
+
+def _list_backups() -> list:
+    items = []
+    for zip_path in sorted(BACKUPS_DIR.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True):
+        backup_id = zip_path.stem
+        try:
+            mtime = datetime.fromtimestamp(zip_path.stat().st_mtime, tz=timezone.utc).isoformat()
+            size = zip_path.stat().st_size
+        except Exception:
+            continue
+        # Derive label from id suffix (e.g. "20260404_020000_nightly" -> "nightly")
+        parts = backup_id.split("_", 2)
+        label = parts[2] if len(parts) > 2 else "manual"
+        items.append({"id": backup_id, "label": label, "createdAt": mtime, "sizeBytes": size})
+    return items
+
+
+@app.get("/api/backups")
+def list_backups():
+    return _list_backups()
+
+
+@app.post("/api/backups")
+def create_backup():
+    backup = _create_backup("manual")
+    return backup
+
+
+@app.get("/api/backups/{backup_id}/download")
+def download_backup(backup_id: str):
+    # Sanitise: only allow alphanumeric, underscores, hyphens
+    if not re.match(r'^[a-zA-Z0-9_\-]+$', backup_id):
+        raise HTTPException(status_code=400, detail="Invalid backup id.")
+    zip_path = BACKUPS_DIR / f"{backup_id}.zip"
+    if not zip_path.exists():
+        raise HTTPException(status_code=404, detail="Backup not found.")
+    return FileResponse(
+        path=str(zip_path),
+        media_type="application/zip",
+        filename=f"{backup_id}.zip",
+    )
+
+
+@app.delete("/api/backups/{backup_id}")
+def delete_backup(backup_id: str):
+    if not re.match(r'^[a-zA-Z0-9_\-]+$', backup_id):
+        raise HTTPException(status_code=400, detail="Invalid backup id.")
+    zip_path = BACKUPS_DIR / f"{backup_id}.zip"
+    if not zip_path.exists():
+        raise HTTPException(status_code=404, detail="Backup not found.")
+    zip_path.unlink()
+    return {"status": "deleted", "id": backup_id}
+
+
+@app.post("/api/backups/restore")
+async def restore_backup(file: UploadFile = File(...)):
+    """Restore workspace data from an uploaded backup zip archive."""
+    if not (file.filename or "").lower().endswith(".zip"):
+        raise HTTPException(status_code=400, detail="File must be a .zip archive.")
+
+    _ALLOWED = {"_libraries.json", "_query_logs.json", "_api_keys.json"}
+
+    import tempfile
+    tmp_path = Path(tempfile.mktemp(suffix=".zip"))
+    try:
+        content = await file.read()
+        tmp_path.write_bytes(content)
+
+        import zipfile as _zipfile
+        try:
+            with _zipfile.ZipFile(tmp_path, "r") as zf:
+                names = set(zf.namelist())
+                if "_libraries.json" not in names:
+                    raise HTTPException(status_code=422, detail="Archive does not contain _libraries.json.")
+                # Only extract explicitly allowed filenames — prevents path traversal
+                restored = []
+                for name in names:
+                    if name in _ALLOWED:
+                        zf.extract(name, WORKSPACE_DIR)
+                        restored.append(name)
+        except _zipfile.BadZipFile:
+            raise HTTPException(status_code=422, detail="Uploaded file is not a valid zip archive.")
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    return {"status": "restored", "files": restored}
+
 
 # ────────────────────────────────────────────────────────────────────────────
 # Entry point
