@@ -264,6 +264,23 @@ def _merge_library_tags(*tag_lists: Optional[List[str]], extra_tags: Optional[Li
     return merged
 
 
+def _normalize_library_keywords(values: Optional[List[str]], limit: int = 80) -> list[str]:
+    cleaned = []
+    seen_lower = set()
+
+    for value in values or []:
+        if not isinstance(value, str):
+            continue
+        normalized = re.sub(r"\s+", " ", value.replace("_", " ").strip(" -_.,"))
+        lowered = normalized.lower()
+        if not normalized or lowered in seen_lower:
+            continue
+        seen_lower.add(lowered)
+        cleaned.append(normalized)
+
+    return cleaned[:limit]
+
+
 def _normalize_document_tags(values: Optional[List[str]]) -> list[str]:
     cleaned = []
     seen_lower = set()
@@ -325,6 +342,11 @@ def _normalize_library_metadata_record(library: dict) -> bool:
 
     if "metadataTerms" not in library or not isinstance(library.get("metadataTerms"), list):
         library["metadataTerms"] = []
+        changed = True
+
+    normalized_keywords = _normalize_library_keywords(library.get("keywords"))
+    if library.get("keywords") != normalized_keywords:
+        library["keywords"] = normalized_keywords
         changed = True
 
     return changed
@@ -586,6 +608,7 @@ def _recover_libraries_from_workspace() -> dict:
             "description": library_description or "Recovered from PageIndex workspace",
             "group": {"name": group_name or "Recovered", "slug": _slugify_group(group_name or "Recovered")},
             "tags": library_tags,
+            "keywords": [],
             "documents": documents,
             "total_chunks": total_chunks,
             "syncStatus": "synced",
@@ -921,6 +944,7 @@ def _create_library_record(
     description: str = "",
     group: str = "Default",
     tags: Optional[List[str]] = None,
+    keywords: Optional[List[str]] = None,
     folder_path: str = "",
     folder_monitor_enabled: bool = False,
     polling_interval_minutes: Optional[int] = None,
@@ -936,7 +960,8 @@ def _create_library_record(
         "name": name.strip(),
         "description": description,
         "group": {"name": group, "slug": _slugify_group(group or "Default")},
-        "tags": tags or [],
+        "tags": _merge_library_tags(tags),
+        "keywords": _normalize_library_keywords(keywords),
         "documents": {},
         "total_chunks": 0,
         "syncStatus": "pending" if folder_monitor["enabled"] and folder_monitor["folderPath"] else "synced",
@@ -1343,12 +1368,14 @@ def _build_library_metadata(library: dict) -> tuple[dict, list[str]]:
     group_name = str(library.get("group", {}).get("name", "")).strip()
     folder_path = str(library.get("folderMonitor", {}).get("folderPath", "")).strip()
     tags = [str(tag).strip() for tag in library.get("tags", []) if str(tag).strip()]
+    keywords = _normalize_library_keywords(library.get("keywords"))
 
     metadata = {
         "libraryName": str(library.get("name", "")).strip(),
         "libraryDescription": str(library.get("description", "")).strip(),
         "libraryGroup": group_name,
         "libraryTags": tags,
+        "keywords": keywords,
         "folderPath": folder_path,
     }
 
@@ -1359,11 +1386,11 @@ def _build_library_metadata(library: dict) -> tuple[dict, list[str]]:
         metadata["libraryGroup"],
         metadata["folderPath"],
         *tags,
+        *keywords,
     ]:
         keyword_terms.extend(_extract_terms_from_value(value))
 
     metadata_terms = _dedupe_preserve_order(keyword_terms)
-    metadata["keywords"] = metadata_terms[:80]
     return metadata, metadata_terms[:120]
 
 
@@ -1952,6 +1979,7 @@ class CreateLibraryRequest(BaseModel):
     description: Optional[str] = ""
     group: Optional[str] = "Default"
     tags: Optional[List[str]] = []
+    keywords: Optional[List[str]] = []
     folderPath: Optional[str] = ""
     folderMonitorEnabled: Optional[bool] = False
     pollingIntervalMinutes: Optional[int] = DEFAULT_FOLDER_POLLING_INTERVAL_MINUTES
@@ -1961,6 +1989,7 @@ class UpdateLibraryRequest(BaseModel):
     description: Optional[str] = None
     group: Optional[str] = None
     tags: Optional[List[str]] = None
+    keywords: Optional[List[str]] = None
     folderPath: Optional[str] = None
     folderMonitorEnabled: Optional[bool] = None
     pollingIntervalMinutes: Optional[int] = None
@@ -2425,6 +2454,7 @@ def create_library(req: CreateLibraryRequest):
         description=req.description or "",
         group=req.group or "Default",
         tags=req.tags or [],
+        keywords=req.keywords or [],
         folder_path=req.folderPath or "",
         folder_monitor_enabled=bool(req.folderMonitorEnabled),
         polling_interval_minutes=req.pollingIntervalMinutes,
@@ -2553,7 +2583,10 @@ def update_library(library_id: str, req: UpdateLibraryRequest):
             lib["group"] = {"name": group_name, "slug": _slugify_group(group_name)}
             metadata_needs_refresh = True
         if req.tags is not None:
-            lib["tags"] = req.tags
+            lib["tags"] = _merge_library_tags(req.tags)
+            metadata_needs_refresh = True
+        if req.keywords is not None:
+            lib["keywords"] = _normalize_library_keywords(req.keywords)
             metadata_needs_refresh = True
 
         monitor = lib.setdefault("folderMonitor", _default_folder_monitor())
