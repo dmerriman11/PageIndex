@@ -8,6 +8,11 @@ Endpoints:
   GET    /api/keys                       — list API keys (admin scope)
   POST   /api/keys                       — create API key (admin scope)
   DELETE /api/keys/{key_id}              — revoke API key (admin scope)
+  GET    /api/settings/ai                — AI settings: indexing mode/model + provider status (admin)
+  PATCH  /api/settings/ai                — update indexing mode/model (admin)
+  GET    /api/settings/ai/models         — live model lists from configured providers (admin)
+  PUT    /api/settings/ai/providers/{p}  — save + validate a provider API key (admin)
+  DELETE /api/settings/ai/providers/{p}  — remove a UI-saved provider API key (admin)
   POST   /api/chat                       — chat-compatible alias for RAG query
   POST   /api/libraries                  — create a library (group of documents)
   GET    /api/libraries                  — list all libraries
@@ -58,6 +63,9 @@ from pydantic import BaseModel, Field
 sys.path.insert(0, str(Path(__file__).parent))
 from pageindex import PageIndexClient
 from workspace_io import write_json_atomic as _write_json_atomic
+from app_settings import AppSettings
+from model_catalog import ModelCatalog
+from settings_api import create_ai_settings_router
 
 # ────────────────────────────────────────────────────────────────────────────
 # Configuration
@@ -135,41 +143,12 @@ TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY = (
     os.getenv("TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY", "false").strip().lower() in {"1", "true", "yes", "on"}
 )
 
-# Determine which model to use
-# Priority: MODEL env var -> GEMINI_API_KEY -> ANTHROPIC_API_KEY -> OPENAI_API_KEY (default)
-def _normalize_model_name(model: str) -> str:
-    """
-    LiteLLM expects provider-qualified model names for several model families.
-    Normalize plain model names to OpenAI when no provider prefix is supplied.
-    """
-    value = (model or "").strip()
-    if not value:
-        return value
-
-    # Already provider-qualified (e.g. openai/..., gemini/..., anthropic/...)
-    if "/" in value:
-        return value
-
-    # Bare OpenAI model names -> make provider explicit
-    # Examples: gpt-5.4-mini-2026-03-17, gpt-4o-2024-11-20, o4-mini
-    if value.startswith(("gpt-", "o1", "o3", "o4", "text-embedding-")):
-        return f"openai/{value}"
-
-    return value
-
-
-def get_model():
-    if os.getenv("MODEL"):
-        return _normalize_model_name(os.getenv("MODEL"))
-    if os.getenv("GEMINI_API_KEY"):
-        return "gemini/gemini-2.0-flash"
-    if os.getenv("ANTHROPIC_API_KEY"):
-        return "anthropic/claude-3-5-sonnet-20241022"
-    return "openai/gpt-5.4-mini-2026-03-17"  # default OpenAI
-
-MODEL = get_model()
-PROCESSING_MODE = "local"
-print(f"[PageIndex API] Processing mode: {PROCESSING_MODE}")
+# Admin-managed AI settings: provider keys (encrypted) and indexing mode/model.
+# A MODEL value in .env only seeds the initial indexing model.
+APP_SETTINGS = AppSettings(WORKSPACE_DIR / "_settings.json", Path(__file__).parent / ".env")
+MODEL_CATALOG = ModelCatalog()
+_initial_mode, _initial_model = APP_SETTINGS.get_indexing()
+print(f"[PageIndex API] Indexing mode: {_initial_mode} (model: {_initial_model or 'none'})")
 
 # ────────────────────────────────────────────────────────────────────────────
 # PocketBase storage
@@ -891,7 +870,7 @@ def get_client(library_id: str) -> PageIndexClient:
     # request handlers waiting for STATE_LOCK.
     lib_workspace = WORKSPACE_DIR / library_id
     lib_workspace.mkdir(parents=True, exist_ok=True)
-    new_client = PageIndexClient(model=MODEL, workspace=str(lib_workspace))
+    new_client = PageIndexClient(workspace=str(lib_workspace), settings_provider=APP_SETTINGS.get_indexing)
 
     with STATE_LOCK:
         # Double-check: another thread may have raced us here.
@@ -1666,8 +1645,12 @@ def _index_document(library_id: str, doc_id: str, file_path: str):
                 "indexedAt": _utcnow_iso(),
                 "metadata": metadata,
                 "metadataTerms": metadata_terms,
+                "indexedBy": indexed_document.get("indexed_by", "local"),
+                "indexFallbackReason": indexed_document.get("index_fallback_reason"),
             })
             document.pop("error", None)
+            if not document.get("indexFallbackReason"):
+                document.pop("indexFallbackReason", None)
             library["lastSyncedAt"] = _utcnow_iso()
             _refresh_library_sync_status(library)
             save_libraries(LIBRARIES)
@@ -2071,6 +2054,9 @@ def require_admin_api_key(
     return key
 
 
+app.include_router(create_ai_settings_router(APP_SETTINGS, MODEL_CATALOG, require_admin_api_key))
+
+
 # ────────────────────────────────────────────────────────────────────────────
 # API Keys
 # ────────────────────────────────────────────────────────────────────────────
@@ -2129,10 +2115,12 @@ def revoke_api_key(key_id: str):
 
 @app.get("/api/health")
 def health():
+    indexing_mode, indexing_model = APP_SETTINGS.get_indexing()
     return {
         "status": "ok",
-        "processingMode": PROCESSING_MODE,
-        "model": MODEL,
+        "indexingMode": indexing_mode,
+        "indexingModel": indexing_model,
+        "model": indexing_model,
         "library_count": len(LIBRARIES),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
