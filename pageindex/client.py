@@ -1,13 +1,23 @@
 import os
+import re
 import uuid
 import json
 from pathlib import Path
+from typing import Callable, Optional
 
+from .llm_index import LLM_INDEXABLE_EXTENSIONS, index_document_with_llm
 from .local_index import index_local_document
 from .retrieve import get_document, get_document_structure, get_page_content
 from .utils import ConfigLoader, remove_fields
 
 META_INDEX = "_meta.json"
+
+_SECRET_PATTERN = re.compile(r"(sk-[A-Za-z0-9_\-\*]{4,}|AIza[A-Za-z0-9_\-]{8,})")
+
+
+def _fallback_reason(exc: Exception) -> str:
+    """Short, key-free description of why LLM indexing failed."""
+    return _SECRET_PATTERN.sub("[redacted]", f"{type(exc).__name__}: {exc}")[:200]
 
 
 def _normalize_retrieve_model(model: str) -> str:
@@ -27,12 +37,16 @@ class PageIndexClient:
 
     For agent-based QA, see examples/agentic_vectorless_rag_demo.py.
     """
-    def __init__(self, api_key: str = None, model: str = None, retrieve_model: str = None, workspace: str = None):
+    def __init__(self, api_key: str = None, model: str = None, retrieve_model: str = None, workspace: str = None,
+                 settings_provider: Optional[Callable[[], tuple[str, Optional[str]]]] = None):
         if api_key:
             os.environ["OPENAI_API_KEY"] = api_key
         elif not os.getenv("OPENAI_API_KEY") and os.getenv("CHATGPT_API_KEY"):
             os.environ["OPENAI_API_KEY"] = os.getenv("CHATGPT_API_KEY")
         self.workspace = Path(workspace).expanduser() if workspace else None
+        # Returns (indexing_mode, indexing_model); read per index() call so
+        # settings changes apply without rebuilding the client.
+        self._settings_provider = settings_provider
         overrides = {}
         if model:
             overrides["model"] = model
@@ -59,8 +73,8 @@ class PageIndexClient:
         if mode not in {"auto", "pdf", "md"}:
             raise ValueError(f"Unsupported indexing mode: {mode}")
 
-        print(f"Indexing locally: {file_path}")
-        document = index_local_document(file_path, metadata=metadata)
+        print(f"Indexing: {file_path}")
+        document = self._build_document(file_path, metadata)
         document["id"] = doc_id
         self.documents[doc_id] = document
 
@@ -68,6 +82,25 @@ class PageIndexClient:
         if self.workspace:
             self._save_doc(doc_id)
         return doc_id
+
+    def _build_document(self, file_path: str, metadata: dict | None) -> dict:
+        mode, model = self._settings_provider() if self._settings_provider else ("local", None)
+        extension = os.path.splitext(file_path)[1].lower()
+        if mode == "llm" and model and extension in LLM_INDEXABLE_EXTENSIONS:
+            try:
+                document = index_document_with_llm(file_path, model, metadata)
+                document["indexed_by"] = f"llm:{model}"
+                return document
+            except Exception as exc:
+                reason = _fallback_reason(exc)
+                print(f"LLM indexing failed, using local parser instead: {reason}")
+                document = index_local_document(file_path, metadata=metadata)
+                document["indexed_by"] = "local-fallback"
+                document["index_fallback_reason"] = reason
+                return document
+        document = index_local_document(file_path, metadata=metadata)
+        document["indexed_by"] = "local"
+        return document
 
     @staticmethod
     def _make_meta_entry(doc: dict) -> dict:
@@ -83,6 +116,10 @@ class PageIndexClient:
             entry['page_count'] = doc.get('page_count')
         elif doc.get('type') == 'md':
             entry['line_count'] = doc.get('line_count')
+        if doc.get('indexed_by'):
+            entry['indexed_by'] = doc['indexed_by']
+        if doc.get('index_fallback_reason'):
+            entry['index_fallback_reason'] = doc['index_fallback_reason']
         return entry
 
     @staticmethod
