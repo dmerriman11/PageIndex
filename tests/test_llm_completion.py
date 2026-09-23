@@ -66,3 +66,52 @@ def test_completion_passes_request_timeout(monkeypatch):
     monkeypatch.setattr(utils.litellm, "completion", fake)
     utils.llm_completion("openai/gpt-x", "hi")
     assert calls[0]["timeout"] == utils.LLM_REQUEST_TIMEOUT_SECONDS
+
+
+def temperature_rejected():
+    return litellm.BadRequestError(
+        message="Unsupported value: 'temperature' does not support 0 with this model. Only the default (1) value is supported.",
+        llm_provider="openai",
+        model="gpt-x",
+    )
+
+
+def test_retries_without_temperature_when_the_model_rejects_it(monkeypatch):
+    calls = []
+
+    def completion(**kwargs):
+        calls.append(kwargs)
+        if "temperature" in kwargs:
+            raise temperature_rejected()
+        return fake_response("ok")
+
+    monkeypatch.setattr(utils.litellm, "completion", completion)
+    assert utils.llm_completion("openai/gpt-x", "hi") == "ok"
+    assert [("temperature" in call) for call in calls] == [True, False]
+
+
+def test_async_retries_without_temperature_when_the_model_rejects_it(monkeypatch):
+    calls = []
+
+    async def acompletion(**kwargs):
+        calls.append(kwargs)
+        if "temperature" in kwargs:
+            raise temperature_rejected()
+        return fake_response("ok")
+
+    monkeypatch.setattr(utils.litellm, "acompletion", acompletion)
+    assert asyncio.run(utils.llm_acompletion("openai/gpt-x", "hi")) == "ok"
+    assert [("temperature" in call) for call in calls] == [True, False]
+
+
+def test_other_bad_requests_still_raise_immediately(monkeypatch):
+    calls = []
+
+    def completion(**kwargs):
+        calls.append(kwargs)
+        raise litellm.BadRequestError(message="context length exceeded", llm_provider="openai", model="gpt-x")
+
+    monkeypatch.setattr(utils.litellm, "completion", completion)
+    with pytest.raises(litellm.BadRequestError):
+        utils.llm_completion("openai/gpt-x", "hi")
+    assert len(calls) == 1

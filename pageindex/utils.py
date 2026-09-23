@@ -36,6 +36,11 @@ NON_RETRYABLE_LLM_ERRORS = (
 # document "indexing" indefinitely.
 LLM_REQUEST_TIMEOUT_SECONDS = 120
 
+def _rejects_temperature(exc):
+    """Some models (e.g. newer OpenAI reasoning models) only accept the default temperature."""
+    return isinstance(exc, litellm.BadRequestError) and "temperature" in str(exc).lower()
+
+
 def count_tokens(text, model=None):
     if not text:
         return 0
@@ -47,14 +52,16 @@ def llm_completion(model, prompt, chat_history=None, return_finish_reason=False)
         model = model.removeprefix("litellm/")
     max_retries = 10
     messages = list(chat_history) + [{"role": "user", "content": prompt}] if chat_history else [{"role": "user", "content": prompt}]
+    request = {"model": model, "messages": messages, "temperature": 0, "timeout": LLM_REQUEST_TIMEOUT_SECONDS}
     for i in range(max_retries):
         try:
-            response = litellm.completion(
-                model=model,
-                messages=messages,
-                temperature=0,
-                timeout=LLM_REQUEST_TIMEOUT_SECONDS,
-            )
+            try:
+                response = litellm.completion(**request)
+            except NON_RETRYABLE_LLM_ERRORS as exc:
+                if not (_rejects_temperature(exc) and "temperature" in request):
+                    raise
+                request.pop("temperature")
+                response = litellm.completion(**request)
             content = response.choices[0].message.content
             if return_finish_reason:
                 finish_reason = "max_output_reached" if response.choices[0].finish_reason == "length" else "finished"
@@ -80,14 +87,16 @@ async def llm_acompletion(model, prompt):
         model = model.removeprefix("litellm/")
     max_retries = 10
     messages = [{"role": "user", "content": prompt}]
+    request = {"model": model, "messages": messages, "temperature": 0, "timeout": LLM_REQUEST_TIMEOUT_SECONDS}
     for i in range(max_retries):
         try:
-            response = await litellm.acompletion(
-                model=model,
-                messages=messages,
-                temperature=0,
-                timeout=LLM_REQUEST_TIMEOUT_SECONDS,
-            )
+            try:
+                response = await litellm.acompletion(**request)
+            except NON_RETRYABLE_LLM_ERRORS as exc:
+                if not (_rejects_temperature(exc) and "temperature" in request):
+                    raise
+                request.pop("temperature")
+                response = await litellm.acompletion(**request)
             return response.choices[0].message.content
         except NON_RETRYABLE_LLM_ERRORS:
             raise
