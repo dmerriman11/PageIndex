@@ -65,6 +65,7 @@ from pageindex import PageIndexClient
 from workspace_io import write_json_atomic as _write_json_atomic
 from retrieval_text import build_excerpt as _build_text_excerpt, page_content_to_text
 from answer_synthesis import synthesize_answer
+from ranking import email_scope_factor, named_library_terms
 from pageindex.utils import llm_completion
 from app_settings import AppSettings
 from model_catalog import ModelCatalog
@@ -2927,6 +2928,7 @@ async def rag_query(req: QueryRequest):
 
     top_pages = max(1, min(req.top_pages or 3, 6))
     query_terms = _extract_query_terms(query)
+    named_terms = named_library_terms(LIBRARIES, _extract_terms_from_value)
     start_ts = time.time()
 
     async def _query_library(lib_id: str) -> tuple[list, list]:
@@ -2951,6 +2953,12 @@ async def rag_query(req: QueryRequest):
         scored_docs = []
         for doc_id, doc in indexed_docs.items():
             scope = _score_document_scope(lib, doc, query, query_terms)
+            doc_terms = set(_extract_terms_from_value(" ".join(
+                [doc.get("fileName", "")] + list(scope["metadata"].get("keywords", [])[:40])
+            )))
+            factor = email_scope_factor(doc.get("fileName", ""), doc_terms, query_terms, named_terms)
+            if factor != 1.0:
+                scope = {**scope, "score": scope["score"] * factor, "docScore": scope["docScore"] * factor}
             scored_docs.append((doc_id, doc, scope))
 
         scored_docs.sort(

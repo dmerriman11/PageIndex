@@ -59,3 +59,10 @@ def test_synthesize_parses_the_model_reply():
     assert synthesize_answer("max DTI?", PASSAGES, lambda prompt: reply) == {
         "found": True, "answer": "Chase allows up to 50% DTI [2].", "citations": [2],
     }
+
+
+def test_prompt_asks_for_partial_answers_instead_of_all_or_nothing():
+    prompt = build_answer_prompt("Compare A and B", PASSAGES).lower()
+
+    assert "answer the part" in prompt
+    assert "only when none of the passages" in prompt
