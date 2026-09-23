@@ -40,6 +40,7 @@ import queue
 import threading
 import asyncio
 import sqlite3
+import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
@@ -130,7 +131,7 @@ API_KEY_PREFIX = "pk_live_"
 DEFAULT_API_KEY_RATE_LIMIT = 120
 ALLOWED_API_KEY_PERMISSIONS = {"query", "admin"}
 TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY = (
-    os.getenv("TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY", "true").strip().lower() in {"1", "true", "yes", "on"}
+    os.getenv("TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY", "false").strip().lower() in {"1", "true", "yes", "on"}
 )
 
 # Determine which model to use
@@ -2179,7 +2180,7 @@ def health():
 # Dashboard
 # ────────────────────────────────────────────────────────────────────────────
 
-@app.get("/api/admin/dashboard")
+@app.get("/api/admin/dashboard", dependencies=[Depends(require_admin_api_key)])
 def dashboard():
     """Return KPI data for the frontend dashboard widget.
 
@@ -2340,7 +2341,7 @@ def dashboard():
     }
 
 
-@app.post("/api/admin/storage/optimize")
+@app.post("/api/admin/storage/optimize", dependencies=[Depends(require_admin_api_key)])
 def optimize_storage():
     """VACUUM the PocketBase SQLite databases and recalculate used bytes.
 
@@ -3306,7 +3307,7 @@ def _compose_answer(query: str, sources: list) -> str:
 # Query Logs
 # ────────────────────────────────────────────────────────────────────────────
 
-@app.get("/api/logs")
+@app.get("/api/logs", dependencies=[Depends(require_admin_api_key)])
 async def get_logs(limit: int = 100):
     all_logs = await asyncio.to_thread(_pb_get_logs_sync, QUERY_LOGS_MAX)
     logs = sorted(all_logs, key=lambda x: -x.get("ts", 0))[:limit]
@@ -3332,7 +3333,7 @@ async def get_logs(limit: int = 100):
         for l in logs
     ]
 
-@app.delete("/api/logs")
+@app.delete("/api/logs", dependencies=[Depends(require_admin_api_key)])
 async def clear_logs():
     await asyncio.to_thread(_pb_clear_logs_sync)
     return {"status": "cleared"}
@@ -3417,18 +3418,18 @@ def _list_backups() -> list:
     return items
 
 
-@app.get("/api/backups")
+@app.get("/api/backups", dependencies=[Depends(require_admin_api_key)])
 def list_backups():
     return _list_backups()
 
 
-@app.post("/api/backups")
+@app.post("/api/backups", dependencies=[Depends(require_admin_api_key)])
 def create_backup():
     backup = _create_backup("manual")
     return backup
 
 
-@app.get("/api/backups/{backup_id}/download")
+@app.get("/api/backups/{backup_id}/download", dependencies=[Depends(require_admin_api_key)])
 def download_backup(backup_id: str):
     # Sanitise: only allow alphanumeric, underscores, hyphens
     if not re.match(r'^[a-zA-Z0-9_\-]+$', backup_id):
@@ -3443,7 +3444,7 @@ def download_backup(backup_id: str):
     )
 
 
-@app.delete("/api/backups/{backup_id}")
+@app.delete("/api/backups/{backup_id}", dependencies=[Depends(require_admin_api_key)])
 def delete_backup(backup_id: str):
     if not re.match(r'^[a-zA-Z0-9_\-]+$', backup_id):
         raise HTTPException(status_code=400, detail="Invalid backup id.")
@@ -3454,7 +3455,7 @@ def delete_backup(backup_id: str):
     return {"status": "deleted", "id": backup_id}
 
 
-@app.post("/api/backups/restore")
+@app.post("/api/backups/restore", dependencies=[Depends(require_admin_api_key)])
 async def restore_backup(file: UploadFile = File(...)):
     """Restore workspace data from an uploaded backup zip archive."""
     if not (file.filename or "").lower().endswith(".zip"):
@@ -3462,11 +3463,13 @@ async def restore_backup(file: UploadFile = File(...)):
 
     _ALLOWED = {"_libraries.json", "_query_logs.json", "_api_keys.json"}
 
-    import tempfile
-    tmp_path = Path(tempfile.mktemp(suffix=".zip"))
+    fd, raw_tmp_path = tempfile.mkstemp(suffix=".zip")
+    tmp_path = Path(raw_tmp_path)
     try:
         content = await file.read()
-        tmp_path.write_bytes(content)
+        with os.fdopen(fd, "wb") as tmp_file:
+            tmp_file.write(content)
+        fd = -1
 
         import zipfile as _zipfile
         try:
@@ -3483,6 +3486,8 @@ async def restore_backup(file: UploadFile = File(...)):
         except _zipfile.BadZipFile:
             raise HTTPException(status_code=422, detail="Uploaded file is not a valid zip archive.")
     finally:
+        if fd != -1:
+            os.close(fd)
         tmp_path.unlink(missing_ok=True)
 
     return {"status": "restored", "files": restored}
