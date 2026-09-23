@@ -70,6 +70,7 @@ from answer_synthesis import synthesize_answer
 from ranking import blended_source_score, email_scope_factor, named_library_terms, term_coverage
 from ranking import field_terms as _field_terms
 from synonyms import expand_terms
+from reranker import CrossEncoderReranker, build_passage, get_reranker
 from pageindex.utils import llm_completion
 from app_settings import AppSettings
 from model_catalog import ModelCatalog
@@ -3739,7 +3740,11 @@ async def rag_query(req: QueryRequest):
             errors.extend(lib_errors)
 
     status = "success" if results else ("error" if errors else "warning")
-    sources = _build_sources(results, query)
+    reranker = get_reranker()
+    if reranker is None:
+        sources, reranker_info = _build_sources(results, query)
+    else:  # CPU-bound model scoring: keep it off the event loop
+        sources, reranker_info = await asyncio.to_thread(_build_sources, results, query, reranker)
     answer, answer_info = await _answer_query(query, sources, results)
     trace = _build_trace(results)
     latency_ms = int((time.time() - start_ts) * 1000)
@@ -3769,6 +3774,7 @@ async def rag_query(req: QueryRequest):
         "latencyMs": latency_ms,
         "status": status,
         **answer_info,
+        **reranker_info,
     }
 
 
@@ -3965,8 +3971,19 @@ def _build_excerpt(content: str, query: str, max_chars: int = 320, skip: tuple =
     return _build_text_excerpt(content, _extract_query_terms(query), max_chars=max_chars, skip=skip)
 
 
-def _build_sources(results: list, query: str) -> list:
-    sources = []
+MAX_SOURCES = 12
+
+
+def _build_sources(
+    results: list, query: str, reranker: Optional[CrossEncoderReranker] = None
+) -> tuple[list, dict]:
+    """Rank every retrieved (document, section) pair and keep the top MAX_SOURCES.
+
+    With a re-ranker (PAGEINDEX_RERANKER=bge), the head of the keyword ranking is re-ordered
+    by fusing it with a cross-encoder's ranking; `score` then holds the fused score. The
+    second return value holds the response fields describing the re-ranking.
+    """
+    candidates = []  # (source, page)
 
     for result in results:
         for page in result.get("pages", []):
@@ -3975,7 +3992,7 @@ def _build_sources(results: list, query: str) -> list:
                 query,
                 skip=(result.get("fileName", ""), page.get("title", "")),
             )
-            sources.append({
+            candidates.append(({
                 "libraryId": result.get("libraryId", ""),
                 "libraryName": result.get("libraryName", ""),
                 "documentId": result.get("documentId", ""),
@@ -3989,16 +4006,38 @@ def _build_sources(results: list, query: str) -> list:
                 "score": blended_source_score(
                     result.get("metadataScore", 0), page.get("coverage", 0.0), page.get("score", 0)
                 ),
-            })
+            }, page))
 
-    sources.sort(
+    candidates.sort(
         key=lambda item: (
-            item.get("score", 0),
-            len(item.get("excerpt", "")),
+            item[0].get("score", 0),
+            len(item[0].get("excerpt", "")),
         ),
         reverse=True,
     )
-    trimmed = sources[:12]
+
+    reranker_info: dict = {}
+    if reranker is not None and candidates:
+        query_terms = _extract_query_terms(query)
+        started = time.perf_counter()
+        outcome = reranker.rerank(
+            query,
+            candidates,
+            lambda item: build_passage(item[1].get("title", ""), item[1].get("content", ""), query_terms),
+        )
+        reranker_ms = int((time.perf_counter() - started) * 1000)
+        if outcome.applied:
+            candidates = outcome.items
+            # The shortlist (20) is longer than MAX_SOURCES, so every kept source has a fused score.
+            for (source, _), fused, score in zip(candidates, outcome.fused, outcome.scores):
+                source["baselineScore"] = source["score"]
+                source["rerankerScore"] = round(score, 4)
+                source["score"] = round(fused, 6)
+            reranker_info = {"reranker": "bge", "rerankerMs": reranker_ms}
+        else:
+            reranker_info = {"rerankerFallback": True}
+
+    trimmed = [source for source, _ in candidates[:MAX_SOURCES]]
 
     # Normalize raw scores → 0.0–1.0 confidence
     if trimmed:
@@ -4010,7 +4049,7 @@ def _build_sources(results: list, query: str) -> list:
             else:
                 s["confidence"] = 0.0
 
-    return trimmed
+    return trimmed, reranker_info
 
 
 def _build_trace(results: list) -> list:

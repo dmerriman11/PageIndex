@@ -18,3 +18,5 @@ pb_migrations
 # Local workspace archives (can be GB-sized; never commit)
 workspace.zip
 venv/
+# Local model weights (e.g. the optional BGE re-ranker, ~280 MB) - never committed.
+/models/
