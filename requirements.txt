@@ -13,3 +13,9 @@ uvicorn[standard]>=0.34.0
 fastapi>=0.135.0
 cryptography>=46.0.0
 httpx>=0.28.0
+
+# optional: local re-ranker (PAGEINDEX_RERANKER=bge). The engine runs without these;
+# it then skips re-ranking. Model files go in models/bge-reranker-base/ (not committed).
+onnxruntime==1.30.0
+numpy>=2.0
+tokenizers>=0.22
