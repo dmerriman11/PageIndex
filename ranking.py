@@ -42,3 +42,27 @@ def email_scope_factor(
     if not anchors or anchors & doc_terms:
         return 1.0
     return EMAIL_DEMOTION
+
+
+def field_terms(value: str, extract_terms: Callable[[str], list[str]]) -> set[str]:
+    """Terms of a metadata field, plus adjacent pairs joined ("New Rez" also yields "newrez")."""
+    tokens = extract_terms(value or "")
+    return set(tokens) | {first + second for first, second in zip(tokens, tokens[1:])}
+
+
+def term_coverage(text: str, query_terms: Iterable[str]) -> float:
+    """Share of distinct query terms that appear in the text (substring match, like _score_text)."""
+    unique = list(dict.fromkeys(query_terms))
+    if not unique:
+        return 0.0
+    lowered = (text or "").lower()
+    return sum(1 for term in unique if term in lowered) / len(unique)
+
+
+def blended_source_score(metadata_score: float, coverage: float, section_score: float) -> float:
+    """Rank a retrieved section by its document match, scaled by how much of the query its text covers.
+
+    Document metadata (file name, keywords) used to dominate on its own, so a document whose
+    title matched outranked the one whose section actually answered the question.
+    """
+    return metadata_score * (0.5 + 0.5 * coverage) + section_score

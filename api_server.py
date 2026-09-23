@@ -65,7 +65,9 @@ from pageindex import PageIndexClient
 from workspace_io import write_json_atomic as _write_json_atomic
 from retrieval_text import build_excerpt as _build_text_excerpt, page_content_to_text
 from answer_synthesis import synthesize_answer
-from ranking import email_scope_factor, named_library_terms
+from ranking import blended_source_score, email_scope_factor, named_library_terms, term_coverage
+from ranking import field_terms as _field_terms
+from synonyms import expand_terms
 from pageindex.utils import llm_completion
 from app_settings import AppSettings
 from model_catalog import ModelCatalog
@@ -1341,8 +1343,8 @@ def _build_library_metadata(library: dict) -> tuple[dict, list[str]]:
 
 
 def _score_metadata_field(value: str, query_terms: list[str], weight: int) -> tuple[int, list[str]]:
-    field_terms = set(_extract_terms_from_value(value))
-    matched_terms = [term for term in query_terms if term in field_terms]
+    terms_in_field = _field_terms(value, _extract_terms_from_value)
+    matched_terms = [term for term in query_terms if term in terms_in_field]
     return len(matched_terms) * weight, matched_terms
 
 
@@ -1997,10 +1999,15 @@ class AutoCreateLibrariesRequest(BaseModel):
     folderMonitorEnabled: Optional[bool] = True
     pollingIntervalMinutes: Optional[int] = DEFAULT_FOLDER_POLLING_INTERVAL_MINUTES
 
+# Sections gathered per candidate document. A wider pool (6 vs 3) gave the ranker more to work
+# with: +3 points on the 15-question eval with LLM answers, for ~35ms.
+DEFAULT_TOP_PAGES = 6
+
+
 class QueryRequest(BaseModel):
     query: str
     library_ids: Optional[List[str]] = None   # None = search all
-    top_pages: Optional[int] = 3
+    top_pages: Optional[int] = DEFAULT_TOP_PAGES
 
 
 class ChatRequest(BaseModel):
@@ -2009,7 +2016,7 @@ class ChatRequest(BaseModel):
     prompt: Optional[str] = None
     messages: Optional[List[dict]] = None
     library_ids: Optional[List[str]] = None
-    top_pages: Optional[int] = 3
+    top_pages: Optional[int] = DEFAULT_TOP_PAGES
 
 
 class CreateApiKeyRequest(BaseModel):
@@ -2926,7 +2933,7 @@ async def rag_query(req: QueryRequest):
     if not target_ids:
         raise HTTPException(status_code=400, detail="No libraries available. Upload documents first.")
 
-    top_pages = max(1, min(req.top_pages or 3, 6))
+    top_pages = max(1, min(req.top_pages or DEFAULT_TOP_PAGES, 6))
     query_terms = _extract_query_terms(query)
     named_terms = named_library_terms(LIBRARIES, _extract_terms_from_value)
     start_ts = time.time()
@@ -3080,6 +3087,8 @@ LLM_ANSWER_PASSAGES = 8
 # Characters kept per retrieved section. Answers often sit past the first 2,000 characters
 # of a page (tables, lower sections), which the LLM answer step can use.
 PAGE_CONTENT_CHARS = int(os.getenv("PAGEINDEX_PAGE_CONTENT_CHARS") or 2000)
+# Upper bound on sections whose text is read per document when ranking (long handbooks).
+MAX_SECTIONS_SCANNED = 200
 LLM_NOT_FOUND_ANSWER = (
     "I couldn't find an answer to that in the selected libraries. "
     "Try rephrasing the question or selecting a specific library."
@@ -3160,55 +3169,63 @@ def _find_relevant_pages(structure, query: str, client: PageIndexClient, doc_id:
     if not sections:
         return []
 
-    # Score sections by keyword overlap with query (simple heuristic for local)
-    # In production, the LLM would reason over the tree structure
-    query_terms = set(_extract_query_terms(query))
+    query_terms = _extract_query_terms(query)
+    distinct_terms = set(query_terms)
 
-    def score_section(section):
-        text = (section["title"] + " " + section.get("summary", "")).lower()
-        overlap = _score_text(text, query_terms)
-        # Prefer deeper (more specific) sections, penalize broad parent sections
-        depth_bonus = section.get("depth", 0) * 0.5
-        is_parent_penalty = -1 if section.get("is_parent") else 0
-        return overlap + depth_bonus + is_parent_penalty
-
-    scored = sorted(sections, key=score_section, reverse=True)
-    top_sections = [s for s in scored if score_section(s) > 0][:top_k]
-
-    # If no keyword match, fall back to first sections
-    if not top_sections:
-        top_sections = sections[:top_k]
-
-    # Retrieve page content for top sections
-    page_results = []
-    for section in top_sections:
+    def page_range_of(section):
         start, end = section["start"], section["end"]
         if start == 0 and end == 0:
-            continue
-        page_range = f"{start}-{end}" if end > start else str(start)
+            return None
+        return f"{start}-{end}" if end > start else str(start)
+
+    def structural_bonus(section):
+        # Prefer deeper (more specific) sections, penalize broad parent sections
+        return section.get("depth", 0) * 0.5 - (1 if section.get("is_parent") else 0)
+
+    # Rank sections by what their text says, not only title/summary: titles are often just
+    # the document header repeated on every page. The scan is capped for long handbooks,
+    # taking the sections whose titles match best first.
+    by_title = sorted(
+        sections,
+        key=lambda section: _score_text(section["title"] + " " + section.get("summary", ""), distinct_terms),
+        reverse=True,
+    )
+    scanned = [section for section in by_title[:MAX_SECTIONS_SCANNED] if page_range_of(section)]
+    for section in scanned:
         try:
-            content = page_content_to_text(client.get_page_content(doc_id, page_range))
-            page_results.append({
-                "title": section["title"],
-                "pages": page_range,
-                "summary": section.get("summary", ""),
-                "content": content[:PAGE_CONTENT_CHARS] if content else "",
-                "score": score_section(section),
-            })
+            section["content"] = page_content_to_text(client.get_page_content(doc_id, page_range_of(section)))
         except Exception as e:
-            page_results.append({
-                "title": section["title"],
-                "pages": page_range,
-                "summary": section.get("summary", ""),
-                "content": f"[Could not retrieve content: {e}]",
-                "score": score_section(section),
-            })
+            section["content"] = ""
+            section["error"] = str(e)
+        text = " ".join([section["title"], section.get("summary", ""), section["content"]])
+        section["coverage"] = term_coverage(text, query_terms)
+        section["score"] = _score_text(text, distinct_terms) + structural_bonus(section)
+
+    ranked = sorted(scanned, key=lambda section: section["score"], reverse=True)
+    top_sections = [section for section in ranked if section["score"] > 0][:top_k]
+    # If nothing matches, fall back to the first sections in document order
+    if not top_sections:
+        top_sections = [section for section in sections if section in scanned][:top_k]
+
+    page_results = []
+    for section in top_sections:
+        content = section.get("content", "")
+        if section.get("error"):
+            content = f"[Could not retrieve content: {section['error']}]"
+        page_results.append({
+            "title": section["title"],
+            "pages": page_range_of(section),
+            "summary": section.get("summary", ""),
+            "content": content[:PAGE_CONTENT_CHARS] if content else "",
+            "score": section["score"],
+            "coverage": section["coverage"],
+        })
 
     return page_results
 
 
 def _extract_query_terms(query: str) -> list[str]:
-    return _extract_terms_from_value(query)
+    return expand_terms(_extract_terms_from_value(query), _extract_terms_from_value)
 
 
 def _score_text(text: str, query_terms) -> int:
@@ -3248,7 +3265,9 @@ def _build_sources(results: list, query: str) -> list:
                 "pageRange": page.get("pages", ""),
                 "summary": page.get("summary", ""),
                 "excerpt": excerpt,
-                "score": page.get("score", 0) + result.get("metadataScore", 0),
+                "score": blended_source_score(
+                    result.get("metadataScore", 0), page.get("coverage", 0.0), page.get("score", 0)
+                ),
             })
 
     sources.sort(

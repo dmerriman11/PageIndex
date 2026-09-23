@@ -1,6 +1,14 @@
 import re
 
-from ranking import EMAIL_DEMOTION, email_scope_factor, is_email_document, named_library_terms
+from ranking import (
+    EMAIL_DEMOTION,
+    blended_source_score,
+    email_scope_factor,
+    field_terms,
+    is_email_document,
+    named_library_terms,
+    term_coverage,
+)
 
 
 def terms(text):
@@ -72,3 +80,28 @@ def test_non_email_documents_are_never_demoted():
     )
 
     assert factor == 1.0
+
+
+def test_field_terms_also_match_names_split_across_two_words():
+    assert "newrez" in field_terms("New Rez VA Refinance 3.26.26.pdf", terms)
+    assert {"new", "rez", "va", "refinance"} <= field_terms("New Rez VA Refinance 3.26.26.pdf", terms)
+
+
+def test_term_coverage_counts_distinct_query_terms_found_in_the_text():
+    text = "Principal Residence LTV / CLTV Minimum Credit Score 580"
+
+    assert term_coverage(text, ["minimum", "credit", "score", "amerihome"]) == 0.75
+    assert term_coverage(text, ["credit", "credit"]) == 1.0
+    assert term_coverage(text, []) == 0.0
+
+
+def test_blended_score_lets_section_content_decide_between_similar_documents():
+    # Same document-level match; the section that actually contains the query terms wins.
+    answering = blended_source_score(metadata_score=95, coverage=1.0, section_score=2.5)
+    generic = blended_source_score(metadata_score=113, coverage=0.4, section_score=1.0)
+
+    assert answering > generic
+
+
+def test_blended_score_keeps_half_the_document_score_when_the_section_matches_nothing():
+    assert blended_source_score(metadata_score=100, coverage=0.0, section_score=0) == 50
