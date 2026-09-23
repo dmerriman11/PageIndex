@@ -182,17 +182,21 @@ def _read_pdf_pages_with_pymupdf(path: str) -> list[dict]:
     return pages
 
 
+def read_pdf_pages(path: str) -> list[dict]:
+    """Per-page text, falling back to PyMuPDF for AES-encrypted or unusual PDFs."""
+    try:
+        return _read_pdf_pages_with_pypdf2(path)
+    except Exception:
+        return _read_pdf_pages_with_pymupdf(path)
+
+
 def index_local_document(file_path: str, metadata: dict | None = None) -> dict:
     resolved_path = os.path.abspath(os.path.expanduser(file_path))
     extension = Path(resolved_path).suffix.lower()
     metadata = metadata or {}
 
     if extension == ".pdf":
-        try:
-            pages = _read_pdf_pages_with_pypdf2(resolved_path)
-        except Exception:
-            # Fallback for AES-encrypted PDFs and parser-specific incompatibilities.
-            pages = _read_pdf_pages_with_pymupdf(resolved_path)
+        pages = read_pdf_pages(resolved_path)
 
         first_text = "\n".join(page["content"] for page in pages[:3] if page["content"])
         return {
