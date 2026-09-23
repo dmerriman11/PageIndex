@@ -54,3 +54,15 @@ def test_async_auth_error_raises_immediately(monkeypatch):
     with pytest.raises(litellm.AuthenticationError):
         asyncio.run(utils.llm_acompletion("openai/gpt-x", "hi"))
     assert len(calls) == 1
+
+
+def test_completion_passes_request_timeout(monkeypatch):
+    calls = []
+
+    def fake(**kwargs):
+        calls.append(kwargs)
+        return fake_response("ok")
+
+    monkeypatch.setattr(utils.litellm, "completion", fake)
+    utils.llm_completion("openai/gpt-x", "hi")
+    assert calls[0]["timeout"] == utils.LLM_REQUEST_TIMEOUT_SECONDS

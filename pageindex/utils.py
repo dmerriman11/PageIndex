@@ -32,6 +32,10 @@ NON_RETRYABLE_LLM_ERRORS = (
     litellm.PermissionDeniedError,
 )
 
+# Cap how long a single LLM call can hang so a stuck provider can't leave a
+# document "indexing" indefinitely.
+LLM_REQUEST_TIMEOUT_SECONDS = 120
+
 def count_tokens(text, model=None):
     if not text:
         return 0
@@ -49,6 +53,7 @@ def llm_completion(model, prompt, chat_history=None, return_finish_reason=False)
                 model=model,
                 messages=messages,
                 temperature=0,
+                timeout=LLM_REQUEST_TIMEOUT_SECONDS,
             )
             content = response.choices[0].message.content
             if return_finish_reason:
@@ -81,6 +86,7 @@ async def llm_acompletion(model, prompt):
                 model=model,
                 messages=messages,
                 temperature=0,
+                timeout=LLM_REQUEST_TIMEOUT_SECONDS,
             )
             return response.choices[0].message.content
         except NON_RETRYABLE_LLM_ERRORS:

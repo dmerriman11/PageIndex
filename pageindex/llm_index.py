@@ -60,6 +60,19 @@ def add_md_line_ranges(structure: list, line_count: int) -> None:
         node["end_index"] = max(start, end)
 
 
+def _promote_prefix_summaries(structure: list) -> None:
+    """Fill missing `summary` from `prefix_summary` so the query scorer (which
+    only reads `summary`) doesn't lose parent-section summaries in Markdown mode."""
+
+    def walk(nodes):
+        for node in nodes:
+            if not node.get("summary") and node.get("prefix_summary"):
+                node["summary"] = node["prefix_summary"]
+            walk(node.get("nodes") or [])
+
+    walk(structure)
+
+
 def index_document_with_llm(file_path: str, model: str, metadata: dict | None = None) -> dict:
     path = Path(file_path)
     extension = path.suffix.lower()
@@ -102,6 +115,7 @@ def index_document_with_llm(file_path: str, model: str, metadata: dict | None = 
         structure = result.get("structure")
         if isinstance(structure, list):
             add_md_line_ranges(structure, line_count)
+            _promote_prefix_summaries(structure)
         validate_structure(structure, max_index=line_count)
         return {
             "type": "md",

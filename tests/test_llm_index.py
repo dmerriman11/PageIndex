@@ -97,6 +97,35 @@ def test_markdown_keeps_text_and_adds_line_ranges(monkeypatch, tmp_path):
     assert doc["structure"][0]["text"] == "# A\n\ntext"
 
 
+def test_markdown_promotes_prefix_summary_to_parent(monkeypatch, tmp_path):
+    md = tmp_path / "notes.md"
+    md.write_text("# A\n\ntext\n# B\n", encoding="utf-8")
+
+    async def fake_md_to_tree(path, **kwargs):
+        return {
+            "doc_name": "notes",
+            "doc_description": "d",
+            "line_count": 5,
+            "structure": [
+                {
+                    "title": "A",
+                    "line_num": 1,
+                    "text": "# A\n\ntext",
+                    "prefix_summary": "Parent summary",
+                    "nodes": [
+                        {"title": "A.1", "line_num": 2, "text": "text", "summary": "Child summary", "nodes": []},
+                    ],
+                },
+                {"title": "B", "line_num": 4, "text": "# B", "nodes": []},
+            ],
+        }
+
+    monkeypatch.setattr(llm_index, "md_to_tree", fake_md_to_tree)
+    doc = index_document_with_llm(str(md), "openai/gpt-5.4")
+    assert doc["structure"][0]["summary"] == "Parent summary"
+    assert doc["structure"][0]["nodes"][0]["summary"] == "Child summary"
+
+
 def test_unsupported_extension_raises(tmp_path):
     with pytest.raises(ValueError):
         index_document_with_llm(str(tmp_path / "mail.eml"), "openai/gpt-5.4")

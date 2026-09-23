@@ -1,5 +1,6 @@
 """Live model lists from LLM provider APIs, filtered to chat-capable models."""
 import hashlib
+import threading
 import time
 from typing import Callable, Optional
 
@@ -43,6 +44,7 @@ class ModelCatalog:
         self._ttl = ttl_seconds
         self._clock = clock
         self._cache: dict[tuple[str, str], tuple[float, list[dict]]] = {}
+        self._lock = threading.Lock()
 
     def list_models(self, provider: str, api_key: str, refresh: bool = False) -> list[dict]:
         fetchers = {"openai": self._fetch_openai, "anthropic": self._fetch_anthropic, "gemini": self._fetch_gemini}
@@ -50,7 +52,8 @@ class ModelCatalog:
             raise ProviderError(f"Unknown provider: {provider}")
 
         cache_key = (provider, hashlib.sha256(api_key.encode()).hexdigest())
-        cached = self._cache.get(cache_key)
+        with self._lock:
+            cached = self._cache.get(cache_key)
         if cached and not refresh and self._clock() - cached[0] < self._ttl:
             return cached[1]
 
@@ -70,7 +73,8 @@ class ModelCatalog:
             raise ProviderError(f"{name} returned an unexpected response.") from None
 
         models.sort(key=lambda model: model["label"].lower())
-        self._cache[cache_key] = (self._clock(), models)
+        with self._lock:
+            self._cache[cache_key] = (self._clock(), models)
         return models
 
     def list_all(self, keys: dict[str, str], refresh: bool = False) -> dict:
@@ -90,8 +94,9 @@ class ModelCatalog:
         self.list_models(provider, api_key, refresh=True)
 
     def invalidate(self, provider: str) -> None:
-        for cache_key in [key for key in self._cache if key[0] == provider]:
-            del self._cache[cache_key]
+        with self._lock:
+            for cache_key in [key for key in self._cache if key[0] == provider]:
+                del self._cache[cache_key]
 
     # ── Provider fetchers ─────────────────────────────────────────────────────
 
