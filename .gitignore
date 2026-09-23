@@ -13,3 +13,6 @@ pb_migrations
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# Local workspace archives (can be GB-sized; never commit)
+workspace.zip
