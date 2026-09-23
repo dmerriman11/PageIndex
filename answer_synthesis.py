@@ -63,9 +63,17 @@ def parse_answer_response(text: Optional[str], passage_count: int) -> Optional[d
 def synthesize_answer(query: str, passages: list[dict], complete: Callable[[str], str]) -> Optional[dict]:
     if not passages:
         return None
-    try:
-        reply = complete(build_answer_prompt(query, passages))
-    except Exception as exc:  # provider/network errors must never break the query endpoint
-        logging.warning("LLM answer step failed: %s", type(exc).__name__)
-        return None
-    return parse_answer_response(reply, len(passages))
+    prompt = build_answer_prompt(query, passages)
+    # Models that only run at their default temperature occasionally return malformed JSON;
+    # one retry recovers almost all of those.
+    for attempt in (1, 2):
+        try:
+            reply = complete(prompt)
+        except Exception as exc:  # provider/network errors must never break the query endpoint
+            logging.warning("LLM answer step failed: %s", type(exc).__name__)
+            return None
+        parsed = parse_answer_response(reply, len(passages))
+        if parsed is not None:
+            return parsed
+        logging.warning("LLM answer step got an unparseable reply (attempt %d of 2)", attempt)
+    return None

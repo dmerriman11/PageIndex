@@ -3111,7 +3111,10 @@ async def _answer_query(query: str, sources: list, results: list) -> tuple[str, 
         for source in sources[:LLM_ANSWER_PASSAGES]
     ]
     verdict = await asyncio.to_thread(
-        synthesize_answer, query, passages, lambda prompt: llm_completion(model, prompt)
+        synthesize_answer,
+        query,
+        passages,
+        lambda prompt: llm_completion(model, prompt, response_format={"type": "json_object"}),
     )
     if verdict is None:
         return _compose_answer(query, sources), {"answerMode": "extractive", "answerFallback": True}

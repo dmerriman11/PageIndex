@@ -47,12 +47,14 @@ def count_tokens(text, model=None):
     return litellm.token_counter(model=model, text=text)
 
 
-def llm_completion(model, prompt, chat_history=None, return_finish_reason=False):
+def llm_completion(model, prompt, chat_history=None, return_finish_reason=False, response_format=None):
     if model:
         model = model.removeprefix("litellm/")
     max_retries = 10
     messages = list(chat_history) + [{"role": "user", "content": prompt}] if chat_history else [{"role": "user", "content": prompt}]
     request = {"model": model, "messages": messages, "temperature": 0, "timeout": LLM_REQUEST_TIMEOUT_SECONDS}
+    if response_format:
+        request["response_format"] = response_format
     for i in range(max_retries):
         try:
             try:

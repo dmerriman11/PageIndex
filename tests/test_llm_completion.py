@@ -115,3 +115,18 @@ def test_other_bad_requests_still_raise_immediately(monkeypatch):
     with pytest.raises(litellm.BadRequestError):
         utils.llm_completion("openai/gpt-x", "hi")
     assert len(calls) == 1
+
+
+def test_completion_passes_response_format_when_requested(monkeypatch):
+    calls = []
+
+    def completion(**kwargs):
+        calls.append(kwargs)
+        return fake_response('{"ok": true}')
+
+    monkeypatch.setattr(utils.litellm, "completion", completion)
+    utils.llm_completion("openai/gpt-x", "hi", response_format={"type": "json_object"})
+    utils.llm_completion("openai/gpt-x", "hi")
+
+    assert calls[0]["response_format"] == {"type": "json_object"}
+    assert "response_format" not in calls[1]

@@ -66,3 +66,28 @@ def test_prompt_asks_for_partial_answers_instead_of_all_or_nothing():
 
     assert "answer the part" in prompt
     assert "only when none of the passages" in prompt
+
+
+def test_synthesize_retries_once_when_the_reply_is_unparseable(caplog):
+    replies = iter(["Sure! The answer is 50%.", json.dumps({"found": True, "answer": "50% [2].", "citations": [2]})])
+
+    result = synthesize_answer("max DTI?", PASSAGES, lambda prompt: next(replies))
+
+    assert result == {"found": True, "answer": "50% [2].", "citations": [2]}
+    assert "unparseable" in caplog.text
+
+
+def test_synthesize_gives_up_after_two_unparseable_replies():
+    calls = []
+
+    def completion(prompt):
+        calls.append(prompt)
+        return "not json"
+
+    assert synthesize_answer("max DTI?", PASSAGES, completion) is None
+    assert len(calls) == 2
+
+
+def test_answer_prompt_says_json_so_providers_accept_json_mode():
+    # OpenAI's JSON mode requires the word "JSON" in the prompt.
+    assert "json" in build_answer_prompt("q", PASSAGES).lower()
