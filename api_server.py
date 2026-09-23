@@ -66,6 +66,7 @@ from workspace_io import write_json_atomic as _write_json_atomic
 from app_settings import AppSettings
 from model_catalog import ModelCatalog
 from settings_api import create_ai_settings_router
+from indexing_recovery import recover_interrupted_documents
 
 # ────────────────────────────────────────────────────────────────────────────
 # Configuration
@@ -1684,6 +1685,36 @@ def _index_document(library_id: str, doc_id: str, file_path: str):
             save_libraries(LIBRARIES)
 
 
+def _recover_interrupted_indexing():
+    """Re-index or fail documents a previous process left in "indexing"."""
+    with STATE_LOCK:
+        plan = recover_interrupted_documents(LIBRARIES)
+        if plan.failed:
+            for library_id in {library_id for library_id, _ in plan.failed}:
+                _refresh_library_sync_status(LIBRARIES[library_id])
+            save_libraries(LIBRARIES)
+
+    if not plan.requeue and not plan.failed:
+        return
+    _safe_print(
+        f"[PageIndex API] Interrupted indexing: {len(plan.requeue)} document(s) re-queued, "
+        f"{len(plan.failed)} marked as error (source file missing)"
+    )
+    if not plan.requeue:
+        return
+
+    # One thread, one document at a time, so a restart doesn't fire a burst of
+    # concurrent (possibly LLM-billed) indexing runs.
+    def _reindex():
+        for library_id, doc_id, file_path in plan.requeue:
+            try:
+                _index_document(library_id, doc_id, file_path)
+            except Exception as exc:
+                _safe_print(f"[PageIndex API] Re-indexing interrupted doc {doc_id} failed: {exc}")
+
+    threading.Thread(target=_reindex, name="reindex-interrupted", daemon=True).start()
+
+
 def _upsert_monitored_document(library_id: str, doc_id: str, source_descriptor: dict):
     source_path = Path(source_descriptor["sourcePath"])
     managed_path = _copy_source_file_to_managed_upload(library_id, doc_id, source_path)
@@ -1881,6 +1912,9 @@ def _folder_monitor_loop():
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     global FOLDER_MONITOR_THREAD
+
+    # Documents left "indexing" by a previous process would otherwise stay stuck.
+    _recover_interrupted_indexing()
 
     # Run startup metadata refresh in a background thread so the server is
     # immediately ready to handle requests rather than blocking until all
