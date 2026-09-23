@@ -23,6 +23,15 @@ if not os.getenv("OPENAI_API_KEY") and os.getenv("CHATGPT_API_KEY"):
 
 litellm.drop_params = True
 
+# Errors retrying cannot fix (bad key, bad request, unknown model). Raise them at
+# once so callers can fall back instead of silently receiving "" after 10 tries.
+NON_RETRYABLE_LLM_ERRORS = (
+    litellm.AuthenticationError,
+    litellm.BadRequestError,
+    litellm.NotFoundError,
+    litellm.PermissionDeniedError,
+)
+
 def count_tokens(text, model=None):
     if not text:
         return 0
@@ -46,6 +55,8 @@ def llm_completion(model, prompt, chat_history=None, return_finish_reason=False)
                 finish_reason = "max_output_reached" if response.choices[0].finish_reason == "length" else "finished"
                 return content, finish_reason
             return content
+        except NON_RETRYABLE_LLM_ERRORS:
+            raise
         except Exception as e:
             print('************* Retrying *************')
             logging.error(f"Error: {e}")
@@ -72,6 +83,8 @@ async def llm_acompletion(model, prompt):
                 temperature=0,
             )
             return response.choices[0].message.content
+        except NON_RETRYABLE_LLM_ERRORS:
+            raise
         except Exception as e:
             print('************* Retrying *************')
             logging.error(f"Error: {e}")
