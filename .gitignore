@@ -7,3 +7,9 @@ logs/
 workspace
 pb_data
 pb_migrations
+
+# graft's local repository settings — not committed.
+/.graft/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
