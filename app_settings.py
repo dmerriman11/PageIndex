@@ -23,6 +23,19 @@ PROVIDERS: dict[str, dict[str, str]] = {
     "gemini": {"name": "Google Gemini", "env_var": "GEMINI_API_KEY"},
 }
 INDEXING_MODES = ("local", "llm")
+
+# Retrieval settings: saved value -> environment variable -> built-in default.
+RERANKERS = ("off", "bge")
+ANSWER_MODES = ("extractive", "llm")
+TOP_PAGES_RANGE = (1, 6)
+PAGE_CONTENT_CHARS_RANGE = (1000, 20000)
+RETRIEVAL_DEFAULTS = {"top_pages": 6, "reranker": "off", "answer_mode": "extractive", "page_content_chars": 2000}
+RETRIEVAL_FIELDS = {  # stored key -> (API name, environment variable)
+    "top_pages": ("topPages", None),
+    "reranker": ("reranker", "PAGEINDEX_RERANKER"),
+    "answer_mode": ("answerMode", "PAGEINDEX_ANSWER_MODE"),
+    "page_content_chars": ("pageContentChars", "PAGEINDEX_PAGE_CONTENT_CHARS"),
+}
 MASTER_KEY_ENV = "SETTINGS_ENCRYPTION_KEY"
 
 
@@ -113,6 +126,7 @@ class AppSettings:
             data = {}
         mode = data.get("indexing_mode")
         providers = data.get("providers")
+        retrieval = data.get("retrieval")
         return {
             "indexing_mode": mode if mode in INDEXING_MODES else "local",
             "indexing_model": data.get("indexing_model") or normalize_model_name(self._environ.get("MODEL", "")),
@@ -121,6 +135,7 @@ class AppSettings:
                 for provider, entry in (providers.items() if isinstance(providers, dict) else [])
                 if provider in PROVIDERS and isinstance(entry, dict)
             },
+            "retrieval": self._valid_retrieval(retrieval if isinstance(retrieval, dict) else {}),
         }
 
     def _save(self):
@@ -227,6 +242,88 @@ class AppSettings:
                 "indexingModel": model,
                 "providers": [self.provider_status(provider) for provider in PROVIDERS],
             }
+
+    # ── Retrieval ─────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _check_retrieval(key: str, value) -> object:
+        """Validate one retrieval value; returns it normalized or raises SettingsError."""
+        if key in ("top_pages", "page_content_chars"):
+            low, high = TOP_PAGES_RANGE if key == "top_pages" else PAGE_CONTENT_CHARS_RANGE
+            if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+                label = "Pages per document" if key == "top_pages" else "Characters per section"
+                raise SettingsError(f"{label} must be a whole number from {low} to {high}.")
+            return value
+        allowed = RERANKERS if key == "reranker" else ANSWER_MODES
+        text = str(value or "").strip().lower()
+        if text not in allowed:
+            label = "Re-ranking" if key == "reranker" else "Answer mode"
+            raise SettingsError(f"{label} must be one of: {', '.join(allowed)}.")
+        return text
+
+    def _valid_retrieval(self, saved: dict) -> dict:
+        valid = {}
+        for key, value in saved.items():
+            if key in RETRIEVAL_FIELDS:
+                try:
+                    valid[key] = self._check_retrieval(key, value)
+                except SettingsError:
+                    print(f"[PageIndex API] Warning: ignoring invalid saved retrieval setting {key!r}")
+        return valid
+
+    def _env_retrieval(self, key: str):
+        env_var = RETRIEVAL_FIELDS[key][1]
+        raw = (self._environ.get(env_var) or "").strip() if env_var else ""
+        if not raw:
+            return None
+        try:
+            return self._check_retrieval(key, int(raw) if key == "page_content_chars" else raw)
+        except (SettingsError, ValueError):
+            return None
+
+    def get_retrieval(self) -> dict:
+        """Effective retrieval settings, by stored key."""
+        return {key: value for key, (value, _) in self._retrieval_with_sources().items()}
+
+    def _retrieval_with_sources(self) -> dict:
+        with self._lock:
+            saved = self._data["retrieval"]
+            resolved = {}
+            for key in RETRIEVAL_FIELDS:
+                if key in saved:
+                    resolved[key] = (saved[key], "saved")
+                elif (env_value := self._env_retrieval(key)) is not None:
+                    resolved[key] = (env_value, "env")
+                else:
+                    resolved[key] = (RETRIEVAL_DEFAULTS[key], "default")
+            return resolved
+
+    def update_retrieval(self, top_pages=None, reranker=None, answer_mode=None, page_content_chars=None) -> None:
+        changes = {
+            key: value
+            for key, value in {
+                "top_pages": top_pages, "reranker": reranker,
+                "answer_mode": answer_mode, "page_content_chars": page_content_chars,
+            }.items()
+            if value is not None
+        }
+        with self._lock:
+            checked = {key: self._check_retrieval(key, value) for key, value in changes.items()}
+            if checked.get("answer_mode") == "llm":
+                _, model = self.get_indexing()
+                provider = provider_of(model or "")
+                if not model or not provider or not self.effective_key(provider):
+                    raise SettingsError("LLM answers need a model with an API key — set one up in AI / LLM first.")
+            if not checked:
+                return
+            self._data["retrieval"] = {**self._data["retrieval"], **checked}
+            self._save()
+
+    def retrieval_view(self) -> dict:
+        resolved = self._retrieval_with_sources()
+        view = {RETRIEVAL_FIELDS[key][0]: value for key, (value, _) in resolved.items()}
+        view["sources"] = {RETRIEVAL_FIELDS[key][0]: source for key, (_, source) in resolved.items()}
+        return view
 
     @staticmethod
     def _require_provider(provider: str) -> None:

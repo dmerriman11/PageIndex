@@ -226,3 +226,33 @@ def test_real_bge_model_scores_relevant_passage_higher():
     )
     assert len(scores) == 2
     assert scores[0] > scores[1]
+
+
+def test_explicit_enabled_flag_overrides_the_environment(tmp_path):
+    from reranker import get_reranker
+    env = {"PAGEINDEX_RERANKER": "bge", "PAGEINDEX_RERANKER_MODEL_DIR": str(tmp_path)}
+    assert get_reranker(env, enabled=False) is None
+    assert get_reranker({"PAGEINDEX_RERANKER_MODEL_DIR": str(tmp_path)}, enabled=True) is not None
+
+
+def test_status_reports_missing_model_files(tmp_path):
+    from reranker import reranker_status
+    ok, reason = reranker_status({"PAGEINDEX_RERANKER_MODEL_DIR": str(tmp_path / "nowhere")})
+    assert ok is False
+    assert "model" in reason.lower()
+
+
+def test_status_is_ok_when_model_files_and_packages_are_present(tmp_path):
+    from reranker import reranker_status
+    for name in ("model_quantized.onnx", "tokenizer.json"):
+        (tmp_path / name).write_text("x", encoding="utf-8")
+    ok, reason = reranker_status({"PAGEINDEX_RERANKER_MODEL_DIR": str(tmp_path)}, has_module=lambda name: True)
+    assert (ok, reason) == (True, None)
+
+
+def test_status_names_a_missing_package(tmp_path):
+    from reranker import reranker_status
+    for name in ("model_quantized.onnx", "tokenizer.json"):
+        (tmp_path / name).write_text("x", encoding="utf-8")
+    ok, reason = reranker_status({"PAGEINDEX_RERANKER_MODEL_DIR": str(tmp_path)}, has_module=lambda name: name != "onnxruntime")
+    assert ok is False and "onnxruntime" in reason

@@ -70,11 +70,11 @@ from answer_synthesis import synthesize_answer
 from ranking import blended_source_score, email_scope_factor, named_library_terms, term_coverage
 from ranking import field_terms as _field_terms
 from synonyms import expand_terms
-from reranker import CrossEncoderReranker, build_passage, get_reranker
+from reranker import CrossEncoderReranker, build_passage, get_reranker, reranker_status
 from pageindex.utils import llm_completion
 from app_settings import AppSettings
 from model_catalog import ModelCatalog
-from settings_api import create_ai_settings_router
+from settings_api import create_ai_settings_router, create_retrieval_settings_router
 from indexing_recovery import recover_interrupted_documents
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -2627,15 +2627,10 @@ class AutoCreateLibrariesRequest(BaseModel):
     folderMonitorEnabled: Optional[bool] = True
     pollingIntervalMinutes: Optional[int] = DEFAULT_FOLDER_POLLING_INTERVAL_MINUTES
 
-# Sections gathered per candidate document. A wider pool (6 vs 3) gave the ranker more to work
-# with: +3 points on the 15-question eval with LLM answers, for ~35ms.
-DEFAULT_TOP_PAGES = 6
-
-
 class QueryRequest(BaseModel):
     query: str
     library_ids: Optional[List[str]] = None   # None = search all
-    top_pages: Optional[int] = DEFAULT_TOP_PAGES
+    top_pages: Optional[int] = None  # None = the saved retrieval setting (default 6)
 
 
 class ChatRequest(BaseModel):
@@ -2644,7 +2639,7 @@ class ChatRequest(BaseModel):
     prompt: Optional[str] = None
     messages: Optional[List[dict]] = None
     library_ids: Optional[List[str]] = None
-    top_pages: Optional[int] = DEFAULT_TOP_PAGES
+    top_pages: Optional[int] = None  # None = the saved retrieval setting (default 6)
 
 
 class CreateApiKeyRequest(BaseModel):
@@ -2728,6 +2723,7 @@ def require_admin_api_key(
 
 
 app.include_router(create_ai_settings_router(APP_SETTINGS, MODEL_CATALOG, require_admin_api_key))
+app.include_router(create_retrieval_settings_router(APP_SETTINGS, require_admin_api_key, reranker_status))
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -3652,7 +3648,9 @@ async def rag_query(req: QueryRequest):
     if not target_ids:
         raise HTTPException(status_code=400, detail="No libraries available. Upload documents first.")
 
-    top_pages = max(1, min(req.top_pages or DEFAULT_TOP_PAGES, 6))
+    # Admin retrieval settings (Settings → Search); env vars are their fallback.
+    retrieval = APP_SETTINGS.get_retrieval()
+    top_pages = max(1, min(req.top_pages or retrieval["top_pages"], 6))
     query_terms = _extract_query_terms(query)
     named_terms = named_library_terms(LIBRARIES, _extract_terms_from_value)
     start_ts = time.time()
@@ -3707,7 +3705,8 @@ async def rag_query(req: QueryRequest):
                 structure_json = await asyncio.to_thread(client.get_document_structure, pi_doc_id)
                 structure = json.loads(structure_json)
                 relevant_pages = await asyncio.to_thread(
-                    _find_relevant_pages, structure, query, client, pi_doc_id, top_pages
+                    _find_relevant_pages, structure, query, client, pi_doc_id, top_pages,
+                    retrieval["page_content_chars"],
                 )
                 lib_results.append({
                     "libraryId": lib_id,
@@ -3740,12 +3739,12 @@ async def rag_query(req: QueryRequest):
             errors.extend(lib_errors)
 
     status = "success" if results else ("error" if errors else "warning")
-    reranker = get_reranker()
+    reranker = get_reranker(enabled=retrieval["reranker"] == "bge")
     if reranker is None:
         sources, reranker_info = _build_sources(results, query)
     else:  # CPU-bound model scoring: keep it off the event loop
         sources, reranker_info = await asyncio.to_thread(_build_sources, results, query, reranker)
-    answer, answer_info = await _answer_query(query, sources, results)
+    answer, answer_info = await _answer_query(query, sources, results, retrieval["answer_mode"])
     trace = _build_trace(results)
     latency_ms = int((time.time() - start_ts) * 1000)
 
@@ -3805,12 +3804,9 @@ async def rag_chat(req: ChatRequest):
     }
 
 
-# Prototype: PAGEINDEX_ANSWER_MODE=llm answers from the top retrieved passages with the
-# configured model instead of stitching excerpts together. Off by default.
+# Answer mode "llm" (Settings → Search, or PAGEINDEX_ANSWER_MODE) answers from the top retrieved
+# passages with the configured model instead of stitching excerpts together. Off by default.
 LLM_ANSWER_PASSAGES = 8
-# Characters kept per retrieved section. Answers often sit past the first 2,000 characters
-# of a page (tables, lower sections), which the LLM answer step can use.
-PAGE_CONTENT_CHARS = int(os.getenv("PAGEINDEX_PAGE_CONTENT_CHARS") or 2000)
 # Upper bound on sections whose text is read per document when ranking (long handbooks).
 MAX_SECTIONS_SCANNED = 200
 LLM_NOT_FOUND_ANSWER = (
@@ -3819,8 +3815,7 @@ LLM_NOT_FOUND_ANSWER = (
 )
 
 
-async def _answer_query(query: str, sources: list, results: list) -> tuple[str, dict]:
-    mode = (os.getenv("PAGEINDEX_ANSWER_MODE") or "extractive").strip().lower()
+async def _answer_query(query: str, sources: list, results: list, mode: str = "extractive") -> tuple[str, dict]:
     _, model = APP_SETTINGS.get_indexing()
     if mode != "llm" or not model or not sources:
         return _compose_answer(query, sources), {"answerMode": "extractive"}
@@ -3852,7 +3847,9 @@ async def _answer_query(query: str, sources: list, results: list) -> tuple[str, 
     }
 
 
-def _find_relevant_pages(structure, query: str, client: PageIndexClient, doc_id: str, top_k: int = 3) -> list:
+def _find_relevant_pages(
+    structure, query: str, client: PageIndexClient, doc_id: str, top_k: int = 3, content_chars: int = 2000
+) -> list:
     """
     Use the PageIndex tree structure to find relevant page ranges.
     This implements the second step of PageIndex: reasoning over the tree.
@@ -3943,7 +3940,7 @@ def _find_relevant_pages(structure, query: str, client: PageIndexClient, doc_id:
             "title": section["title"],
             "pages": page_range_of(section),
             "summary": section.get("summary", ""),
-            "content": content[:PAGE_CONTENT_CHARS] if content else "",
+            "content": content[:content_chars] if content else "",
             "score": section["score"],
             "coverage": section["coverage"],
         })
