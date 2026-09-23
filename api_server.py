@@ -63,6 +63,9 @@ from pydantic import BaseModel, Field
 sys.path.insert(0, str(Path(__file__).parent))
 from pageindex import PageIndexClient
 from workspace_io import write_json_atomic as _write_json_atomic
+from retrieval_text import build_excerpt as _build_text_excerpt, page_content_to_text
+from answer_synthesis import synthesize_answer
+from pageindex.utils import llm_completion
 from app_settings import AppSettings
 from model_catalog import ModelCatalog
 from settings_api import create_ai_settings_router
@@ -3002,11 +3005,11 @@ async def rag_query(req: QueryRequest):
             results.extend(lib_results)
             errors.extend(lib_errors)
 
-    latency_ms = int((time.time() - start_ts) * 1000)
     status = "success" if results else ("error" if errors else "warning")
     sources = _build_sources(results, query)
-    answer = _compose_answer(query, sources)
+    answer, answer_info = await _answer_query(query, sources, results)
     trace = _build_trace(results)
+    latency_ms = int((time.time() - start_ts) * 1000)
 
     primary_lib_id = target_ids[0] if target_ids else ""
     primary_lib_name = LIBRARIES.get(primary_lib_id, {}).get("name", "") if primary_lib_id else ""
@@ -3032,6 +3035,7 @@ async def rag_query(req: QueryRequest):
         "targetLibraries": targeted_library_matches,
         "latencyMs": latency_ms,
         "status": status,
+        **answer_info,
     }
 
 
@@ -3059,6 +3063,48 @@ async def rag_chat(req: ChatRequest):
             "role": "assistant",
             "content": query_result.get("answer", ""),
         },
+    }
+
+
+# Prototype: PAGEINDEX_ANSWER_MODE=llm answers from the top retrieved passages with the
+# configured model instead of stitching excerpts together. Off by default.
+LLM_ANSWER_PASSAGES = 8
+# Characters kept per retrieved section. Answers often sit past the first 2,000 characters
+# of a page (tables, lower sections), which the LLM answer step can use.
+PAGE_CONTENT_CHARS = int(os.getenv("PAGEINDEX_PAGE_CONTENT_CHARS") or 2000)
+LLM_NOT_FOUND_ANSWER = (
+    "I couldn't find an answer to that in the selected libraries. "
+    "Try rephrasing the question or selecting a specific library."
+)
+
+
+async def _answer_query(query: str, sources: list, results: list) -> tuple[str, dict]:
+    mode = (os.getenv("PAGEINDEX_ANSWER_MODE") or "extractive").strip().lower()
+    _, model = APP_SETTINGS.get_indexing()
+    if mode != "llm" or not model or not sources:
+        return _compose_answer(query, sources), {"answerMode": "extractive"}
+
+    content_by_page = {
+        (result.get("documentId"), page.get("pages")): page.get("content", "")
+        for result in results
+        for page in result.get("pages", [])
+    }
+    passages = [
+        {**source, "content": content_by_page.get((source["documentId"], source["pageRange"])) or source.get("excerpt", "")}
+        for source in sources[:LLM_ANSWER_PASSAGES]
+    ]
+    verdict = await asyncio.to_thread(
+        synthesize_answer, query, passages, lambda prompt: llm_completion(model, prompt)
+    )
+    if verdict is None:
+        return _compose_answer(query, sources), {"answerMode": "extractive", "answerFallback": True}
+    if not verdict["found"] or not verdict["answer"]:
+        return LLM_NOT_FOUND_ANSWER, {"answerMode": "llm", "answerFound": False, "citedSources": []}
+    # Citation numbers refer to positions in `sources`, which keeps its order.
+    return verdict["answer"], {
+        "answerMode": "llm",
+        "answerFound": True,
+        "citedSources": [number - 1 for number in verdict["citations"]],
     }
 
 
@@ -3133,12 +3179,12 @@ def _find_relevant_pages(structure, query: str, client: PageIndexClient, doc_id:
             continue
         page_range = f"{start}-{end}" if end > start else str(start)
         try:
-            content = client.get_page_content(doc_id, page_range)
+            content = page_content_to_text(client.get_page_content(doc_id, page_range))
             page_results.append({
                 "title": section["title"],
                 "pages": page_range,
                 "summary": section.get("summary", ""),
-                "content": content[:2000] if content else "",
+                "content": content[:PAGE_CONTENT_CHARS] if content else "",
                 "score": score_section(section),
             })
         except Exception as e:
@@ -3169,33 +3215,8 @@ def _truncate_text(text: str, max_chars: int = 320) -> str:
     return cleaned[: max_chars - 3].rstrip() + "..."
 
 
-def _build_excerpt(content: str, query: str, max_chars: int = 320) -> str:
-    cleaned = re.sub(r"\s+", " ", (content or "")).strip()
-    if not cleaned:
-        return ""
-
-    query_terms = _extract_query_terms(query)
-    segments = [segment.strip() for segment in re.split(r"(?<=[.!?])\s+", cleaned) if segment.strip()]
-    best_segment = ""
-    best_score = -1
-
-    for segment in segments:
-        score = _score_text(segment, query_terms)
-        if score > best_score:
-            best_score = score
-            best_segment = segment
-
-    if best_segment:
-        return _truncate_text(best_segment, max_chars)
-
-    if query_terms:
-        lowered = cleaned.lower()
-        offsets = [lowered.find(term) for term in query_terms if lowered.find(term) != -1]
-        if offsets:
-            start = max(0, min(offsets) - 120)
-            return _truncate_text(cleaned[start:start + max_chars], max_chars)
-
-    return _truncate_text(cleaned, max_chars)
+def _build_excerpt(content: str, query: str, max_chars: int = 320, skip: tuple = ()) -> str:
+    return _build_text_excerpt(content, _extract_query_terms(query), max_chars=max_chars, skip=skip)
 
 
 def _build_sources(results: list, query: str) -> list:
@@ -3203,7 +3224,11 @@ def _build_sources(results: list, query: str) -> list:
 
     for result in results:
         for page in result.get("pages", []):
-            excerpt = _build_excerpt(page.get("content", ""), query)
+            excerpt = _build_excerpt(
+                page.get("content", ""),
+                query,
+                skip=(result.get("fileName", ""), page.get("title", "")),
+            )
             sources.append({
                 "libraryId": result.get("libraryId", ""),
                 "libraryName": result.get("libraryName", ""),
