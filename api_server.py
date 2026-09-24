@@ -111,6 +111,7 @@ SHAREPOINT_MAX_FILE_BYTES = _env_positive_int("PAGEINDEX_SHAREPOINT_MAX_FILE_MB"
 SHAREPOINT_STATE_DIR = WORKSPACE_DIR / "_sharepoint"  # per-library folder index files
 SHAREPOINT_MAX_ATTEMPTS = 5
 SHAREPOINT_SCOPE_FALLBACK_STATUSES = {400, 404, 501}
+SHAREPOINT_CHILD_FOLDERS_QUERY = "?$select=id,name,folder&$top=200"
 SHAREPOINT_RETRY_ALL_REASONS = {"manual", "full-resync"}
 # Document fields refreshed without a download when a file's content is unchanged.
 SHAREPOINT_METADATA_FIELDS = (
@@ -1052,6 +1053,20 @@ def _get_library_for_monitored_folder(folder_path: Path) -> Optional[dict]:
     return None
 
 
+def _get_library_for_sharepoint_target(drive_id: str, folder_path: str) -> Optional[dict]:
+    """The library that already syncs this SharePoint folder, if any."""
+    target = _normalize_sharepoint_folder_path(folder_path).lower()
+    with STATE_LOCK:
+        for library in LIBRARIES.values():
+            monitor = library.get("folderMonitor") or {}
+            if _monitor_source_type(monitor) != "sharepoint":
+                continue
+            sharepoint = monitor.get("sharePoint") or {}
+            if sharepoint.get("driveId") == drive_id and _normalize_sharepoint_folder_path(sharepoint.get("folderPath") or "").lower() == target:
+                return library
+    return None
+
+
 def _list_immediate_subfolders(parent_path_value: str) -> tuple[Path, list[Path]]:
     parent_path = Path(parent_path_value).expanduser()
     if not parent_path.exists():
@@ -1094,6 +1109,56 @@ def _build_auto_create_preview(
         "parentPath": str(parent_path),
         "subfolders": items,
     }
+
+
+def _sharepoint_settings_from_request(req) -> dict:
+    return {
+        "siteUrl": (req.sharePointSiteUrl or "").strip(),
+        "driveId": (req.sharePointDriveId or "").strip(),
+        "driveName": (req.sharePointDriveName or "").strip(),
+        "folderPath": (req.sharePointFolderPath or "").strip(),
+    }
+
+
+def _build_sharepoint_auto_create_preview(settings: dict, include_folders=None, exclude_folders=None) -> dict:
+    """Immediate subfolders of a SharePoint folder, marked like the local-folder preview."""
+    source = _resolve_sharepoint_source(settings)
+    children = SHAREPOINT_GRAPH.get_all(
+        f"/drives/{quote(source['driveId'], safe='')}/items/{quote(source['rootItemId'], safe='')}/children"
+        + SHAREPOINT_CHILD_FOLDERS_QUERY
+    )
+    include_set = set(_normalize_name_list(include_folders))
+    exclude_set = set(_normalize_name_list(exclude_folders))
+    folders = sorted((child for child in children if "folder" in child and child.get("name")), key=lambda child: str(child["name"]).lower())
+
+    items = []
+    for child in folders:
+        name = str(child["name"])
+        folder_path = "/".join(part for part in [source["folderPath"], name] if part)
+        existing = _get_library_for_sharepoint_target(source["driveId"], folder_path)
+        is_excluded = name in exclude_set
+        items.append({
+            "name": name,
+            "path": folder_path,
+            "selected": (name in include_set if include_set else True) and not is_excluded and not existing,
+            "excluded": is_excluded,
+            "alreadyManaged": bool(existing),
+            "existingLibraryId": existing.get("id") if existing else None,
+            "existingLibraryName": existing.get("name") if existing else None,
+        })
+
+    return {
+        "parentPath": source["folderPath"],
+        "siteUrl": source["siteUrl"],
+        "driveId": source["driveId"],
+        "driveName": source["driveName"],
+        "subfolders": items,
+    }
+
+
+def _require_admin_key(key: dict, action: str) -> None:
+    if "admin" not in (key or {}).get("permissions", []):
+        raise HTTPException(status_code=403, detail=f"Only admin API keys can {action}.")
 
 
 def _extract_terms_from_value(value: Optional[str]) -> list[str]:
@@ -2707,19 +2772,29 @@ class UpdateDocumentRequest(BaseModel):
 
 
 class AutoCreatePreviewRequest(BaseModel):
-    parentPath: str
+    parentPath: Optional[str] = ""
     includeFolders: Optional[List[str]] = None
     excludeFolders: Optional[List[str]] = []
+    sourceType: Optional[str] = "folder"
+    sharePointSiteUrl: Optional[str] = ""
+    sharePointDriveId: Optional[str] = ""
+    sharePointDriveName: Optional[str] = ""
+    sharePointFolderPath: Optional[str] = ""
 
 
 class AutoCreateLibrariesRequest(BaseModel):
-    parentPath: str
+    parentPath: Optional[str] = ""
     group: Optional[str] = "Default"
     tags: Optional[List[str]] = []
     includeFolders: Optional[List[str]] = None
     excludeFolders: Optional[List[str]] = []
     folderMonitorEnabled: Optional[bool] = True
     pollingIntervalMinutes: Optional[int] = DEFAULT_FOLDER_POLLING_INTERVAL_MINUTES
+    sourceType: Optional[str] = "folder"
+    sharePointSiteUrl: Optional[str] = ""
+    sharePointDriveId: Optional[str] = ""
+    sharePointDriveName: Optional[str] = ""
+    sharePointFolderPath: Optional[str] = ""
 
 class QueryRequest(BaseModel):
     query: str
@@ -3222,8 +3297,18 @@ def test_sharepoint_connection(req: SharePointConnectionTestRequest):
         raise HTTPException(status_code=400, detail=_short_error(exc)) from exc
 
 
-@app.post("/api/libraries/auto-create/preview", dependencies=[Depends(require_api_key)])
-def preview_auto_create_libraries(req: AutoCreatePreviewRequest):
+@app.post("/api/libraries/auto-create/preview")
+def preview_auto_create_libraries(req: AutoCreatePreviewRequest, key: dict = Depends(require_api_key)):
+    if req.sourceType == "sharepoint":
+        _require_admin_key(key, "scan SharePoint folders")
+        settings = _sharepoint_settings_from_request(req)
+        if not settings["siteUrl"]:
+            raise HTTPException(status_code=400, detail="SharePoint site URL is required.")
+        try:
+            return _build_sharepoint_auto_create_preview(settings, req.includeFolders, req.excludeFolders)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=_short_error(exc)) from exc
+
     parent_path = (req.parentPath or "").strip()
     if not parent_path:
         raise HTTPException(status_code=400, detail="Parent directory is required.")
