@@ -1635,16 +1635,13 @@ def _sharepoint_url_parts(site_url: str) -> dict:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError("Enter a valid SharePoint site URL, for example https://tenant.sharepoint.com/sites/name.")
     segments = [_decode_sharepoint_path(segment) for segment in parsed.path.split("/") if segment]
-    site_path_segments = []
-    remainder_segments = []
     if len(segments) >= 2 and segments[0].lower() in {"sites", "teams"}:
         site_path_segments = segments[:2]
         remainder_segments = segments[2:]
     else:
-        site_path_segments = segments
-
-    if not site_path_segments:
-        raise ValueError("Enter a SharePoint site URL that includes a site path, for example https://tenant.sharepoint.com/sites/name.")
+        # Root site: everything after the host is library and folder.
+        site_path_segments = []
+        remainder_segments = segments
 
     inferred_drive_path = ""
     inferred_folder_path = ""
@@ -1663,19 +1660,21 @@ def _sharepoint_url_parts(site_url: str) -> dict:
         query_values[key.lower()] = unquote(value)
 
     item_path = _decode_sharepoint_path(query_values.get("id", ""))
-    if item_path and site_path_segments:
-        site_prefix = "/".join(site_path_segments)
-        if item_path.lower().startswith(site_prefix.lower().rstrip("/") + "/"):
-            item_path = item_path[len(site_prefix.rstrip("/")) + 1:]
+    if item_path:
+        if site_path_segments:
+            site_prefix = "/".join(site_path_segments)
+            if item_path.lower().startswith(site_prefix.lower() + "/"):
+                item_path = item_path[len(site_prefix) + 1:]
         item_segments = [segment for segment in item_path.split("/") if segment]
         if item_segments:
             inferred_drive_path = inferred_drive_path or item_segments[0]
             inferred_folder_path = _normalize_sharepoint_folder_path("/".join(item_segments[1:]))
 
+    site_path = "/" + "/".join(site_path_segments) if site_path_segments else ""
     return {
         "hostname": parsed.netloc,
-        "sitePath": "/" + "/".join(site_path_segments),
-        "siteUrl": f"{parsed.scheme}://{parsed.netloc}/{'/'.join(site_path_segments)}",
+        "sitePath": site_path,
+        "siteUrl": f"{parsed.scheme}://{parsed.netloc}{site_path}",
         "drivePath": inferred_drive_path,
         "folderPath": inferred_folder_path,
     }
@@ -1709,7 +1708,8 @@ def _resolve_sharepoint_source(settings: dict) -> dict:
     if site_id:
         site = SHAREPOINT_GRAPH.get_json(f"/sites/{site_id}")
     else:
-        site = SHAREPOINT_GRAPH.get_json(f"/sites/{hostname}:{quote(site_path, safe='/')}")
+        site_lookup = f"/sites/{hostname}:{quote(site_path, safe='/')}" if site_path else f"/sites/{hostname}"
+        site = SHAREPOINT_GRAPH.get_json(site_lookup)
         site_id = site.get("id") or ""
     if not site_id:
         raise ValueError("Unable to resolve SharePoint site id from the site URL.")

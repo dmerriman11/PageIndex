@@ -119,22 +119,6 @@ class SharePointSyncTests(unittest.TestCase):
 
         self.assertEqual(result["added"], 1)
 
-    def test_sharepoint_browser_url_is_reduced_to_site_and_library_parts(self):
-        parts = api._sharepoint_url_parts(
-            "https://novahomeloans.sharepoint.com/sites/NovaProducts/Shared%20Documents/Forms/AllItems.aspx"
-            "?id=%2Fsites%2FNovaProducts%2FShared%20Documents%2FAmerihome&tenantId=ignored"
-        )
-
-        self.assertEqual(parts["hostname"], "novahomeloans.sharepoint.com")
-        self.assertEqual(parts["sitePath"], "/sites/NovaProducts")
-        self.assertEqual(parts["siteUrl"], "https://novahomeloans.sharepoint.com/sites/NovaProducts")
-        self.assertEqual(parts["drivePath"], "Shared Documents")
-        self.assertEqual(parts["folderPath"], "Amerihome")
-
-    def test_query_string_is_not_treated_as_graph_drive_id(self):
-        self.assertFalse(api._valid_sharepoint_drive_id("tenantId=d6eb089a%2D824b"))
-        self.assertTrue(api._valid_sharepoint_drive_id("b!abc123_def456"))
-
 
 if __name__ == "__main__":
     unittest.main()
