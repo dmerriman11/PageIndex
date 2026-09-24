@@ -46,6 +46,11 @@ def graph_url(path_or_url: str) -> str:
     return f"{GRAPH_BASE_URL}/{path_or_url.lstrip('/')}"
 
 
+def download_deadline_seconds(size_bytes: int) -> float:
+    """Overall time allowed for one download: 60 s plus 1 s per MB, capped at 10 minutes."""
+    return min(600.0, 60.0 + size_bytes / (1024 * 1024))
+
+
 def _graph_error(response) -> GraphError:
     status = response.status_code
     try:
@@ -224,3 +229,41 @@ class GraphClient:
 
     def get_all(self, path_or_url: str) -> list[dict]:
         return [item for page in self.iter_pages(path_or_url) for item in page.get("value", [])]
+
+    def download(self, path_or_url: str, dest: Path, *, expected_size: int, max_bytes: int, deadline_seconds: float) -> Path:
+        """Stream a file to `dest` through `dest.part`, enforcing a size limit, completeness and a deadline.
+
+        On any failure the .part file is removed and an existing `dest` is left as it was.
+        """
+        limit_mb = max_bytes // (1024 * 1024)
+        if expected_size > max_bytes:
+            raise GraphError(f"File is larger than the {limit_mb} MB limit.")
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        part = dest.with_name(dest.name + ".part")
+        deadline = self._clock() + deadline_seconds
+        response = self._get(graph_url(path_or_url), stream=True)
+        written = 0
+        try:
+            try:
+                with part.open("wb") as output:
+                    for chunk in response.iter_content(chunk_size=DOWNLOAD_CHUNK_BYTES):
+                        if not chunk:
+                            continue
+                        written += len(chunk)
+                        if written > max_bytes:
+                            raise GraphError(f"File is larger than the {limit_mb} MB limit.")
+                        if self._clock() > deadline:
+                            raise GraphError(f"Download took longer than {int(deadline_seconds)} seconds and was stopped.")
+                        output.write(chunk)
+            except requests.RequestException as exc:
+                raise GraphError(f"Download was interrupted ({type(exc).__name__}).") from exc
+            if written != expected_size:
+                raise GraphError(f"Download was incomplete: received {written} of {expected_size} bytes.")
+            os.replace(part, dest)
+        except BaseException:
+            part.unlink(missing_ok=True)
+            raise
+        finally:
+            response.close()
+        return dest

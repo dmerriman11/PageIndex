@@ -179,3 +179,70 @@ def test_error_messages_are_capped_at_300_characters():
     error_msg = str(caught.value)
     assert len(error_msg) <= 300
     assert "no access to this site" in error_msg
+
+
+# ── downloads ─────────────────────────────────────────────────────────────────
+
+from sharepoint_graph import download_deadline_seconds
+
+CONTENT_URL = graph_url("/drives/d/items/i/content")
+MB = 1024 * 1024
+
+
+def download_session(content, status=200):
+    session = session_with_token()
+    session.set("GET", CONTENT_URL, FakeResponse(status, {} if status >= 400 else None, content=content))
+    return session
+
+
+def test_download_writes_the_file_and_leaves_no_part_file(tmp_path):
+    client, _ = make_client(download_session(b"hello"))
+    dest = tmp_path / "doc.pdf"
+
+    client.download("/drives/d/items/i/content", dest, expected_size=5, max_bytes=MB, deadline_seconds=60)
+
+    assert dest.read_bytes() == b"hello"
+    assert list(tmp_path.iterdir()) == [dest]
+
+
+def test_an_oversized_file_is_refused_before_downloading(tmp_path):
+    session = download_session(b"x" * 10)
+    client, _ = make_client(session)
+
+    with pytest.raises(GraphError, match="limit"):
+        client.download("/drives/d/items/i/content", tmp_path / "doc.pdf", expected_size=2 * MB, max_bytes=MB, deadline_seconds=60)
+    assert session.count("GET", CONTENT_URL) == 0
+
+
+def test_a_stream_that_passes_the_limit_is_aborted(tmp_path):
+    client, _ = make_client(download_session(b"x" * (2 * MB)))
+
+    with pytest.raises(GraphError, match="limit"):
+        client.download("/drives/d/items/i/content", tmp_path / "doc.pdf", expected_size=10, max_bytes=MB, deadline_seconds=60)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_an_incomplete_download_keeps_the_previous_file(tmp_path):
+    dest = tmp_path / "doc.pdf"
+    dest.write_bytes(b"previous")
+    client, _ = make_client(download_session(b"hel"))
+
+    with pytest.raises(GraphError, match="incomplete"):
+        client.download("/drives/d/items/i/content", dest, expected_size=5, max_bytes=MB, deadline_seconds=60)
+    assert dest.read_bytes() == b"previous"
+    assert list(tmp_path.iterdir()) == [dest]
+
+
+def test_a_download_past_its_deadline_is_stopped(tmp_path):
+    ticks = iter([0.0, 1000.0, 1000.0, 1000.0])
+    client, _ = make_client(download_session(b"x" * (2 * MB)), clock=lambda: next(ticks))
+
+    with pytest.raises(GraphError, match="longer than 60 seconds"):
+        client.download("/drives/d/items/i/content", tmp_path / "doc.pdf", expected_size=2 * MB, max_bytes=4 * MB, deadline_seconds=60)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_download_deadline_is_60s_plus_1s_per_mb_capped_at_10_minutes():
+    assert download_deadline_seconds(0) == 60
+    assert download_deadline_seconds(200 * MB) == 260
+    assert download_deadline_seconds(2000 * MB) == 600
