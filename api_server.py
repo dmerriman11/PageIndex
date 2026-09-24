@@ -2050,7 +2050,7 @@ def _mark_monitor_sync_started(library_id: str, reason: str):
         return True
 
 
-def _mark_monitor_sync_finished(library_id: str, result: dict, error_message: Optional[str] = None):
+def _mark_monitor_sync_finished(library_id: str, result: dict, error_message: Optional[str] = None, mark_synced: bool = True):
     with STATE_LOCK:
         library = LIBRARIES.get(library_id)
         if not library:
@@ -2061,7 +2061,7 @@ def _mark_monitor_sync_finished(library_id: str, result: dict, error_message: Op
         monitor["lastCompletedAt"] = _utcnow_iso()
         monitor["lastResult"] = result
         monitor["lastError"] = error_message
-        if not error_message:
+        if mark_synced and not error_message:
             library["lastSyncedAt"] = monitor["lastCompletedAt"]
         _refresh_library_sync_status(library)
         save_libraries(LIBRARIES)
@@ -2498,6 +2498,7 @@ def _run_library_sync(library_id: str, reason: str):
 
     started_at = time.monotonic()
     restart = False
+    mark_synced = True
     _safe_print(f"[Sync] start library={library_id} reason={reason}")
     try:
         with STATE_LOCK:
@@ -2514,6 +2515,7 @@ def _run_library_sync(library_id: str, reason: str):
             result = {**_new_sync_result(reason), "outcome": "superseded"}
             error_message = None
             restart = True
+            mark_synced = False
         except Exception as exc:
             result = {
                 **_new_sync_result(reason),
@@ -2523,7 +2525,7 @@ def _run_library_sync(library_id: str, reason: str):
             }
             error_message = _short_error(exc)
         result["durationSeconds"] = round(time.monotonic() - started_at, 1)
-        _mark_monitor_sync_finished(library_id, result, error_message=error_message)
+        _mark_monitor_sync_finished(library_id, result, error_message=error_message, mark_synced=mark_synced)
         _safe_print(
             f"[Sync] end library={library_id} outcome={result['outcome']} mode={result.get('mode')} "
             f"added={result.get('added', 0)} updated={result.get('updated', 0)} renamed={result.get('renamed', 0)} "

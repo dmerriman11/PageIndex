@@ -64,6 +64,20 @@ def test_a_failed_sync_records_the_error(monkeypatch, library_id):
     assert api.LIBRARIES[library_id]["folderMonitor"]["lastError"] == "site not found"
 
 
+def test_a_superseded_sync_does_not_mark_the_library_as_synced(monkeypatch, library_id):
+    api.LIBRARIES[library_id]["lastSyncedAt"] = "2026-01-01T00:00:00+00:00"
+
+    def superseded(*_):
+        raise api.SharePointSyncSuperseded()
+
+    monkeypatch.setattr(api, "_sync_library_sharepoint", superseded)
+    monkeypatch.setattr(api, "_start_library_sync", lambda lib_id, reason: True)
+
+    api._run_library_sync(library_id, "scheduled")
+
+    assert api.LIBRARIES[library_id]["lastSyncedAt"] == "2026-01-01T00:00:00+00:00"
+
+
 def test_full_resync_is_requested_with_a_query_flag(monkeypatch, library_id):
     started = []
     monkeypatch.setattr(api, "_start_library_sync", lambda lib_id, reason: started.append(reason) or True)
