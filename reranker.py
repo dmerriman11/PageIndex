@@ -192,11 +192,39 @@ _RERANKERS: dict[str, CrossEncoderReranker] = {}
 _RERANKERS_LOCK = threading.Lock()
 
 
-def get_reranker(environ: Mapping[str, str] = os.environ) -> Optional[CrossEncoderReranker]:
-    """The shared re-ranker when PAGEINDEX_RERANKER=bge, else None (no re-ranking)."""
-    if not reranker_enabled(environ):
+def model_dir_of(environ: Mapping[str, str]) -> Path:
+    return Path(environ.get(MODEL_DIR_ENV) or DEFAULT_MODEL_DIR).resolve()
+
+
+REQUIRED_MODEL_FILES = ("model_quantized.onnx", "tokenizer.json")
+REQUIRED_MODULES = ("onnxruntime", "numpy", "tokenizers")
+
+
+def _module_available(name: str) -> bool:
+    import importlib.util
+    return importlib.util.find_spec(name) is not None
+
+
+def reranker_status(
+    environ: Mapping[str, str] = os.environ, has_module: Callable[[str], bool] = _module_available
+) -> tuple[bool, Optional[str]]:
+    """Whether the BGE re-ranker can run here, and if not, a reason an admin can act on."""
+    missing = [name for name in REQUIRED_MODULES if not has_module(name)]
+    if missing:
+        return False, f"{', '.join(missing)} is not installed (see the optional re-ranker section of requirements.txt)."
+    model_dir = model_dir_of(environ)
+    if not all((model_dir / name).is_file() for name in REQUIRED_MODEL_FILES):
+        return False, f"BGE model files are not installed in {model_dir}."
+    return True, None
+
+
+def get_reranker(
+    environ: Mapping[str, str] = os.environ, enabled: Optional[bool] = None
+) -> Optional[CrossEncoderReranker]:
+    """The shared re-ranker when enabled (explicitly, else PAGEINDEX_RERANKER=bge), else None."""
+    if not (reranker_enabled(environ) if enabled is None else enabled):
         return None
-    model_dir = str(Path(environ.get(MODEL_DIR_ENV) or DEFAULT_MODEL_DIR).resolve())
+    model_dir = str(model_dir_of(environ))
     with _RERANKERS_LOCK:
         reranker = _RERANKERS.get(model_dir)
         if reranker is None:
