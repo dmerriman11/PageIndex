@@ -89,3 +89,17 @@ def test_the_connection_test_lists_the_site_document_libraries(monkeypatch):
 
     assert body["driveId"] == "drive-1"
     assert body["drives"] == [{"id": "drive-1", "name": "Documents"}, {"id": "drive-2", "name": "Archive"}]
+
+
+def test_the_connection_test_returns_the_canonical_site_url_for_a_browser_link(monkeypatch):
+    site = FakeSharePoint()
+    client, _ = make_client(site.session)
+    monkeypatch.setattr(api, "SHAREPOINT_GRAPH", client)
+
+    body = api.test_sharepoint_connection(
+        api.SharePointConnectionTestRequest(
+            siteUrl=SITE_URL + "/Shared%20Documents/Forms/AllItems.aspx", folderPath="Amerihome"
+        )
+    )
+
+    assert body["siteUrl"] == SITE_URL

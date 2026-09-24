@@ -3210,6 +3210,7 @@ def test_sharepoint_connection(req: SharePointConnectionTestRequest):
             "status": "ok",
             "credentialsConfigured": True,
             "siteId": source["siteId"],
+            "siteUrl": source["siteUrl"],
             "driveId": source["driveId"],
             "driveName": source["driveName"],
             "folderPath": source["folderPath"],
