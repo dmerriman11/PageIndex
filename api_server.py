@@ -2460,7 +2460,12 @@ def _sync_library_sharepoint(library_id: str, reason: str) -> dict:
     for document in documents.values():  # documents that failed before pending items existed
         item_id = str(document.get("sharePointItemId") or "")
         if document.get("status") == "error" and item_id and item_id not in run.pending:
-            run.pending[item_id] = {"name": document.get("fileName") or item_id, "attempts": 0, "lastError": document.get("error"), "lastAttemptAt": None}
+            run.pending[item_id] = {
+                "name": document.get("fileName") or item_id,
+                "attempts": 0,
+                "lastError": _short_error(ValueError(document.get("error"))) if document.get("error") else None,
+                "lastAttemptAt": None,
+            }
     run.force_item_ids = set(run.pending)
     if full_scan:
         run.pending = {item_id: entry for item_id, entry in run.pending.items() if item_id in latest}
@@ -2537,7 +2542,12 @@ def _run_library_sync(library_id: str, reason: str):
             SYNC_THREADS.pop(library_id, None)
 
     if restart:
-        _start_library_sync(library_id, "settings-update")
+        with STATE_LOCK:
+            library = LIBRARIES.get(library_id)
+            monitor = library.get("folderMonitor") if library else None
+            restart = bool(library and monitor and monitor.get("enabled") and _monitor_has_sync_target(monitor))
+        if restart:
+            _start_library_sync(library_id, "settings-update")
 
 
 def _start_library_sync(library_id: str, reason: str) -> bool:
@@ -2669,9 +2679,16 @@ SHAREPOINT_REQUEST_FIELDS = ("sharePointSiteUrl", "sharePointDriveId", "sharePoi
 
 def _require_admin_for_sharepoint(req, key: dict, current_source: str = "folder") -> None:
     """Pointing a library at SharePoint, retargeting it or switching it away is an admin action."""
+    if isinstance(req, UpdateLibraryRequest):
+        # These fields default to None; anything sent at all (including "") touches SharePoint.
+        sharepoint_field_touched = any(getattr(req, field) is not None for field in SHAREPOINT_REQUEST_FIELDS)
+    else:
+        # CreateLibraryRequest defaults these to "", so "not sent" and "" look the same; a new,
+        # non-SharePoint library is unaffected either way.
+        sharepoint_field_touched = any(getattr(req, field, None) not in (None, "") for field in SHAREPOINT_REQUEST_FIELDS)
     touches_sharepoint = (
         req.syncSourceType == "sharepoint"
-        or any(getattr(req, field, None) not in (None, "") for field in SHAREPOINT_REQUEST_FIELDS)
+        or sharepoint_field_touched
         or (current_source == "sharepoint" and req.syncSourceType not in (None, "sharepoint"))
     )
     if touches_sharepoint and "admin" not in (key or {}).get("permissions", []):
@@ -3309,6 +3326,12 @@ def update_library(library_id: str, req: UpdateLibraryRequest, key: dict = Depen
 
         _require_admin_for_sharepoint(req, key, current_source=_monitor_source_type(lib.get("folderMonitor") or {}))
 
+        existing_monitor = lib.get("folderMonitor") or {}
+        if req.syncSourceType is not None and existing_monitor.get("syncInProgress"):
+            new_source_type = "sharepoint" if req.syncSourceType == "sharepoint" else "folder"
+            if _monitor_source_type(existing_monitor) != new_source_type:
+                raise HTTPException(status_code=409, detail="A sync is running for this library. Try again when it finishes.")
+
         if req.name is not None:
             lib["name"] = req.name.strip()
             metadata_needs_refresh = True
@@ -3366,7 +3389,9 @@ def update_library(library_id: str, req: UpdateLibraryRequest, key: dict = Depen
                 sharepoint_changed = True
                 sharepoint_changed_fields.add(field)
         if sharepoint_changed:
-            if req.sharePointDriveId is None and ("siteUrl" in sharepoint_changed_fields or "driveName" in sharepoint_changed_fields):
+            if (
+                "siteUrl" in sharepoint_changed_fields or "driveName" in sharepoint_changed_fields
+            ) and "driveId" not in sharepoint_changed_fields:
                 sharepoint["driveId"] = ""  # resolved from the old site/name; resolve it again
             _reset_sharepoint_target(sharepoint)
             monitor["sharePoint"] = sharepoint

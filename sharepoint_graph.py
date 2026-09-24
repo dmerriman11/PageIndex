@@ -190,12 +190,14 @@ class GraphClient:
                 response = self._session.request(
                     "GET", url, headers={"Authorization": f"Bearer {token}"}, timeout=REQUEST_TIMEOUT, stream=stream
                 )
-            except (requests.ConnectionError, requests.Timeout) as exc:
+            except (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError) as exc:
                 if attempt >= MAX_RETRIES:
                     raise GraphError(f"Microsoft Graph could not be reached ({type(exc).__name__}).") from exc
                 self._sleep(self._backoff(attempt, None))
                 attempt += 1
                 continue
+            except requests.RequestException as exc:
+                raise GraphError(f"Microsoft Graph request failed ({type(exc).__name__}).") from exc
             if response.status_code == 401 and not refreshed:
                 refreshed = True
                 force_token = True
@@ -239,9 +241,12 @@ class GraphClient:
         if expected_size > max_bytes:
             raise GraphError(f"File is larger than the {limit_mb} MB limit.")
         dest = Path(dest)
-        dest.parent.mkdir(parents=True, exist_ok=True)
         part = dest.with_name(dest.name + ".part")
         deadline = self._clock() + deadline_seconds
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            raise GraphError(f"Could not save the downloaded file on the server ({type(exc).__name__}).") from exc
         response = self._get(graph_url(path_or_url), stream=True)
         written = 0
         try:
@@ -258,9 +263,14 @@ class GraphClient:
                         output.write(chunk)
             except requests.RequestException as exc:
                 raise GraphError(f"Download was interrupted ({type(exc).__name__}).") from exc
+            except OSError as exc:
+                raise GraphError(f"Could not save the downloaded file on the server ({type(exc).__name__}).") from exc
             if written != expected_size:
                 raise GraphError(f"Download was incomplete: received {written} of {expected_size} bytes.")
-            os.replace(part, dest)
+            try:
+                os.replace(part, dest)
+            except OSError as exc:
+                raise GraphError(f"Could not save the downloaded file on the server ({type(exc).__name__}).") from exc
         except BaseException:
             part.unlink(missing_ok=True)
             raise

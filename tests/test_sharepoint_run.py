@@ -52,6 +52,39 @@ def test_a_superseded_sync_is_not_an_error_and_starts_a_fresh_sync(monkeypatch, 
     assert started == [(library_id, "settings-update")]
 
 
+def test_a_superseded_sync_does_not_restart_when_the_monitor_was_disabled(monkeypatch, library_id):
+    api.LIBRARIES[library_id]["folderMonitor"]["enabled"] = False
+    started = []
+
+    def superseded(*_):
+        raise api.SharePointSyncSuperseded()
+
+    monkeypatch.setattr(api, "_sync_library_sharepoint", superseded)
+    monkeypatch.setattr(api, "_start_library_sync", lambda lib_id, reason: started.append((lib_id, reason)) or True)
+
+    api._run_library_sync(library_id, "scheduled")
+
+    assert last_result(library_id)["outcome"] == "superseded"
+    assert started == []
+
+
+def test_a_superseded_sync_does_not_restart_when_the_target_was_cleared(monkeypatch, library_id):
+    api.LIBRARIES[library_id]["folderMonitor"]["sharePoint"]["siteUrl"] = ""
+    api.LIBRARIES[library_id]["folderMonitor"]["sharePoint"]["driveName"] = ""
+    started = []
+
+    def superseded(*_):
+        raise api.SharePointSyncSuperseded()
+
+    monkeypatch.setattr(api, "_sync_library_sharepoint", superseded)
+    monkeypatch.setattr(api, "_start_library_sync", lambda lib_id, reason: started.append((lib_id, reason)) or True)
+
+    api._run_library_sync(library_id, "scheduled")
+
+    assert last_result(library_id)["outcome"] == "superseded"
+    assert started == []
+
+
 def test_a_failed_sync_records_the_error(monkeypatch, library_id):
     def boom(*_):
         raise ValueError("site not found")

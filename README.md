@@ -337,7 +337,7 @@ In a library's **Settings**, choose **SharePoint**, paste the site URL (a browse
 
 - Every polling interval the engine asks Graph for changes since the last sync (delta). Content changes are downloaded and re-indexed; renames and moves only update the document's name and path.
 - If the change list expires, or you press **Full resync**, the engine lists the whole folder again and removes documents that are no longer there.
-- Throttling (429) and server errors are retried with backoff, honouring `Retry-After`.
+- Throttling (429) and temporary unavailability (503/504) are retried with backoff, honouring `Retry-After`.
 - Files that fail to download or index are listed as **pending** on the library and retried on later syncs (up to 5 automatic attempts, then on manual syncs).
 - Synced types: PDF, Markdown, EML, MSG. Files over `PAGEINDEX_SHAREPOINT_MAX_FILE_MB` (default 200 MB) are not downloaded and show as pending with the reason.
 - If a tenant doesn't support folder-scoped change tracking, the engine tracks the whole drive and keeps only items inside the folder.

@@ -1,4 +1,5 @@
 import pytest
+from fastapi import HTTPException
 
 import api_server as api
 from sharepoint_fakes import SITE_URL
@@ -89,6 +90,20 @@ def test_a_drive_id_only_target_keeps_its_drive_when_the_folder_changes():
     assert sharepoint["targetVersion"] == 1
 
 
+def test_a_drive_id_equal_to_the_stored_value_is_cleared_when_the_site_changes():
+    library_id = resolved_library()
+
+    api.update_library(
+        library_id,
+        api.UpdateLibraryRequest(
+            sharePointSiteUrl="https://contoso.sharepoint.com/sites/other", sharePointDriveId="drive-1"
+        ),
+        key=ADMIN_KEY,
+    )
+
+    assert sharepoint_of(library_id)["driveId"] == ""
+
+
 def test_a_drive_id_sent_with_the_change_is_kept():
     library_id = resolved_library()
 
@@ -122,4 +137,16 @@ def test_switching_source_can_keep_the_old_documents():
 
     api.update_library(library_id, api.UpdateLibraryRequest(syncSourceType="folder", keepExistingDocuments=True), key=ADMIN_KEY)
 
+    assert set(api.LIBRARIES[library_id]["documents"]) == {"d-sp", "d-up"}
+
+
+def test_switching_source_while_a_sync_is_running_is_rejected():
+    library_id = resolved_library()
+    api.LIBRARIES[library_id]["folderMonitor"]["syncInProgress"] = True
+
+    with pytest.raises(HTTPException) as caught:
+        api.update_library(library_id, api.UpdateLibraryRequest(syncSourceType="folder"), key=ADMIN_KEY)
+
+    assert caught.value.status_code == 409
+    assert api.LIBRARIES[library_id]["folderMonitor"]["sourceType"] == "sharepoint"
     assert set(api.LIBRARIES[library_id]["documents"]) == {"d-sp", "d-up"}

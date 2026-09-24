@@ -59,6 +59,17 @@ def test_a_query_key_can_rename_a_sharepoint_library_but_not_retarget_it():
     assert switch.value.status_code == 403
 
 
+@pytest.mark.parametrize("field", api.SHAREPOINT_REQUEST_FIELDS)
+def test_a_query_key_sending_an_empty_sharepoint_field_on_patch_is_rejected(field):
+    library = api.create_library(sharepoint_request(), key=ADMIN_KEY)
+
+    with pytest.raises(HTTPException) as caught:
+        api.update_library(library["id"], api.UpdateLibraryRequest(**{field: ""}), key=QUERY_KEY)
+
+    assert caught.value.status_code == 403
+    assert api.LIBRARIES[library["id"]]["folderMonitor"]["sharePoint"]["targetVersion"] == 0
+
+
 def test_the_connection_test_requires_an_admin_key():
     for route in api.app.routes:
         if getattr(route, "path", None) == "/api/libraries/sharepoint/test":

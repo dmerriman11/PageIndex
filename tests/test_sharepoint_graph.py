@@ -123,6 +123,27 @@ def test_connection_errors_are_retried():
     assert sleeps == [1.0]
 
 
+def test_a_chunked_encoding_error_is_retried():
+    session = session_with_token()
+    session.set("GET", SITES, requests.exceptions.ChunkedEncodingError("broken"), FakeResponse(200, {"id": "site-1"}))
+    client, sleeps = make_client(session)
+
+    assert client.get_json("/sites/site-1") == {"id": "site-1"}
+    assert sleeps == [1.0]
+
+
+def test_other_request_exceptions_are_wrapped_without_the_url():
+    session = session_with_token()
+    session.set("GET", SITES, requests.exceptions.TooManyRedirects("too many redirects to https://graph.microsoft.com/v1.0/sites/site-1"))
+    client, _ = make_client(session)
+
+    with pytest.raises(GraphError) as caught:
+        client.get_json("/sites/site-1")
+
+    assert "https://" not in str(caught.value)
+    assert "TooManyRedirects" in str(caught.value)
+
+
 def test_a_404_is_not_retried():
     session = session_with_token()
     session.set("GET", SITES, FakeResponse(404, {"error": {"code": "itemNotFound", "message": "gone"}}))
@@ -239,6 +260,25 @@ def test_a_download_past_its_deadline_is_stopped(tmp_path):
 
     with pytest.raises(GraphError, match="longer than 60 seconds"):
         client.download("/drives/d/items/i/content", tmp_path / "doc.pdf", expected_size=2 * MB, max_bytes=4 * MB, deadline_seconds=60)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_a_filesystem_error_saving_the_file_is_wrapped_without_the_path(tmp_path, monkeypatch):
+    import sharepoint_graph
+
+    def boom(*_args, **_kwargs):
+        raise PermissionError("C:\\secret\\path")
+
+    monkeypatch.setattr(sharepoint_graph.os, "replace", boom)
+    client, _ = make_client(download_session(b"hello"))
+    dest = tmp_path / "doc.pdf"
+
+    with pytest.raises(GraphError) as caught:
+        client.download("/drives/d/items/i/content", dest, expected_size=5, max_bytes=MB, deadline_seconds=60)
+
+    message = str(caught.value)
+    assert "PermissionError" in message
+    assert "secret" not in message
     assert list(tmp_path.iterdir()) == []
 
 
