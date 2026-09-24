@@ -23,6 +23,7 @@ MAX_RETRIES = 5
 MAX_RETRY_AFTER_SECONDS = 120.0
 TOKEN_REFRESH_MARGIN_SECONDS = 300
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024
+MAX_ERROR_MESSAGE_CHARS = 300
 
 Credentials = tuple[str, str, str]  # tenant id, client id, client secret
 
@@ -65,7 +66,8 @@ def _graph_error(response) -> GraphError:
         message = "The SharePoint change list expired (410)."
     else:
         message = f"Microsoft Graph request failed ({status})."
-    return GraphError(f"{message} {detail}".strip(), status=status)
+    full_message = f"{message} {detail}".strip()[:MAX_ERROR_MESSAGE_CHARS]
+    return GraphError(full_message, status=status)
 
 
 def _token_error(response, secret: str) -> GraphError:
@@ -77,7 +79,8 @@ def _token_error(response, secret: str) -> GraphError:
     detail = (lines[0] if lines else "")[:200]
     if secret:
         detail = detail.replace(secret, "…")
-    return GraphError(f"Microsoft sign-in failed ({response.status_code}). {detail}".strip(), status=response.status_code)
+    full_message = f"Microsoft sign-in failed ({response.status_code}). {detail}".strip()[:MAX_ERROR_MESSAGE_CHARS]
+    return GraphError(full_message, status=response.status_code)
 
 
 class GraphTokenCache:

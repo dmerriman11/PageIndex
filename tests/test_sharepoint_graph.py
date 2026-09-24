@@ -165,3 +165,17 @@ def test_clear_tokens_forces_a_new_sign_in():
     client.get_json("/sites/site-1")
 
     assert session.count("POST", TOKEN_URL) == 2
+
+
+def test_error_messages_are_capped_at_300_characters():
+    session = session_with_token()
+    long_detail = "x" * 500
+    session.set("GET", SITES, FakeResponse(403, {"error": {"code": "accessDenied", "message": long_detail}}))
+    client, _ = make_client(session)
+
+    with pytest.raises(GraphError) as caught:
+        client.get_json("/sites/site-1")
+
+    error_msg = str(caught.value)
+    assert len(error_msg) <= 300
+    assert "no access to this site" in error_msg
