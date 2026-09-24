@@ -303,6 +303,45 @@ python3 run_pageindex.py --md_path /path/to/your/document.md
 > Note: in this mode, we use "#" to determine node headings and their levels. For example, "##" is level 2, "###" is level 3, etc. Make sure your markdown file is formatted correctly. If your Markdown file was converted from a PDF or HTML, we don't recommend using this mode, since most existing conversion tools cannot preserve the original hierarchy. Instead, use our [PageIndex OCR](https://pageindex.ai/blog/ocr), which is designed to preserve the original hierarchy, to convert the PDF to a markdown file and then use this mode.
 </details>
 
+## SharePoint sync
+
+A library can sync from a SharePoint document library folder. The engine uses one app-only identity (no user sign-in) and polls Microsoft Graph for changes.
+
+### 1. Register an app in Entra ID
+
+1. Entra admin center → **App registrations** → **New registration**. Note the **Application (client) ID** and **Directory (tenant) ID**.
+2. **Certificates & secrets** → **New client secret**. Copy the secret **value** (not the secret ID).
+3. **API permissions** → **Add a permission** → **Microsoft Graph** → **Application permissions**:
+   - Recommended: `Sites.Selected`, then grant the app read access to each site you sync (below).
+   - Or broader: `Sites.Read.All` (or `Files.Read.All`).
+4. **Grant admin consent** for the tenant.
+
+With `Sites.Selected`, a tenant admin grants each site once:
+
+```http
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+Content-Type: application/json
+
+{ "roles": ["read"], "grantedToIdentities": [{ "application": { "id": "<client-id>", "displayName": "Lemur sync" } }] }
+```
+
+### 2. Enter the credentials
+
+Dashboard → **Settings → Connectors**: tenant ID, client ID, client secret. The secret is encrypted with `SETTINGS_ENCRYPTION_KEY` and stored in `workspace/_settings.json`; the API only ever returns its last four characters. To rotate it, create a new secret in Entra, choose **Replace** in Connectors, save, then delete the old secret in Entra. `SHAREPOINT_*` variables in `.env` are only a fallback.
+
+### 3. Point a library at SharePoint
+
+In a library's **Settings**, choose **SharePoint**, paste the site URL (a browser URL of the library or folder works), pick the document library and optionally a folder, and save. Only admin API keys can set or change a SharePoint target.
+
+### How syncing works
+
+- Every polling interval the engine asks Graph for changes since the last sync (delta). Content changes are downloaded and re-indexed; renames and moves only update the document's name and path.
+- If the change list expires, or you press **Full resync**, the engine lists the whole folder again and removes documents that are no longer there.
+- Throttling (429) and temporary unavailability (503/504) are retried with backoff, honouring `Retry-After`.
+- Files that fail to download or index are listed as **pending** on the library and retried on later syncs (up to 5 automatic attempts, then on manual syncs).
+- Synced types: PDF, Markdown, EML, MSG. Files over `PAGEINDEX_SHAREPOINT_MAX_FILE_MB` (default 200 MB) are not downloaded and show as pending with the reason.
+- If a tenant doesn't support folder-scoped change tracking, the engine tracks the whole drive and keeps only items inside the folder.
+
 ## Agentic Vectorless RAG: An Example
 
 For a simple, end-to-end _**agentic vectorless RAG**_ example using PageIndex with OpenAI Agents SDK, see [`examples/agentic_vectorless_rag_demo.py`](examples/agentic_vectorless_rag_demo.py).

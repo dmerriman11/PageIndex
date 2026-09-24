@@ -31,7 +31,6 @@ async def check_title_appearance(item, page_list, start_index=1, model=None):
     Reply format:
     {{
         
-        "thinking": <why do you think the section appears or starts in the page_text>
         "answer": "yes or no" (yes if the section appears or starts in the page_text, no otherwise)
     }}
     Directly return the final JSON structure. Do not output anything else."""
@@ -59,7 +58,6 @@ async def check_title_appearance_in_start(title, page_text, model=None, logger=N
     
     reply format:
     {{
-        "thinking": <why do you think the section appears or starts in the page_text>
         "start_begin": "yes or no" (yes if the section starts in the beginning of the page_text, no otherwise)
     }}
     Directly return the final JSON structure. Do not output anything else."""
@@ -109,7 +107,6 @@ def toc_detector_single_page(content, model=None):
 
     return the following JSON format:
     {{
-        "thinking": <why do you think there is a table of content in the given text>
         "toc_detected": "<yes or no>",
     }}
 
@@ -129,7 +126,6 @@ def check_if_toc_extraction_is_complete(content, toc, model=None):
 
     Reply format:
     {{
-        "thinking": <why do you think the table of contents is complete or not>
         "completed": "yes" or "no"
     }}
     Directly return the final JSON structure. Do not output anything else."""
@@ -147,7 +143,6 @@ def check_if_toc_transformation_is_complete(content, toc, model=None):
 
     Reply format:
     {{
-        "thinking": <why do you think the cleaned table of contents is complete or not>
         "completed": "yes" or "no"
     }}
     Directly return the final JSON structure. Do not output anything else."""
@@ -210,7 +205,6 @@ def detect_page_index(toc_content, model=None):
 
     Reply format:
     {{
-        "thinking": <why do you think there are page numbers/indices given within the table of contents>
         "page_index_given_in_toc": "<yes or no>"
     }}
     Directly return the final JSON structure. Do not output anything else."""
@@ -745,7 +739,6 @@ async def single_toc_item_index_fixer(section_title, content, model=None):
 
     Reply in a JSON format:
     {
-        "thinking": <explain which page, started and closed by <physical_index_X>, contains the start of this section>,
         "physical_index": "<physical_index_X>" (keep the format)
     }
     Directly return the final JSON structure. Do not output anything else."""

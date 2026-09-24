@@ -1,4 +1,4 @@
-"""Admin endpoints for provider API keys and the indexing model (/api/settings/ai)."""
+"""Admin settings endpoints: AI keys and model, retrieval, SharePoint connector."""
 from typing import Callable, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -127,4 +127,46 @@ def create_retrieval_settings_router(
             raise HTTPException(status_code=400, detail=str(exc))
         return view()
 
+    return router
+
+
+class SharePointSettingsPatch(BaseModel):
+    tenantId: Optional[str] = Field(default=None, max_length=200)
+    clientId: Optional[str] = Field(default=None, max_length=200)
+    clientSecret: Optional[str] = Field(default=None, max_length=1000)
+    clearClientSecret: bool = False
+
+
+def create_sharepoint_settings_router(
+    settings: AppSettings,
+    admin_dependency: Callable,
+    on_change: Callable[[], None],
+) -> APIRouter:
+    """Admin endpoints for the SharePoint connector (/api/settings/sharepoint).
+
+    /api/admin/sharepoint-config is a deprecated alias, kept for one release.
+    Responses never include the client secret, only a masked tail.
+    """
+    router = APIRouter(dependencies=[Depends(admin_dependency)])
+
+    def get_sharepoint_settings():
+        return settings.sharepoint_view()
+
+    def patch_sharepoint_settings(req: SharePointSettingsPatch):
+        try:
+            changed = settings.update_sharepoint(
+                tenant_id=req.tenantId,
+                client_id=req.clientId,
+                client_secret=req.clientSecret,
+                clear_client_secret=req.clearClientSecret,
+            )
+        except SettingsError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        if changed:
+            on_change()
+        return settings.sharepoint_view()
+
+    for path, deprecated in (("/api/settings/sharepoint", False), ("/api/admin/sharepoint-config", True)):
+        router.add_api_route(path, get_sharepoint_settings, methods=["GET"], deprecated=deprecated)
+        router.add_api_route(path, patch_sharepoint_settings, methods=["PATCH"], deprecated=deprecated)
     return router
