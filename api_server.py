@@ -2496,29 +2496,46 @@ def _run_library_sync(library_id: str, reason: str):
     if not _mark_monitor_sync_started(library_id, reason):
         return
 
+    started_at = time.monotonic()
+    restart = False
+    _safe_print(f"[Sync] start library={library_id} reason={reason}")
     try:
         with STATE_LOCK:
             monitor = LIBRARIES.get(library_id, {}).get("folderMonitor", _default_folder_monitor())
             source_type = _monitor_source_type(monitor)
-        result = _sync_library_sharepoint(library_id, reason) if source_type == "sharepoint" else _sync_library_folder(library_id, reason)
-        error_message = None
-        if result["errorCount"]:
-            error_message = f"{result['errorCount']} file(s) failed during sync."
+        try:
+            if source_type == "sharepoint":
+                result = _sync_library_sharepoint(library_id, reason)
+            else:
+                result = _sync_library_folder(library_id, reason)
+            result["outcome"] = "completed"
+            error_message = f"{result['errorCount']} file(s) failed during sync." if result["errorCount"] else None
+        except SharePointSyncSuperseded:
+            result = {**_new_sync_result(reason), "outcome": "superseded"}
+            error_message = None
+            restart = True
+        except Exception as exc:
+            result = {
+                **_new_sync_result(reason),
+                "outcome": "failed",
+                "errorCount": 1,
+                "errors": [{"path": "", "error": _short_error(exc)}],
+            }
+            error_message = _short_error(exc)
+        result["durationSeconds"] = round(time.monotonic() - started_at, 1)
         _mark_monitor_sync_finished(library_id, result, error_message=error_message)
-    except Exception as exc:
-        fallback_result = {
-            "reason": reason,
-            "added": 0,
-            "updated": 0,
-            "removed": 0,
-            "unchanged": 0,
-            "errorCount": 1,
-            "errors": [{"path": "", "error": str(exc)}],
-        }
-        _mark_monitor_sync_finished(library_id, fallback_result, error_message=str(exc))
+        _safe_print(
+            f"[Sync] end library={library_id} outcome={result['outcome']} mode={result.get('mode')} "
+            f"added={result.get('added', 0)} updated={result.get('updated', 0)} renamed={result.get('renamed', 0)} "
+            f"removed={result.get('removed', 0)} failed={result.get('errorCount', 0)} skipped={result.get('skipped', 0)} "
+            f"seconds={result['durationSeconds']}"
+        )
     finally:
         with STATE_LOCK:
             SYNC_THREADS.pop(library_id, None)
+
+    if restart:
+        _start_library_sync(library_id, "settings-update")
 
 
 def _start_library_sync(library_id: str, reason: str) -> bool:
@@ -3382,7 +3399,7 @@ def update_library(library_id: str, req: UpdateLibraryRequest, key: dict = Depen
 
 
 @app.post("/api/libraries/{library_id}/sync", dependencies=[Depends(require_api_key)])
-def sync_library_now(library_id: str):
+def sync_library_now(library_id: str, full: bool = False):
     with STATE_LOCK:
         library = LIBRARIES.get(library_id)
         if not library:
@@ -3399,7 +3416,7 @@ def sync_library_now(library_id: str):
                 "folderMonitor": monitor,
             }
 
-    started = _start_library_sync(library_id, "manual")
+    started = _start_library_sync(library_id, "full-resync" if full else "manual")
     if not started:
         with STATE_LOCK:
             monitor = LIBRARIES.get(library_id, {}).get("folderMonitor", _default_folder_monitor())
