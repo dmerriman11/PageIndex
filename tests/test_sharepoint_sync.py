@@ -95,11 +95,6 @@ class SharePointSyncTests(unittest.TestCase):
         self.assertEqual(result["added"], 0)
         self.assertEqual(api.LIBRARIES[self.library_id]["documents"], {})
 
-    def test_missing_sharepoint_credentials_raise_clear_error(self):
-        with patch.object(api, "SHAREPOINT_TENANT_ID", ""), patch.object(api, "SHAREPOINT_CLIENT_ID", ""), patch.object(api, "SHAREPOINT_CLIENT_SECRET", ""):
-            with self.assertRaisesRegex(ValueError, "SharePoint credentials are not configured"):
-                api._get_sharepoint_access_token()
-
     def test_sharepoint_browser_url_is_reduced_to_site_and_library_parts(self):
         parts = api._sharepoint_url_parts(
             "https://novahomeloans.sharepoint.com/sites/NovaProducts/Shared%20Documents/Forms/AllItems.aspx"

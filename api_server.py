@@ -74,7 +74,8 @@ from reranker import CrossEncoderReranker, build_passage, get_reranker, reranker
 from pageindex.utils import llm_completion
 from app_settings import AppSettings
 from model_catalog import ModelCatalog
-from settings_api import create_ai_settings_router, create_retrieval_settings_router
+from settings_api import create_ai_settings_router, create_retrieval_settings_router, create_sharepoint_settings_router
+from sharepoint_graph import GraphClient, GraphError, download_deadline_seconds
 from indexing_recovery import recover_interrupted_documents
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -96,12 +97,15 @@ SUPPORTED_SOURCE_EXTENSIONS = {".pdf", ".md", ".markdown", ".eml", ".msg"}
 DEFAULT_FOLDER_POLLING_INTERVAL_MINUTES = 5
 ALLOWED_FOLDER_POLLING_INTERVAL_MINUTES = {1, 5, 10, 60}
 FOLDER_MONITOR_LOOP_INTERVAL_SECONDS = 15
-MICROSOFT_GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0"
-SHAREPOINT_TENANT_ID = os.getenv("SHAREPOINT_TENANT_ID", "").strip()
-SHAREPOINT_CLIENT_ID = os.getenv("SHAREPOINT_CLIENT_ID", "").strip()
-SHAREPOINT_CLIENT_SECRET = os.getenv("SHAREPOINT_CLIENT_SECRET", "").strip()
-SHAREPOINT_TOKEN_CACHE = {"access_token": "", "expires_at": 0.0}
-ENV_FILE = Path(__file__).parent / ".env"
+def _env_positive_int(name: str, default: int) -> int:
+    try:
+        value = int(os.getenv(name, "") or default)
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+SHAREPOINT_MAX_FILE_BYTES = _env_positive_int("PAGEINDEX_SHAREPOINT_MAX_FILE_MB", 200) * 1024 * 1024
 GENERIC_LIBRARY_TAG_TERMS = {
     "nova", "products", "2026", "insights", "auto", "created", "guidelines",
     "guideline", "resources", "products", "training", "archive", "document",
@@ -162,6 +166,9 @@ TRUST_LOCAL_REQUESTS_WITHOUT_API_KEY = (
 # Admin-managed AI settings: provider keys (encrypted) and indexing mode/model.
 # A MODEL value in .env only seeds the initial indexing model.
 APP_SETTINGS = AppSettings(WORKSPACE_DIR / "_settings.json", Path(__file__).parent / ".env")
+
+# All Microsoft Graph traffic for SharePoint sync; credentials are read from APP_SETTINGS on each token request.
+SHAREPOINT_GRAPH = GraphClient(APP_SETTINGS.sharepoint_credentials, requests.Session())
 MODEL_CATALOG = ModelCatalog()
 _initial_mode, _initial_model = APP_SETTINGS.get_indexing()
 print(f"[PageIndex API] Indexing mode: {_initial_mode} (model: {_initial_model or 'none'})")
@@ -181,63 +188,9 @@ def _safe_print(message: str):
         print(message.encode("ascii", errors="backslashreplace").decode("ascii"))
 
 
-def _mask_secret(value: str) -> str:
-    if not value:
-        return ""
-    if len(value) <= 8:
-        return "••••"
-    return f"{value[:4]}••••{value[-4:]}"
-
-
-def _refresh_sharepoint_env_values():
-    global SHAREPOINT_TENANT_ID, SHAREPOINT_CLIENT_ID, SHAREPOINT_CLIENT_SECRET
-    SHAREPOINT_TENANT_ID = os.getenv("SHAREPOINT_TENANT_ID", "").strip()
-    SHAREPOINT_CLIENT_ID = os.getenv("SHAREPOINT_CLIENT_ID", "").strip()
-    SHAREPOINT_CLIENT_SECRET = os.getenv("SHAREPOINT_CLIENT_SECRET", "").strip()
-    SHAREPOINT_TOKEN_CACHE["access_token"] = ""
-    SHAREPOINT_TOKEN_CACHE["expires_at"] = 0.0
-
-
-def _quote_env_value(value: str) -> str:
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
-
-
-def _write_env_values(updates: dict[str, str]):
-    existing_lines = []
-    if ENV_FILE.exists():
-        existing_lines = ENV_FILE.read_text(encoding="utf-8").splitlines()
-
-    remaining = dict(updates)
-    output_lines = []
-    for line in existing_lines:
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "=" not in line:
-            output_lines.append(line)
-            continue
-        key = line.split("=", 1)[0].strip()
-        if key in remaining:
-            output_lines.append(f"{key}={_quote_env_value(remaining.pop(key) or '')}")
-        else:
-            output_lines.append(line)
-
-    for key, value in remaining.items():
-        output_lines.append(f"{key}={_quote_env_value(value or '')}")
-
-    ENV_FILE.write_text("\n".join(output_lines) + "\n", encoding="utf-8")
-    for key, value in updates.items():
-        os.environ[key] = value or ""
-    _refresh_sharepoint_env_values()
-
-
-def _sharepoint_connector_config() -> dict:
-    return {
-        "tenantId": SHAREPOINT_TENANT_ID,
-        "clientId": SHAREPOINT_CLIENT_ID,
-        "clientSecretSet": bool(SHAREPOINT_CLIENT_SECRET),
-        "clientSecretMasked": _mask_secret(SHAREPOINT_CLIENT_SECRET),
-        "configured": _sharepoint_credentials_configured(),
-    }
+def _short_error(exc: BaseException) -> str:
+    """A one-line, length-limited error message for admin-facing status fields."""
+    return (str(exc) or type(exc).__name__)[:300]
 
 
 def _get_structure_nodes(structure_payload):
@@ -1663,84 +1616,6 @@ def _build_source_descriptor(root_path: Path, source_path: Path) -> dict:
     }
 
 
-def _sharepoint_credentials_configured() -> bool:
-    return bool(SHAREPOINT_TENANT_ID and SHAREPOINT_CLIENT_ID and SHAREPOINT_CLIENT_SECRET)
-
-
-def _get_sharepoint_access_token() -> str:
-    if not _sharepoint_credentials_configured():
-        raise ValueError(
-            "SharePoint credentials are not configured. Set SHAREPOINT_TENANT_ID, SHAREPOINT_CLIENT_ID, and SHAREPOINT_CLIENT_SECRET."
-        )
-
-    now = time.time()
-    cached_token = SHAREPOINT_TOKEN_CACHE.get("access_token")
-    if cached_token and float(SHAREPOINT_TOKEN_CACHE.get("expires_at") or 0) > now + 60:
-        return str(cached_token)
-
-    token_url = f"https://login.microsoftonline.com/{quote(SHAREPOINT_TENANT_ID)}/oauth2/v2.0/token"
-    response = requests.post(
-        token_url,
-        data={
-            "client_id": SHAREPOINT_CLIENT_ID,
-            "client_secret": SHAREPOINT_CLIENT_SECRET,
-            "scope": "https://graph.microsoft.com/.default",
-            "grant_type": "client_credentials",
-        },
-        timeout=20,
-    )
-    if response.status_code >= 400:
-        raise ValueError(f"Microsoft identity token request failed ({response.status_code}): {response.text[:500]}")
-
-    payload = response.json()
-    access_token = payload.get("access_token")
-    if not access_token:
-        raise ValueError("Microsoft identity token response did not include an access token.")
-
-    SHAREPOINT_TOKEN_CACHE["access_token"] = access_token
-    SHAREPOINT_TOKEN_CACHE["expires_at"] = now + int(payload.get("expires_in") or 3600)
-    return access_token
-
-
-def _graph_url(path_or_url: str) -> str:
-    if path_or_url.startswith("https://"):
-        return path_or_url
-    return f"{MICROSOFT_GRAPH_BASE_URL}/{path_or_url.lstrip('/')}"
-
-
-def _graph_get_json(path_or_url: str, *, timeout: int = 30) -> dict:
-    response = requests.get(
-        _graph_url(path_or_url),
-        headers={"Authorization": f"Bearer {_get_sharepoint_access_token()}"},
-        timeout=timeout,
-    )
-    if response.status_code >= 400:
-        if response.status_code in {401, 403}:
-            raise ValueError(
-                "Microsoft Graph denied the request. Confirm the Entra app has Microsoft Graph application permissions "
-                "for SharePoint files/sites, admin consent is granted, and site-specific access is granted if using Sites.Selected. "
-                f"Graph response ({response.status_code}): {response.text[:500]}"
-            )
-        raise ValueError(f"Microsoft Graph request failed ({response.status_code}): {response.text[:500]}")
-    return response.json()
-
-
-def _graph_download_file(path_or_url: str, target_path: Path):
-    response = requests.get(
-        _graph_url(path_or_url),
-        headers={"Authorization": f"Bearer {_get_sharepoint_access_token()}"},
-        stream=True,
-        timeout=120,
-    )
-    if response.status_code >= 400:
-        raise ValueError(f"Microsoft Graph download failed ({response.status_code}): {response.text[:500]}")
-    target_path.parent.mkdir(parents=True, exist_ok=True)
-    with target_path.open("wb") as output:
-        for chunk in response.iter_content(chunk_size=1024 * 1024):
-            if chunk:
-                output.write(chunk)
-
-
 def _normalize_sharepoint_folder_path(value: str) -> str:
     normalized = re.sub(r"[/\\]+", "/", (value or "").strip().strip("/\\"))
     return normalized
@@ -1832,9 +1707,9 @@ def _resolve_sharepoint_source(settings: dict) -> dict:
     site_path = url_parts["sitePath"]
     site_id = sharepoint.get("siteId")
     if site_id:
-        site = _graph_get_json(f"/sites/{site_id}")
+        site = SHAREPOINT_GRAPH.get_json(f"/sites/{site_id}")
     else:
-        site = _graph_get_json(f"/sites/{hostname}:{quote(site_path, safe='/')}")
+        site = SHAREPOINT_GRAPH.get_json(f"/sites/{hostname}:{quote(site_path, safe='/')}")
         site_id = site.get("id") or ""
     if not site_id:
         raise ValueError("Unable to resolve SharePoint site id from the site URL.")
@@ -1844,10 +1719,9 @@ def _resolve_sharepoint_source(settings: dict) -> dict:
     inferred_drive_path = url_parts.get("drivePath", "")
     drive = None
     if drive_id:
-        drive = _graph_get_json(f"/drives/{quote(drive_id, safe='')}")
+        drive = SHAREPOINT_GRAPH.get_json(f"/drives/{quote(drive_id, safe='')}")
     else:
-        drives_payload = _graph_get_json(f"/sites/{quote(site_id, safe=',')}/drives")
-        drives = drives_payload.get("value", [])
+        drives = SHAREPOINT_GRAPH.get_all(f"/sites/{quote(site_id, safe=',')}/drives")
         if inferred_drive_path:
             drive = next((item for item in drives if _drive_matches_sharepoint_value(item, inferred_drive_path)), None)
         if not drive and drive_name:
@@ -1863,9 +1737,9 @@ def _resolve_sharepoint_source(settings: dict) -> dict:
 
     folder_path = _normalize_sharepoint_folder_path(sharepoint.get("folderPath", "") or url_parts.get("folderPath", ""))
     if folder_path:
-        root_item = _graph_get_json(f"/drives/{quote(drive_id, safe='')}/root:/{quote(folder_path, safe='/')}")
+        root_item = SHAREPOINT_GRAPH.get_json(f"/drives/{quote(drive_id, safe='')}/root:/{quote(folder_path, safe='/')}")
     else:
-        root_item = _graph_get_json(f"/drives/{quote(drive_id, safe='')}/root")
+        root_item = SHAREPOINT_GRAPH.get_json(f"/drives/{quote(drive_id, safe='')}/root")
     root_item_id = root_item.get("id")
     if not root_item_id:
         raise ValueError("Unable to resolve the SharePoint sync folder.")
@@ -1925,13 +1799,11 @@ def _sharepoint_supported_file_descriptor(item: dict, source: dict) -> Optional[
 
 
 def _iter_sharepoint_delta_items(source: dict, delta_link: str) -> tuple[list[dict], str]:
-    next_url = delta_link or f"/drives/{quote(source['driveId'], safe='')}/items/{quote(source['rootItemId'], safe='')}/delta"
+    start_url = delta_link or f"/drives/{quote(source['driveId'], safe='')}/items/{quote(source['rootItemId'], safe='')}/delta"
     items: list[dict] = []
     final_delta_link = ""
-    while next_url:
-        payload = _graph_get_json(next_url, timeout=60)
+    for payload in SHAREPOINT_GRAPH.iter_pages(start_url):
         items.extend(payload.get("value", []))
-        next_url = payload.get("@odata.nextLink")
         final_delta_link = payload.get("@odata.deltaLink") or final_delta_link
     return items, final_delta_link
 
@@ -2174,9 +2046,12 @@ def _download_sharepoint_file_to_managed_upload(library_id: str, doc_id: str, de
     for existing_path in upload_path.glob(f"{doc_id}.*"):
         if existing_path != managed_path:
             existing_path.unlink(missing_ok=True)
-    _graph_download_file(
+    SHAREPOINT_GRAPH.download(
         f"/drives/{quote(descriptor['sharePointDriveId'], safe='')}/items/{quote(descriptor['sharePointItemId'], safe='')}/content",
         managed_path,
+        expected_size=descriptor["fileSize"],
+        max_bytes=SHAREPOINT_MAX_FILE_BYTES,
+        deadline_seconds=download_deadline_seconds(descriptor["fileSize"]),
     )
     return managed_path
 
@@ -2602,12 +2477,6 @@ class SharePointConnectionTestRequest(BaseModel):
     folderPath: Optional[str] = ""
 
 
-class UpdateSharePointConnectorRequest(BaseModel):
-    tenantId: Optional[str] = None
-    clientId: Optional[str] = None
-    clientSecret: Optional[str] = None
-
-
 class UpdateDocumentRequest(BaseModel):
     tags: Optional[List[str]] = None
 
@@ -2724,6 +2593,7 @@ def require_admin_api_key(
 
 app.include_router(create_ai_settings_router(APP_SETTINGS, MODEL_CATALOG, require_admin_api_key))
 app.include_router(create_retrieval_settings_router(APP_SETTINGS, require_admin_api_key, reranker_status))
+app.include_router(create_sharepoint_settings_router(APP_SETTINGS, require_admin_api_key, SHAREPOINT_GRAPH.clear_tokens))
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -2778,29 +2648,6 @@ def revoke_api_key(key_id: str):
     save_api_keys(API_KEYS)
     return {"status": "deleted"}
 
-
-@app.get("/api/admin/sharepoint-config", dependencies=[Depends(require_admin_api_key)])
-def get_sharepoint_config():
-    return _sharepoint_connector_config()
-
-
-@app.patch("/api/admin/sharepoint-config", dependencies=[Depends(require_admin_api_key)])
-def update_sharepoint_config(req: UpdateSharePointConnectorRequest):
-    updates = {
-        "SHAREPOINT_TENANT_ID": (req.tenantId or "").strip(),
-        "SHAREPOINT_CLIENT_ID": (req.clientId or "").strip(),
-    }
-    if req.clientSecret is not None and req.clientSecret.strip():
-        updates["SHAREPOINT_CLIENT_SECRET"] = req.clientSecret.strip()
-    elif not SHAREPOINT_CLIENT_SECRET:
-        updates["SHAREPOINT_CLIENT_SECRET"] = ""
-
-    try:
-        _write_env_values(updates)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed to save SharePoint connector settings: {exc}") from exc
-
-    return _sharepoint_connector_config()
 
 # ────────────────────────────────────────────────────────────────────────────
 # Health
@@ -3129,7 +2976,7 @@ def test_sharepoint_connection(req: SharePointConnectionTestRequest):
             "driveName": req.driveName or "",
             "folderPath": req.folderPath or "",
         })
-        sample_payload = _graph_get_json(
+        sample_payload = SHAREPOINT_GRAPH.get_json(
             f"/drives/{quote(source['driveId'], safe='')}/items/{quote(source['rootItemId'], safe='')}/children?$top=5"
         )
         supported_count = 0
