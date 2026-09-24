@@ -1968,6 +1968,7 @@ def _apply_sharepoint_item(run: _SharePointRun, item: dict, seen: set) -> None:
     except SharePointSyncSuperseded:
         raise
     except Exception as exc:
+        _record_pending(run, item_id, descriptor["fileName"], exc)
         run.result["errorCount"] += 1
         run.result["errors"].append({"path": relative_path, "error": _short_error(exc)})
         return
@@ -1988,6 +1989,36 @@ def _refresh_sharepoint_paths(run: _SharePointRun, seen: set) -> None:
         elif path != document.get("sourceRelativePath"):
             descriptor = {**{name: document.get(name) for name in SHAREPOINT_METADATA_FIELDS}, "sourceRelativePath": path}
             _update_sharepoint_metadata(run, doc_id, document, descriptor)
+
+
+def _record_pending(run: _SharePointRun, item_id: str, name: str, exc: BaseException) -> None:
+    previous = run.pending.get(item_id) or {}
+    run.pending[item_id] = {
+        "name": name,
+        "attempts": int(previous.get("attempts") or 0) + 1,
+        "lastError": _short_error(exc),
+        "lastAttemptAt": _utcnow_iso(),
+    }
+
+
+def _retry_pending_sharepoint_items(run: _SharePointRun, reason: str, change_ids: set, seen: set) -> None:
+    """Fetch and re-apply pending files the change list didn't mention (delta syncs only)."""
+    retry_all = reason in SHAREPOINT_RETRY_ALL_REASONS
+    for item_id, entry in list(run.pending.items()):
+        if item_id in change_ids:
+            continue
+        if int(entry.get("attempts") or 0) >= SHAREPOINT_MAX_ATTEMPTS and not retry_all:
+            continue
+        try:
+            item = SHAREPOINT_GRAPH.get_json(f"/drives/{quote(run.source['driveId'], safe='')}/items/{quote(item_id, safe='')}")
+        except GraphError as exc:
+            if exc.status != 404:
+                _record_pending(run, item_id, entry.get("name") or item_id, exc)
+                run.result["errorCount"] += 1
+                run.result["errors"].append({"path": entry.get("name") or item_id, "error": _short_error(exc)})
+                continue
+            item = {"id": item_id, "deleted": {}}  # gone from SharePoint
+        _apply_sharepoint_item(run, item, seen)
 
 
 def _mark_monitor_sync_started(library_id: str, reason: str):
@@ -2425,10 +2456,20 @@ def _sync_library_sharepoint(library_id: str, reason: str) -> dict:
         docs_by_item={str(doc["sharePointItemId"]): doc_id for doc_id, doc in documents.items() if doc.get("sharePointItemId")},
         result=result,
     )
+    run.pending = dict(settings["pendingItems"])
+    for document in documents.values():  # documents that failed before pending items existed
+        item_id = str(document.get("sharePointItemId") or "")
+        if document.get("status") == "error" and item_id and item_id not in run.pending:
+            run.pending[item_id] = {"name": document.get("fileName") or item_id, "attempts": 0, "lastError": document.get("error"), "lastAttemptAt": None}
+    run.force_item_ids = set(run.pending)
+    if full_scan:
+        run.pending = {item_id: entry for item_id, entry in run.pending.items() if item_id in latest}
 
     seen: set[str] = set()
     for item in latest.values():
         _apply_sharepoint_item(run, item, seen)
+    if not full_scan:
+        _retry_pending_sharepoint_items(run, reason, set(latest), seen)
 
     if full_scan:
         for item_id, doc_id in list(run.docs_by_item.items()):
