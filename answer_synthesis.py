@@ -6,10 +6,11 @@ import logging
 import re
 from typing import Callable, Optional
 
-ANSWER_PROMPT = """You answer questions for mortgage loan officers using ONLY the numbered source passages below.
+ANSWER_PROMPT = """You answer questions for mortgage loan officers using only the numbered source passages below.
+Loan officers act on these answers for specific lenders and programs, so a fact that is not in the
+passages must not appear, even when you believe it is true elsewhere.
 
 Rules:
-- Use only facts stated in the passages. Never use outside knowledge.
 - If the passages answer only part of the question (e.g. one of two lenders), answer the part
   they cover and say plainly what the passages do not state.
 - Set "found" to false only when none of the passages answer any part of the question; then
@@ -17,15 +18,36 @@ Rules:
 - Quote figures exactly as written (credit scores, LTVs, DTIs, fees, dates, loan limits).
 - Cite the passages you used by number in the answer, e.g. [2].
 - If passages cover different lenders, programs or dates, say which source says what.
-- Keep the answer under 120 words.
+- When the question asks about a period (a month or a date range), use the dates in the source names
+  and headers to decide which passages fall inside it, and cover each of those.
+- Answer only what was asked; loan officers scan these between calls.
 
-Return JSON only, no prose around it:
-{{"found": true or false, "answer": "...", "citations": [passage numbers]}}
+Reply with a JSON object: "found" (boolean), "answer" (string), "citations" (passage numbers used).
 
 Question: {query}
 
 Passages:
 {passages}"""
+
+
+# Structured output: the provider constrains the reply to this schema (LiteLLM maps it per provider).
+ANSWER_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "answer",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "found": {"type": "boolean"},
+                "answer": {"type": "string"},
+                "citations": {"type": "array", "items": {"type": "integer"}},
+            },
+            "required": ["found", "answer", "citations"],
+            "additionalProperties": False,
+        },
+    },
+}
 
 
 def build_answer_prompt(query: str, passages: list[dict]) -> str:
@@ -63,17 +85,12 @@ def parse_answer_response(text: Optional[str], passage_count: int) -> Optional[d
 def synthesize_answer(query: str, passages: list[dict], complete: Callable[[str], str]) -> Optional[dict]:
     if not passages:
         return None
-    prompt = build_answer_prompt(query, passages)
-    # Models that only run at their default temperature occasionally return malformed JSON;
-    # one retry recovers almost all of those.
-    for attempt in (1, 2):
-        try:
-            reply = complete(prompt)
-        except Exception as exc:  # provider/network errors must never break the query endpoint
-            logging.warning("LLM answer step failed: %s", type(exc).__name__)
-            return None
-        parsed = parse_answer_response(reply, len(passages))
-        if parsed is not None:
-            return parsed
-        logging.warning("LLM answer step got an unparseable reply (attempt %d of 2)", attempt)
-    return None
+    try:
+        reply = complete(build_answer_prompt(query, passages))
+    except Exception as exc:  # provider/network errors must never break the query endpoint
+        logging.warning("LLM answer step failed: %s", type(exc).__name__)
+        return None
+    parsed = parse_answer_response(reply, len(passages))
+    if parsed is None:
+        logging.warning("LLM answer step got an unparseable reply")
+    return parsed

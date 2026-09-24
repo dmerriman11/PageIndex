@@ -68,40 +68,25 @@ def test_completion_passes_request_timeout(monkeypatch):
     assert calls[0]["timeout"] == utils.LLM_REQUEST_TIMEOUT_SECONDS
 
 
-def temperature_rejected():
-    return litellm.BadRequestError(
-        message="Unsupported value: 'temperature' does not support 0 with this model. Only the default (1) value is supported.",
-        llm_provider="openai",
-        model="gpt-x",
-    )
-
-
-def test_retries_without_temperature_when_the_model_rejects_it(monkeypatch):
+def test_requests_leave_sampling_parameters_at_the_model_default(monkeypatch):
     calls = []
 
     def completion(**kwargs):
         calls.append(kwargs)
-        if "temperature" in kwargs:
-            raise temperature_rejected()
         return fake_response("ok")
-
-    monkeypatch.setattr(utils.litellm, "completion", completion)
-    assert utils.llm_completion("openai/gpt-x", "hi") == "ok"
-    assert [("temperature" in call) for call in calls] == [True, False]
-
-
-def test_async_retries_without_temperature_when_the_model_rejects_it(monkeypatch):
-    calls = []
 
     async def acompletion(**kwargs):
         calls.append(kwargs)
-        if "temperature" in kwargs:
-            raise temperature_rejected()
         return fake_response("ok")
 
+    monkeypatch.setattr(utils.litellm, "completion", completion)
     monkeypatch.setattr(utils.litellm, "acompletion", acompletion)
-    assert asyncio.run(utils.llm_acompletion("openai/gpt-x", "hi")) == "ok"
-    assert [("temperature" in call) for call in calls] == [True, False]
+    utils.llm_completion("openai/gpt-x", "hi")
+    asyncio.run(utils.llm_acompletion("openai/gpt-x", "hi", response_format={"type": "json_object"}))
+
+    assert len(calls) == 2
+    assert all("temperature" not in call for call in calls)
+    assert calls[1]["response_format"] == {"type": "json_object"}
 
 
 def test_other_bad_requests_still_raise_immediately(monkeypatch):

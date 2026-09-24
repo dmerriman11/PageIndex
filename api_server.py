@@ -67,10 +67,11 @@ sys.path.insert(0, str(Path(__file__).parent))
 from pageindex import PageIndexClient
 from workspace_io import write_json_atomic as _write_json_atomic
 from retrieval_text import build_excerpt as _build_text_excerpt, page_content_to_text
-from answer_synthesis import synthesize_answer
+from answer_synthesis import ANSWER_RESPONSE_FORMAT, synthesize_answer
 from ranking import blended_source_score, email_scope_factor, named_library_terms, term_coverage
 from ranking import field_terms as _field_terms
 from synonyms import expand_terms
+from query_dates import MonthFilter, document_date, in_month, month_filter
 from reranker import CrossEncoderReranker, build_passage, get_reranker, reranker_status
 from pageindex.utils import llm_completion
 from app_settings import AppSettings
@@ -122,28 +123,6 @@ GENERIC_LIBRARY_TAG_TERMS = {
     "nova", "products", "2026", "insights", "auto", "created", "guidelines",
     "guideline", "resources", "products", "training", "archive", "document",
 }
-DOCUMENT_TAGGING_PROMPT = """
-You generate 2 to 4 high-signal retrieval tags for one mortgage/product document.
-
-Rules:
-- Use the document title first. Prefer exact phrase segments already present in the title.
-- Tags must be compact noun phrases, usually 2 to 5 words.
-- Keep lender / investor / provider names when they materially scope the file.
-- Keep product / program phrases when they materially scope the file.
-- Prefer title-crafted tags over library, folder collection, or auto-created library labels.
-- If a title contains a lender phrase and a separate product phrase, split them into separate tags instead of repeating the full title.
-- Remove generic collection words and folder boilerplate such as: NOVA, insights, auto created, guidelines, training, resources, archive.
-- Remove dates, version numbers, and revision stamps unless they are essential to the product identity.
-- Do not emit single generic words like "temporary", "government", "guide", or "program" by themselves.
-- Do not emit tags copied from library labels like "nova insights auto created guidelines" unless those words are also the true product identity in the filename.
-- If the title contains both a lender phrase and a more specific product phrase, return both.
-
-Examples:
-- "Amerihome VA and VA IRRRL Program Guide" -> ["Amerihome VA", "VA IRRRL Program"]
-- "Temporary Interest Rate Buydown Guide" -> ["Temporary Interest Rate Buydown"]
-- "Penny Mac Overlays Govt 12.30.25" -> ["Penny Mac Overlays"]
-- "Amerihome FHA Streamline Refinance Program" -> ["Amerihome FHA", "FHA Streamline Refinance Program"]
-""".strip()
 DOCUMENT_TAGGING_STRATEGY = "title_phrase_tags_v2"
 GENERIC_TAG_SUFFIX_TERMS = {
     "agency",
@@ -1432,7 +1411,6 @@ def _build_document_metadata(
         "structureTitles": structure_titles,
         "manualTags": manual_tags,
         "displayTags": display_tags,
-        "taggingPrompt": DOCUMENT_TAGGING_PROMPT,
         "taggingStrategy": DOCUMENT_TAGGING_STRATEGY,
     }
 
@@ -3833,6 +3811,25 @@ def _extract_chat_query(req: ChatRequest) -> str:
     return ""
 
 
+KEYWORD_CANDIDATE_DOCS = 12
+MONTH_CANDIDATE_DOCS = 20
+
+
+def _select_candidate_docs(scored_docs: list, month: Optional[MonthFilter]) -> list:
+    """Documents to search for sections, from (doc_id, document, scope) tuples in ranked order.
+
+    A question about a month ("April 2026") shares no words with files named "NCM-P-2026-04-10 ...",
+    so when it names one, documents dated in that month are the candidates. Otherwise, and when no
+    document is dated in it, the best keyword matches are.
+    """
+    if month is not None:
+        dated = [item for item in scored_docs if in_month(month, document_date(item[1].get("fileName", "")))]
+        if dated:
+            return dated[:MONTH_CANDIDATE_DOCS]
+    keyword_hits = [item for item in scored_docs if item[2]["docScore"] > 0]
+    return keyword_hits[:KEYWORD_CANDIDATE_DOCS] if keyword_hits else scored_docs
+
+
 @app.post("/api/query", dependencies=[Depends(require_api_key_strict)])
 async def rag_query(req: QueryRequest):
     """
@@ -3892,6 +3889,7 @@ async def rag_query(req: QueryRequest):
     retrieval = APP_SETTINGS.get_retrieval()
     top_pages = max(1, min(req.top_pages or retrieval["top_pages"], 6))
     query_terms = _extract_query_terms(query)
+    query_month = month_filter(query)
     named_terms = named_library_terms(LIBRARIES, _extract_terms_from_value)
     start_ts = time.time()
 
@@ -3934,8 +3932,7 @@ async def rag_query(req: QueryRequest):
             reverse=True,
         )
 
-        docs_with_doc_metadata_hits = [item for item in scored_docs if item[2]["docScore"] > 0]
-        candidate_docs = docs_with_doc_metadata_hits[:12] if docs_with_doc_metadata_hits else scored_docs
+        candidate_docs = _select_candidate_docs(scored_docs, query_month)
 
         lib_results: list = []
         lib_errors: list = []
@@ -4073,7 +4070,7 @@ async def _answer_query(query: str, sources: list, results: list, mode: str = "e
         synthesize_answer,
         query,
         passages,
-        lambda prompt: llm_completion(model, prompt, response_format={"type": "json_object"}),
+        lambda prompt: llm_completion(model, prompt, response_format=ANSWER_RESPONSE_FORMAT),
     )
     if verdict is None:
         return _compose_answer(query, sources), {"answerMode": "extractive", "answerFallback": True}
