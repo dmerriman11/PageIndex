@@ -1,7 +1,7 @@
 # SharePoint sync hardening: design
 
 **Date:** 2026-09-23
-**Status:** Approved design, awaiting spec review
+**Status:** Approved. Implementation plans: `docs/superpowers/plans/2026-09-23-sharepoint-sync-hardening-{engine,frontend}.md`
 **Repos:** engine `dmerriman11/PageIndex` (this repo), frontend `dmerriman11/lemur-pageindex`
 **Builds on:** engine PR #2 and frontend PR #3 (retrieval settings), which touch the same settings files and merge first.
 
@@ -295,3 +295,18 @@ populated in drive scope mode.
   "app has no access to this site".
 - **Stored PII.** Synced documents may contain borrower PII. They are stored the same way as
   uploads today, and no new vendor receives them.
+
+## Revisions during planning
+
+Planning against the code turned up these changes to the approved design. The plans implement the revised version.
+
+1. **No new test dependency.** `GraphClient` takes its HTTP session as a parameter, so tests pass a scripted fake session (`tests/sharepoint_fakes.py`) instead of adding `responses`. Tests still exercise the real client code, and nothing is downloaded.
+2. **Folder index in both scope modes, stored beside the library.** Delta responses omit `parentReference.path` in folder scope too, so paths always come from the folder index. It lives in `workspace/_sharepoint/<library_id>.json`, tagged with `targetVersion`, rather than in the library record. That keeps library API responses small; on a large drive the index can hold thousands of folders.
+3. **Folder renames update the paths of files inside them.** Those files don't appear in the delta, so after each delta sync the paths of existing documents are re-derived from the index. A file whose folder moved out of scope is removed.
+4. **No mass re-index after upgrading.** Change detection compares the stored content tag and size with the item's, instead of comparing the old fingerprint hash, so existing documents aren't re-downloaded. The first sync after upgrading is a full scan, because no folder index exists yet.
+5. **Sync status reuses `folderMonitor.lastResult`.** It gains `mode`, `renamed`, `skipped`, `pendingCount`, `outcome` and `durationSeconds`, instead of new `lastSyncResult`/`lastSyncCounts` fields; the frontend already reads `lastResult`.
+6. **Failed files are shown from the retry list.** An existing document keeps its last good content when a re-download fails. The library page lists pending files with their errors, rather than flipping each document to `error`. Indexing failures still mark the document `error`, as today.
+7. **After a superseded sync, the new target syncs straight away** rather than waiting for the next poll.
+8. **No role gating in the dashboard.** The dashboard has no admin and non-admin sessions: every signed-in session reaches the engine as an admin through the proxies. The engine enforces admin-only access for API keys; the UI doesn't hide anything.
+9. **The connection test also returns the site's document libraries**, which the library picker uses.
+10. **The download deadline is `min(600, 60 + size in MB)` seconds.**
