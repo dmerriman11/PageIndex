@@ -3188,6 +3188,7 @@ def update_library(library_id: str, req: UpdateLibraryRequest, key: dict = Depen
                 monitor_changed = True
         sharepoint = _normalize_sharepoint_settings(monitor.get("sharePoint"))
         sharepoint_changed = False
+        sharepoint_changed_fields = set()
         sharepoint_updates = {
             "siteUrl": req.sharePointSiteUrl,
             "driveId": req.sharePointDriveId,
@@ -3201,9 +3202,10 @@ def update_library(library_id: str, req: UpdateLibraryRequest, key: dict = Depen
             if sharepoint.get(field) != normalized_value:
                 sharepoint[field] = normalized_value
                 sharepoint_changed = True
+                sharepoint_changed_fields.add(field)
         if sharepoint_changed:
-            if req.sharePointDriveId is None:
-                sharepoint["driveId"] = ""  # resolved for the old target; resolve it again
+            if req.sharePointDriveId is None and ("siteUrl" in sharepoint_changed_fields or "driveName" in sharepoint_changed_fields):
+                sharepoint["driveId"] = ""  # resolved from the old site/name; resolve it again
             _reset_sharepoint_target(sharepoint)
             monitor["sharePoint"] = sharepoint
             monitor["lastCompletedAt"] = None

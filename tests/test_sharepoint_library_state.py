@@ -56,9 +56,37 @@ def test_changing_the_folder_resets_everything_resolved_for_the_old_target():
 
     sharepoint = sharepoint_of(library_id)
     assert sharepoint["targetVersion"] == 1
-    assert (sharepoint["siteId"], sharepoint["driveId"], sharepoint["rootItemId"], sharepoint["deltaLink"], sharepoint["scopeMode"]) == ("", "", "", "", "")
+    assert (sharepoint["siteId"], sharepoint["rootItemId"], sharepoint["deltaLink"], sharepoint["scopeMode"]) == ("", "", "", "")
+    assert sharepoint["driveId"] == "drive-1"
     assert sharepoint["pendingItems"] == {}
     assert sharepoint["folderPath"] == "Other"
+
+
+def test_changing_the_site_clears_a_resolved_drive_id():
+    library_id = resolved_library()
+
+    api.update_library(
+        library_id,
+        api.UpdateLibraryRequest(sharePointSiteUrl="https://contoso.sharepoint.com/sites/other"),
+        key=ADMIN_KEY,
+    )
+
+    assert sharepoint_of(library_id)["driveId"] == ""
+
+
+def test_a_drive_id_only_target_keeps_its_drive_when_the_folder_changes():
+    library = api._create_library_record(
+        name="SP2", folder_monitor_enabled=True, sync_source_type="sharepoint",
+        sharepoint={"siteUrl": SITE_URL, "driveId": "drive-9"},
+    )
+    api.LIBRARIES[library["id"]] = library
+    library_id = library["id"]
+
+    api.update_library(library_id, api.UpdateLibraryRequest(sharePointFolderPath="Other"), key=ADMIN_KEY)
+
+    sharepoint = sharepoint_of(library_id)
+    assert sharepoint["driveId"] == "drive-9"
+    assert sharepoint["targetVersion"] == 1
 
 
 def test_a_drive_id_sent_with_the_change_is_kept():
