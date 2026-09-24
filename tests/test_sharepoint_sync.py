@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import api_server as api
+from sharepoint_graph import GraphError
 
 
 def graph_file(item_id: str, name: str = "Guide.pdf", size: int = 12, etag: str = "a", ctag: str = "c"):
@@ -94,6 +95,29 @@ class SharePointSyncTests(unittest.TestCase):
 
         self.assertEqual(result["added"], 0)
         self.assertEqual(api.LIBRARIES[self.library_id]["documents"], {})
+
+    def test_expired_delta_link_falls_back_to_full_rescan(self):
+        api.LIBRARIES[self.library_id]["folderMonitor"]["sharePoint"]["deltaLink"] = "old"
+
+        def fake_iter_delta_items(source, delta_link):
+            if delta_link:
+                raise GraphError("expired", status=410)
+            return [graph_file("item-1")], "delta2"
+
+        patches = [
+            patch.object(api, "save_libraries", lambda *_args, **_kwargs: None),
+            patch.object(api, "_resolve_sharepoint_source", return_value=self.source),
+            patch.object(api, "_iter_sharepoint_delta_items", side_effect=fake_iter_delta_items),
+            patch.object(api, "_download_sharepoint_file_to_managed_upload", return_value=Path("managed.pdf")),
+            patch.object(api, "_index_document", lambda *_args, **_kwargs: None),
+        ]
+        for item in patches:
+            item.start()
+            self.addCleanup(item.stop)
+
+        result = api._sync_library_sharepoint(self.library_id, "manual")
+
+        self.assertEqual(result["added"], 1)
 
     def test_sharepoint_browser_url_is_reduced_to_site_and_library_parts(self):
         parts = api._sharepoint_url_parts(

@@ -2216,7 +2216,7 @@ def _sync_library_sharepoint(library_id: str, reason: str) -> dict:
     full_scan = not original_delta_link
     try:
         items, delta_link = _iter_sharepoint_delta_items(source, original_delta_link)
-    except ValueError:
+    except (ValueError, GraphError):
         if not original_delta_link:
             raise
         full_scan = True
