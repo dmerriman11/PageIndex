@@ -3323,8 +3323,71 @@ def preview_auto_create_libraries(req: AutoCreatePreviewRequest, key: dict = Dep
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@app.post("/api/libraries/auto-create", status_code=201, dependencies=[Depends(require_api_key)])
-def auto_create_libraries(req: AutoCreateLibrariesRequest):
+def _auto_create_sharepoint_libraries(req: AutoCreateLibrariesRequest) -> dict:
+    settings = _sharepoint_settings_from_request(req)
+    if not settings["siteUrl"]:
+        raise HTTPException(status_code=400, detail="SharePoint site URL is required.")
+    try:
+        preview = _build_sharepoint_auto_create_preview(settings, req.includeFolders, req.excludeFolders)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=_short_error(exc)) from exc
+
+    selected = [item for item in preview["subfolders"] if item["selected"]]
+    if not selected:
+        raise HTTPException(status_code=400, detail="Select at least one eligible subfolder.")
+
+    parent_label = " / ".join(part for part in [preview["driveName"], preview["parentPath"]] if part)
+    created, skipped, sync_targets = [], [], []
+    with STATE_LOCK:
+        for item in selected:
+            existing = _get_library_for_sharepoint_target(preview["driveId"], item["path"])
+            if existing:
+                skipped.append({
+                    "name": item["name"],
+                    "path": item["path"],
+                    "reason": f"Already synced by library '{existing.get('name', 'Unknown')}'.",
+                })
+                continue
+            library = _create_library_record(
+                name=item["name"],
+                description=f"Auto-created from SharePoint {parent_label}",
+                group=req.group or "Default",
+                tags=_merge_library_tags(req.tags, extra_tags=[item["name"]]),
+                folder_monitor_enabled=bool(req.folderMonitorEnabled),
+                polling_interval_minutes=req.pollingIntervalMinutes,
+                sync_source_type="sharepoint",
+                sharepoint={
+                    "siteUrl": preview["siteUrl"],
+                    "driveId": preview["driveId"],
+                    "driveName": preview["driveName"],
+                    "folderPath": item["path"],
+                },
+            )
+            LIBRARIES[library["id"]] = library
+            created.append(library)
+            monitor = library["folderMonitor"]
+            if monitor["enabled"] and _monitor_has_sync_target(monitor):
+                sync_targets.append(library["id"])
+        save_libraries(LIBRARIES)
+
+    for library_id in sync_targets:
+        _start_library_sync(library_id, "auto-created")
+
+    return {
+        "parentPath": preview["parentPath"],
+        "created": created,
+        "skipped": skipped,
+        "totalDiscovered": len(preview["subfolders"]),
+        "selectedCount": len(selected),
+    }
+
+
+@app.post("/api/libraries/auto-create", status_code=201)
+def auto_create_libraries(req: AutoCreateLibrariesRequest, key: dict = Depends(require_api_key)):
+    if req.sourceType == "sharepoint":
+        _require_admin_key(key, "connect a library to SharePoint")
+        return _auto_create_sharepoint_libraries(req)
+
     parent_path = (req.parentPath or "").strip()
     if not parent_path:
         raise HTTPException(status_code=400, detail="Parent directory is required.")

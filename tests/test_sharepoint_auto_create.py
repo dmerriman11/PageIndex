@@ -92,3 +92,68 @@ def test_a_local_folder_preview_still_needs_a_parent_path(site):
         api.preview_auto_create_libraries(api.AutoCreatePreviewRequest(), key=QUERY_KEY)
 
     assert caught.value.status_code == 400
+
+
+# ── creating ──────────────────────────────────────────────────────────────────
+
+def create_request(**overrides):
+    fields = {
+        "sourceType": "sharepoint", "sharePointSiteUrl": SITE_URL, "sharePointDriveName": "Documents",
+        "sharePointFolderPath": "Amerihome", "group": "Investors", "tags": ["guides"], "pollingIntervalMinutes": 10,
+    }
+    return api.AutoCreateLibrariesRequest(**{**fields, **overrides})
+
+
+@pytest.fixture
+def started(monkeypatch):
+    calls = []
+    monkeypatch.setattr(api, "_start_library_sync", lambda library_id, reason: calls.append((library_id, reason)) or True)
+    return calls
+
+
+def test_one_sharepoint_library_is_created_per_selected_subfolder(site, started):
+    body = api.auto_create_libraries(create_request(includeFolders=["Rates"]), key=ADMIN_KEY)
+
+    assert [library["name"] for library in body["created"]] == ["Rates"]
+    library = api.LIBRARIES[body["created"][0]["id"]]
+    monitor = library["folderMonitor"]
+    assert (monitor["sourceType"], monitor["enabled"], monitor["pollingIntervalMinutes"]) == ("sharepoint", True, 10)
+    assert (monitor["sharePoint"]["siteUrl"], monitor["sharePoint"]["driveId"], monitor["sharePoint"]["folderPath"]) == (SITE_URL, "drive-1", "Amerihome/Rates")
+    assert library["group"]["name"] == "Investors"
+    assert "guides" in library["tags"]
+    assert started == [(library["id"], "auto-created")]
+    assert (body["totalDiscovered"], body["selectedCount"]) == (2, 1)
+
+
+def test_already_synced_subfolders_are_skipped(site, started):
+    existing = api._create_library_record(
+        name="Rates", sync_source_type="sharepoint",
+        sharepoint={"siteUrl": SITE_URL, "driveId": "drive-1", "folderPath": "Amerihome/Rates"},
+    )
+    api.LIBRARIES[existing["id"]] = existing
+
+    body = api.auto_create_libraries(create_request(), key=ADMIN_KEY)
+
+    assert [library["name"] for library in body["created"]] == ["Archive"]
+
+
+def test_monitoring_can_be_left_off(site, started):
+    body = api.auto_create_libraries(create_request(folderMonitorEnabled=False), key=ADMIN_KEY)
+
+    assert len(body["created"]) == 2
+    assert started == []
+
+
+def test_a_query_key_cannot_auto_create_sharepoint_libraries(site, started):
+    with pytest.raises(HTTPException) as caught:
+        api.auto_create_libraries(create_request(), key=QUERY_KEY)
+
+    assert caught.value.status_code == 403
+    assert api.LIBRARIES == {}
+
+
+def test_nothing_selected_is_a_400(site, started):
+    with pytest.raises(HTTPException) as caught:
+        api.auto_create_libraries(create_request(excludeFolders=["Rates", "Archive"]), key=ADMIN_KEY)
+
+    assert caught.value.status_code == 400
