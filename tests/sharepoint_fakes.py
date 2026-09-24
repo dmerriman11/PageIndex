@@ -67,3 +67,67 @@ def make_client(session, credentials=(TENANT, CLIENT_ID, SECRET), clock=None):
     extra = {"clock": clock} if clock else {}
     client = GraphClient(lambda: credentials, session, sleep=sleeps.append, random=lambda: 0.0, **extra)
     return client, sleeps
+
+
+# ── A fake SharePoint site ────────────────────────────────────────────────────
+
+SITE_URL = "https://contoso.sharepoint.com/sites/team"
+SITE = {"id": "site-1", "webUrl": SITE_URL}
+DRIVE = {"id": "drive-1", "name": "Documents", "webUrl": f"{SITE_URL}/Shared%20Documents"}
+OTHER_DRIVE = {"id": "drive-2", "name": "Archive", "webUrl": f"{SITE_URL}/Archive"}
+SCOPE_ROOT = {"id": "folder-1", "name": "Amerihome", "folder": {"childCount": 1}, "parentReference": {"id": "root-1", "driveId": "drive-1"}}
+FOLDER_DELTA = "/drives/drive-1/items/folder-1/delta"
+DRIVE_DELTA = "/drives/drive-1/root/delta"
+
+
+def folder_item(item_id, name, parent_id):
+    return {"id": item_id, "name": name, "folder": {"childCount": 0}, "parentReference": {"id": parent_id, "driveId": "drive-1"}}
+
+
+def deleted_item(item_id, parent_id="folder-1"):
+    return {"id": item_id, "deleted": {"state": "deleted"}, "parentReference": {"id": parent_id, "driveId": "drive-1"}}
+
+
+class FakeSharePoint:
+    """Site "team" with document libraries "Documents" (drive-1) and "Archive"; the synced folder is Amerihome (folder-1)."""
+
+    def __init__(self):
+        self.session = FakeSession()
+        self.session.set("POST", TOKEN_URL, token_response())
+        self._links = 0
+        self.get("/sites/contoso.sharepoint.com:/sites/team", SITE)
+        self.get("/sites/site-1", SITE)
+        self.get("/sites/site-1/drives", {"value": [DRIVE, OTHER_DRIVE]})
+        self.get("/drives/drive-1", DRIVE)
+        self.get("/drives/drive-1/root:/Amerihome", SCOPE_ROOT)
+        self.get("/drives/drive-1/items/folder-1/children?$top=5", {"value": []})
+
+    def get(self, path, body):
+        self.session.set("GET", graph_url(path), FakeResponse(200, body))
+
+    def fail(self, path, status, headers=None):
+        self.session.set("GET", graph_url(path), FakeResponse(status, {"error": {"code": "failed", "message": "failed"}}, headers))
+
+    def add_file(self, item_id, name="Guide.pdf", parent_id="folder-1", content=b"%PDF-1.4 guide", ctag="c1", etag="e1"):
+        """Serve the file's content and item metadata; returns the driveItem as delta would list it."""
+        item = {
+            "id": item_id,
+            "name": name,
+            "size": len(content),
+            "cTag": ctag,
+            "eTag": etag,
+            "lastModifiedDateTime": "2026-09-20T12:00:00Z",
+            "webUrl": f"{SITE_URL}/Shared%20Documents/{name}",
+            "file": {"mimeType": "application/octet-stream"},
+            "parentReference": {"id": parent_id, "driveId": "drive-1"},
+        }
+        self.session.set("GET", graph_url(f"/drives/drive-1/items/{item_id}/content"), FakeResponse(200, content=content))
+        self.get(f"/drives/drive-1/items/{item_id}", item)
+        return item
+
+    def changes(self, items, at=FOLDER_DELTA):
+        """Serve `items` as one delta page at `at` (a start path or a previous delta link); returns the next delta link."""
+        self._links += 1
+        link = f"{GRAPH_BASE_URL}/delta-links/{self._links}"
+        self.session.set("GET", graph_url(at), FakeResponse(200, {"value": list(items), "@odata.deltaLink": link}))
+        return link

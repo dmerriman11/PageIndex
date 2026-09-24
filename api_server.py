@@ -1798,6 +1798,11 @@ def _sharepoint_supported_file_descriptor(item: dict, source: dict) -> Optional[
     }
 
 
+def _is_supported_sharepoint_file(item: dict) -> bool:
+    name = str(item.get("name") or "").strip()
+    return "file" in item and "deleted" not in item and bool(name) and Path(name).suffix.lower() in SUPPORTED_SOURCE_EXTENSIONS
+
+
 def _iter_sharepoint_delta_items(source: dict, delta_link: str) -> tuple[list[dict], str]:
     start_url = delta_link or f"/drives/{quote(source['driveId'], safe='')}/items/{quote(source['rootItemId'], safe='')}/delta"
     items: list[dict] = []
@@ -2470,6 +2475,20 @@ class UpdateLibraryRequest(BaseModel):
     sharePointFolderPath: Optional[str] = None
 
 
+SHAREPOINT_REQUEST_FIELDS = ("sharePointSiteUrl", "sharePointDriveId", "sharePointDriveName", "sharePointFolderPath")
+
+
+def _require_admin_for_sharepoint(req, key: dict, current_source: str = "folder") -> None:
+    """Pointing a library at SharePoint, retargeting it or switching it away is an admin action."""
+    touches_sharepoint = (
+        req.syncSourceType == "sharepoint"
+        or any(getattr(req, field, None) not in (None, "") for field in SHAREPOINT_REQUEST_FIELDS)
+        or (current_source == "sharepoint" and req.syncSourceType not in (None, "sharepoint"))
+    )
+    if touches_sharepoint and "admin" not in (key or {}).get("permissions", []):
+        raise HTTPException(status_code=403, detail="Only admin API keys can connect a library to SharePoint.")
+
+
 class SharePointConnectionTestRequest(BaseModel):
     siteUrl: str
     driveId: Optional[str] = ""
@@ -2937,8 +2956,9 @@ def list_libraries(search: Optional[str] = None, limit: Optional[int] = None):
 
     return scored_libraries
 
-@app.post("/api/libraries", status_code=201, dependencies=[Depends(require_api_key)])
-def create_library(req: CreateLibraryRequest):
+@app.post("/api/libraries", status_code=201)
+def create_library(req: CreateLibraryRequest, key: dict = Depends(require_api_key)):
+    _require_admin_for_sharepoint(req, key)
     sync_source_type = "sharepoint" if req.syncSourceType == "sharepoint" else "folder"
     library = _create_library_record(
         name=req.name,
@@ -2967,7 +2987,7 @@ def create_library(req: CreateLibraryRequest):
     return library
 
 
-@app.post("/api/libraries/sharepoint/test", dependencies=[Depends(require_api_key)])
+@app.post("/api/libraries/sharepoint/test", dependencies=[Depends(require_admin_api_key)])
 def test_sharepoint_connection(req: SharePointConnectionTestRequest):
     try:
         source = _resolve_sharepoint_source({
@@ -2976,13 +2996,10 @@ def test_sharepoint_connection(req: SharePointConnectionTestRequest):
             "driveName": req.driveName or "",
             "folderPath": req.folderPath or "",
         })
-        sample_payload = SHAREPOINT_GRAPH.get_json(
+        sample = SHAREPOINT_GRAPH.get_json(
             f"/drives/{quote(source['driveId'], safe='')}/items/{quote(source['rootItemId'], safe='')}/children?$top=5"
         )
-        supported_count = 0
-        for item in sample_payload.get("value", []):
-            if _sharepoint_supported_file_descriptor(item, source):
-                supported_count += 1
+        drives = SHAREPOINT_GRAPH.get_all(f"/sites/{quote(source['siteId'], safe=',')}/drives")
         return {
             "status": "ok",
             "credentialsConfigured": True,
@@ -2991,10 +3008,11 @@ def test_sharepoint_connection(req: SharePointConnectionTestRequest):
             "driveName": source["driveName"],
             "folderPath": source["folderPath"],
             "rootItemId": source["rootItemId"],
-            "sampleSupportedFiles": supported_count,
+            "sampleSupportedFiles": sum(1 for item in sample.get("value", []) if _is_supported_sharepoint_file(item)),
+            "drives": [{"id": drive["id"], "name": drive.get("name") or drive["id"]} for drive in drives if drive.get("id")],
         }
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=_short_error(exc)) from exc
 
 
 @app.post("/api/libraries/auto-create/preview", dependencies=[Depends(require_api_key)])
@@ -3090,8 +3108,8 @@ def get_library(library_id: str):
             raise HTTPException(status_code=404, detail="Library not found")
         return lib
 
-@app.patch("/api/libraries/{library_id}", dependencies=[Depends(require_api_key)])
-def update_library(library_id: str, req: UpdateLibraryRequest):
+@app.patch("/api/libraries/{library_id}")
+def update_library(library_id: str, req: UpdateLibraryRequest, key: dict = Depends(require_api_key)):
     should_start_sync = False
     metadata_needs_refresh = False
 
@@ -3099,6 +3117,8 @@ def update_library(library_id: str, req: UpdateLibraryRequest):
         lib = LIBRARIES.get(library_id)
         if not lib:
             raise HTTPException(status_code=404, detail="Library not found")
+
+        _require_admin_for_sharepoint(req, key, current_source=_monitor_source_type(lib.get("folderMonitor") or {}))
 
         if req.name is not None:
             lib["name"] = req.name.strip()
