@@ -7,6 +7,7 @@ SETTINGS_ENCRYPTION_KEY, outside the workspace, so backups hold only ciphertext.
 """
 import json
 import os
+import re
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,6 +37,17 @@ RETRIEVAL_FIELDS = {  # stored key -> (API name, environment variable)
     "answer_mode": ("answerMode", "PAGEINDEX_ANSWER_MODE"),
     "page_content_chars": ("pageContentChars", "PAGEINDEX_PAGE_CONTENT_CHARS"),
 }
+
+# SharePoint connector credentials: saved value (secret encrypted) -> environment variable -> empty.
+SHAREPOINT_FIELDS = {  # stored key -> (API name, environment variable)
+    "tenant_id": ("tenantId", "SHAREPOINT_TENANT_ID"),
+    "client_id": ("clientId", "SHAREPOINT_CLIENT_ID"),
+    "client_secret": ("clientSecret", "SHAREPOINT_CLIENT_SECRET"),
+}
+GUID_PATTERN = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+TENANT_DOMAIN_PATTERN = re.compile(r"^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$")
+MAX_SECRET_LENGTH = 500
+
 MASTER_KEY_ENV = "SETTINGS_ENCRYPTION_KEY"
 
 
@@ -71,6 +83,11 @@ def mask_key(key: str) -> str:
     if len(key) < 8:
         return "…"
     return f"{key[:3]}…{key[-4:]}"
+
+
+def mask_secret_tail(secret: str) -> str:
+    secret = (secret or "").strip()
+    return f"…{secret[-4:]}" if len(secret) >= 8 else "…"
 
 
 class AppSettings:
@@ -136,6 +153,7 @@ class AppSettings:
                 if provider in PROVIDERS and isinstance(entry, dict)
             },
             "retrieval": self._valid_retrieval(retrieval if isinstance(retrieval, dict) else {}),
+            "connectors": self._valid_connectors(data.get("connectors")),
         }
 
     def _save(self):
@@ -324,6 +342,109 @@ class AppSettings:
         view = {RETRIEVAL_FIELDS[key][0]: value for key, (value, _) in resolved.items()}
         view["sources"] = {RETRIEVAL_FIELDS[key][0]: source for key, (_, source) in resolved.items()}
         return view
+
+    # ── SharePoint connector ──────────────────────────────────────────────────
+
+    @staticmethod
+    def _valid_connectors(saved) -> dict:
+        sharepoint = saved.get("sharepoint") if isinstance(saved, dict) else None
+        if not isinstance(sharepoint, dict):
+            return {"sharepoint": {}}
+        return {
+            "sharepoint": {
+                key: value
+                for key, value in sharepoint.items()
+                if key in ("tenant_id", "client_id", "client_secret_enc") and isinstance(value, str) and value
+            }
+        }
+
+    def _saved_sharepoint_secret(self) -> tuple[Optional[str], bool]:
+        """Return (decrypted saved secret, needs_reentry)."""
+        encrypted = self._data["connectors"]["sharepoint"].get("client_secret_enc")
+        if not encrypted:
+            return None, False
+        try:
+            return self._fernet.decrypt(encrypted.encode()).decode(), False
+        except (InvalidToken, ValueError):
+            return None, True
+
+    def _sharepoint_resolved(self) -> dict:
+        """Stored key -> (value, source), source being 'saved', 'env' or 'default'."""
+        with self._lock:
+            saved = self._data["connectors"]["sharepoint"]
+            secret, _ = self._saved_sharepoint_secret()
+            saved_values = {"tenant_id": saved.get("tenant_id"), "client_id": saved.get("client_id"), "client_secret": secret}
+            resolved = {}
+            for key, (_, env_var) in SHAREPOINT_FIELDS.items():
+                env_value = (self._environ.get(env_var) or "").strip()
+                if saved_values[key]:
+                    resolved[key] = (saved_values[key], "saved")
+                elif env_value:
+                    resolved[key] = (env_value, "env")
+                else:
+                    resolved[key] = ("", "default")
+            return resolved
+
+    def sharepoint_credentials(self) -> tuple[str, str, str]:
+        """(tenant id, client id, client secret) for the Graph client; empty strings when unset."""
+        resolved = self._sharepoint_resolved()
+        return resolved["tenant_id"][0], resolved["client_id"][0], resolved["client_secret"][0]
+
+    def update_sharepoint(
+        self,
+        tenant_id: Optional[str] = None,
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
+        clear_client_secret: bool = False,
+    ) -> bool:
+        """Change only the fields given; '' clears a saved value. Returns True when anything changed."""
+        tenant = None if tenant_id is None else tenant_id.strip()
+        client = None if client_id is None else client_id.strip()
+        secret = None if client_secret is None else client_secret.strip()
+        if tenant and not (GUID_PATTERN.match(tenant) or TENANT_DOMAIN_PATTERN.match(tenant)):
+            raise SettingsError("Tenant ID must be a GUID or a domain such as contoso.onmicrosoft.com.")
+        if client and not GUID_PATTERN.match(client):
+            raise SettingsError("Client ID must be the application (client) ID GUID from Entra ID.")
+        if secret and len(secret) > MAX_SECRET_LENGTH:
+            raise SettingsError(f"Client secret must be at most {MAX_SECRET_LENGTH} characters.")
+        if secret and clear_client_secret:
+            raise SettingsError("Send a new client secret or clear it, not both.")
+        with self._lock:
+            current = self._data["connectors"]["sharepoint"]
+            saved = dict(current)
+            for key, value in (("tenant_id", tenant), ("client_id", client)):
+                if value is None:
+                    continue
+                if value:
+                    saved[key] = value
+                else:
+                    saved.pop(key, None)
+            if clear_client_secret or secret == "":
+                saved.pop("client_secret_enc", None)
+            elif secret:
+                existing, _ = self._saved_sharepoint_secret()
+                if secret != existing:
+                    saved["client_secret_enc"] = self._fernet.encrypt(secret.encode()).decode()
+            if saved == current:
+                return False
+            self._data["connectors"]["sharepoint"] = saved
+            self._save()
+            return True
+
+    def sharepoint_view(self) -> dict:
+        with self._lock:
+            resolved = self._sharepoint_resolved()
+            _, needs_reentry = self._saved_sharepoint_secret()
+        secret = resolved["client_secret"][0]
+        return {
+            "tenantId": resolved["tenant_id"][0],
+            "clientId": resolved["client_id"][0],
+            "clientSecretSet": bool(secret),
+            "clientSecretMasked": mask_secret_tail(secret) if secret else None,
+            "configured": all(value for value, _ in resolved.values()),
+            "needsReentry": needs_reentry,
+            "sources": {SHAREPOINT_FIELDS[key][0]: source for key, (_, source) in resolved.items()},
+        }
 
     @staticmethod
     def _require_provider(provider: str) -> None:
