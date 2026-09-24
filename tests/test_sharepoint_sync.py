@@ -181,6 +181,15 @@ class ChangeListErrorTests(SharePointSyncCase):
             self.sync()
         self.assertEqual(self.sharepoint()["deltaLink"], link)
 
+    def test_a_folder_index_save_failure_keeps_the_delta_link_unchanged(self):
+        link = self.first_sync(self.site.add_file("item-1"))
+        self.site.changes([self.site.add_file("item-1")], at=link)
+
+        with patch.object(api, "_write_json_atomic", side_effect=OSError("disk full")):
+            with self.assertRaises(OSError):
+                self.sync()
+        self.assertEqual(self.sharepoint()["deltaLink"], link)
+
     def test_a_full_resync_ignores_the_delta_link(self):
         self.first_sync(self.site.add_file("item-1"))
         self.site.changes([SCOPE_ROOT, self.site.add_file("item-1")])

@@ -2439,11 +2439,11 @@ def _sync_library_sharepoint(library_id: str, reason: str) -> dict:
 
     with STATE_LOCK:
         sharepoint = _current_sharepoint_settings(library_id, target_version)
+        folder_index.save(folder_index_path, target_version, _write_json_atomic)
         sharepoint.update({
             "deltaLink": delta_link, "scopeMode": scope_mode, "pendingItems": run.pending,
             "lastConnectedAt": _utcnow_iso(), "lastConnectionError": None,
         })
-        folder_index.save(folder_index_path, target_version, _write_json_atomic)
         save_libraries(LIBRARIES)
 
     result["pendingCount"] = len(run.pending)
