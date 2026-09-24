@@ -243,6 +243,9 @@ def _default_folder_monitor() -> dict:
             "folderPath": "",
             "rootItemId": "",
             "deltaLink": "",
+            "targetVersion": 0,
+            "scopeMode": "",
+            "pendingItems": {},
             "lastConnectedAt": None,
             "lastConnectionError": None,
         },
@@ -341,7 +344,30 @@ def _normalize_sharepoint_settings(value: Optional[dict]) -> dict:
     for key in ["lastConnectedAt", "lastConnectionError"]:
         candidate = value.get(key)
         normalized[key] = candidate if isinstance(candidate, str) and candidate.strip() else None
+    normalized["scopeMode"] = value.get("scopeMode") if value.get("scopeMode") in {"folder", "drive"} else ""
+    version = value.get("targetVersion")
+    normalized["targetVersion"] = version if isinstance(version, int) and not isinstance(version, bool) and version >= 0 else 0
+    pending = value.get("pendingItems")
+    normalized["pendingItems"] = {
+        str(item_id): {
+            "name": str(entry.get("name") or item_id),
+            "attempts": entry["attempts"] if isinstance(entry.get("attempts"), int) and entry["attempts"] >= 0 else 0,
+            "lastError": entry.get("lastError") if isinstance(entry.get("lastError"), str) else None,
+            "lastAttemptAt": entry.get("lastAttemptAt") if isinstance(entry.get("lastAttemptAt"), str) else None,
+        }
+        for item_id, entry in (pending.items() if isinstance(pending, dict) else [])
+        if isinstance(entry, dict)
+    }
     return normalized
+
+
+def _reset_sharepoint_target(sharepoint: dict) -> None:
+    """Forget what was resolved for the previous target. A sync still running for it sees the new
+    targetVersion and stops without writing; the saved folder index no longer matches and is ignored."""
+    sharepoint.update({
+        "siteId": "", "rootItemId": "", "deltaLink": "", "scopeMode": "", "pendingItems": {}, "lastConnectionError": None,
+    })
+    sharepoint["targetVersion"] = int(sharepoint.get("targetVersion") or 0) + 1
 
 
 def _monitor_source_type(monitor: dict) -> str:
@@ -2473,6 +2499,7 @@ class UpdateLibraryRequest(BaseModel):
     sharePointDriveId: Optional[str] = None
     sharePointDriveName: Optional[str] = None
     sharePointFolderPath: Optional[str] = None
+    keepExistingDocuments: Optional[bool] = None
 
 
 SHAREPOINT_REQUEST_FIELDS = ("sharePointSiteUrl", "sharePointDriveId", "sharePointDriveName", "sharePointFolderPath")
@@ -3141,10 +3168,18 @@ def update_library(library_id: str, req: UpdateLibraryRequest, key: dict = Depen
         monitor_changed = False
         if req.syncSourceType is not None:
             source_type = "sharepoint" if req.syncSourceType == "sharepoint" else "folder"
-            if monitor.get("sourceType") != source_type:
+            previous_type = _monitor_source_type(monitor)
+            if previous_type != source_type:
                 monitor["sourceType"] = source_type
                 monitor["lastCompletedAt"] = None
                 monitor_changed = True
+                switched_sharepoint = _normalize_sharepoint_settings(monitor.get("sharePoint"))
+                _reset_sharepoint_target(switched_sharepoint)
+                monitor["sharePoint"] = switched_sharepoint
+                if not req.keepExistingDocuments:
+                    for doc_id, document in list(lib.get("documents", {}).items()):
+                        if document.get("sourceType") == previous_type:
+                            _remove_document_record(library_id, doc_id)
         if req.folderPath is not None:
             folder_path = req.folderPath.strip()
             if monitor.get("folderPath") != folder_path:
@@ -3167,9 +3202,9 @@ def update_library(library_id: str, req: UpdateLibraryRequest, key: dict = Depen
                 sharepoint[field] = normalized_value
                 sharepoint_changed = True
         if sharepoint_changed:
-            sharepoint["rootItemId"] = ""
-            sharepoint["deltaLink"] = ""
-            sharepoint["lastConnectionError"] = None
+            if req.sharePointDriveId is None:
+                sharepoint["driveId"] = ""  # resolved for the old target; resolve it again
+            _reset_sharepoint_target(sharepoint)
             monitor["sharePoint"] = sharepoint
             monitor["lastCompletedAt"] = None
             monitor_changed = True
