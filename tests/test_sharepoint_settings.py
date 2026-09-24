@@ -123,3 +123,93 @@ def test_a_secret_that_cannot_be_decrypted_needs_reentry(tmp_path):
 
     assert view["needsReentry"] is True
     assert view["clientSecretSet"] is False
+
+
+# ── API ──────────────────────────────────────────────────────────────────────
+
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
+
+from settings_api import create_sharepoint_settings_router
+
+
+def client_for(settings, changes=None, admin=True):
+    def admin_dependency():
+        if not admin:
+            raise HTTPException(status_code=403, detail="Admin API key permission is required.")
+        return {"id": "admin"}
+
+    app = FastAPI()
+    app.include_router(create_sharepoint_settings_router(
+        settings, admin_dependency, (lambda: changes.append(1)) if changes is not None else (lambda: None)
+    ))
+    return TestClient(app)
+
+
+def test_get_never_returns_the_secret(tmp_path):
+    settings = make(tmp_path)
+    settings.update_sharepoint(tenant_id=TENANT, client_id=CLIENT, client_secret=SECRET)
+
+    response = client_for(settings).get("/api/settings/sharepoint")
+
+    assert response.status_code == 200
+    assert response.json()["clientSecretMasked"] == "…9xyz"
+    assert SECRET not in response.text
+    assert "clientSecret" not in response.json()
+
+
+def test_patch_saves_and_reports_a_change_once(tmp_path):
+    settings = make(tmp_path)
+    changes = []
+    client = client_for(settings, changes)
+
+    first = client.patch("/api/settings/sharepoint", json={"tenantId": TENANT, "clientId": CLIENT, "clientSecret": SECRET})
+    client.patch("/api/settings/sharepoint", json={"tenantId": TENANT})
+
+    assert first.status_code == 200
+    assert first.json()["configured"] is True
+    assert SECRET not in first.text
+    assert changes == [1]
+
+
+def test_patch_keeps_fields_that_are_left_out(tmp_path):
+    settings = make(tmp_path)
+    client = client_for(settings)
+    client.patch("/api/settings/sharepoint", json={"tenantId": TENANT, "clientId": CLIENT, "clientSecret": SECRET})
+
+    client.patch("/api/settings/sharepoint", json={"tenantId": "contoso.onmicrosoft.com"})
+
+    assert settings.sharepoint_credentials() == ("contoso.onmicrosoft.com", CLIENT, SECRET)
+
+
+def test_patch_with_a_secret_and_clear_is_a_400(tmp_path):
+    settings = make(tmp_path)
+
+    response = client_for(settings).patch(
+        "/api/settings/sharepoint", json={"clientSecret": SECRET, "clearClientSecret": True}
+    )
+
+    assert response.status_code == 400
+    assert settings.sharepoint_view()["clientSecretSet"] is False
+
+
+def test_patch_rejects_an_invalid_client_id(tmp_path):
+    response = client_for(make(tmp_path)).patch("/api/settings/sharepoint", json={"clientId": "abc"})
+
+    assert response.status_code == 400
+    assert "Client ID" in response.json()["detail"]
+
+
+def test_old_admin_route_is_an_alias(tmp_path):
+    settings = make(tmp_path)
+    client = client_for(settings)
+
+    client.patch("/api/admin/sharepoint-config", json={"tenantId": TENANT})
+
+    assert client.get("/api/admin/sharepoint-config").json()["tenantId"] == TENANT
+
+
+def test_non_admins_are_refused(tmp_path):
+    response = client_for(make(tmp_path), admin=False).get("/api/settings/sharepoint")
+
+    assert response.status_code == 403
