@@ -48,6 +48,7 @@ import sqlite3
 import tempfile
 import requests
 from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
@@ -76,6 +77,7 @@ from app_settings import AppSettings
 from model_catalog import ModelCatalog
 from settings_api import create_ai_settings_router, create_retrieval_settings_router, create_sharepoint_settings_router
 from sharepoint_graph import GraphClient, GraphError, download_deadline_seconds
+from sharepoint_items import FolderIndex, content_changed, content_fingerprint, delta_url
 from indexing_recovery import recover_interrupted_documents
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -106,6 +108,15 @@ def _env_positive_int(name: str, default: int) -> int:
 
 
 SHAREPOINT_MAX_FILE_BYTES = _env_positive_int("PAGEINDEX_SHAREPOINT_MAX_FILE_MB", 200) * 1024 * 1024
+SHAREPOINT_STATE_DIR = WORKSPACE_DIR / "_sharepoint"  # per-library folder index files
+SHAREPOINT_MAX_ATTEMPTS = 5
+SHAREPOINT_SCOPE_FALLBACK_STATUSES = {400, 404, 501}
+SHAREPOINT_RETRY_ALL_REASONS = {"manual", "full-resync"}
+# Document fields refreshed without a download when a file's content is unchanged.
+SHAREPOINT_METADATA_FIELDS = (
+    "fileName", "sourcePath", "sourceRelativePath", "sourceModifiedAt", "sourceFingerprint",
+    "sharePointWebUrl", "sharePointETag", "sharePointCTag", "sharePointParentId",
+)
 GENERIC_LIBRARY_TAG_TERMS = {
     "nova", "products", "2026", "insights", "auto", "created", "guidelines",
     "guideline", "resources", "products", "training", "archive", "document",
@@ -1777,50 +1788,6 @@ def _resolve_sharepoint_source(settings: dict) -> dict:
         "driveName": drive_name or (drive or {}).get("name", ""),
         "folderPath": folder_path,
         "rootItemId": root_item_id,
-        "rootItemPath": _sharepoint_item_relative_path(root_item, ""),
-    }
-
-
-def _sharepoint_item_relative_path(item: dict, root_folder_path: str) -> str:
-    name = str(item.get("name") or "").strip()
-    parent_path = str(item.get("parentReference", {}).get("path", "") or "")
-    item_path = ""
-    if "root:" in parent_path:
-        item_path = unquote(parent_path.split("root:", 1)[1]).strip("/")
-    if name:
-        item_path = "/".join(part for part in [item_path, name] if part)
-    root_prefix = _normalize_sharepoint_folder_path(root_folder_path)
-    if root_prefix and item_path.lower().startswith(root_prefix.lower().rstrip("/") + "/"):
-        item_path = item_path[len(root_prefix.rstrip("/")) + 1:]
-    elif root_prefix and item_path.lower() == root_prefix.lower():
-        item_path = ""
-    return item_path.strip("/")
-
-
-def _sharepoint_supported_file_descriptor(item: dict, source: dict) -> Optional[dict]:
-    if "file" not in item or "deleted" in item:
-        return None
-    file_name = str(item.get("name") or "").strip()
-    if not file_name or Path(file_name).suffix.lower() not in SUPPORTED_SOURCE_EXTENSIONS:
-        return None
-    relative_path = _sharepoint_item_relative_path(item, source.get("folderPath", ""))
-    if not relative_path:
-        relative_path = file_name
-    item_id = str(item.get("id") or "").strip()
-    modified_at = str(item.get("lastModifiedDateTime") or "").strip() or None
-    fingerprint = f"{item_id}:{item.get('size', 0)}:{item.get('eTag') or ''}:{item.get('cTag') or ''}:{modified_at or ''}"
-    return {
-        "sharePointItemId": item_id,
-        "sharePointDriveId": source["driveId"],
-        "sharePointWebUrl": item.get("webUrl"),
-        "sharePointETag": item.get("eTag"),
-        "sharePointCTag": item.get("cTag"),
-        "sourcePath": item.get("webUrl"),
-        "sourceRelativePath": relative_path,
-        "sourceFingerprint": hashlib.sha256(fingerprint.encode("utf-8")).hexdigest(),
-        "sourceModifiedAt": modified_at,
-        "fileName": file_name,
-        "fileSize": int(item.get("size") or 0),
     }
 
 
@@ -1829,14 +1796,198 @@ def _is_supported_sharepoint_file(item: dict) -> bool:
     return "file" in item and "deleted" not in item and bool(name) and Path(name).suffix.lower() in SUPPORTED_SOURCE_EXTENSIONS
 
 
-def _iter_sharepoint_delta_items(source: dict, delta_link: str) -> tuple[list[dict], str]:
-    start_url = delta_link or f"/drives/{quote(source['driveId'], safe='')}/items/{quote(source['rootItemId'], safe='')}/delta"
+class SharePointSyncSuperseded(Exception):
+    """The library's SharePoint target changed (or the library went away) while a sync was running."""
+
+
+class SharePointIndexError(Exception):
+    """A SharePoint file downloaded but failed to index."""
+
+
+def _new_sync_result(reason: str) -> dict:
+    return {
+        "reason": reason, "mode": None, "added": 0, "updated": 0, "renamed": 0, "removed": 0, "unchanged": 0,
+        "skipped": 0, "pendingCount": 0, "errorCount": 0, "errors": [], "outcome": None, "durationSeconds": None,
+    }
+
+
+@dataclass
+class _SharePointRun:
+    """State for one SharePoint sync of one library target."""
+    library_id: str
+    target_version: int
+    source: dict
+    folder_index: FolderIndex
+    documents: dict      # doc id -> snapshot of the document
+    docs_by_item: dict   # SharePoint item id -> doc id
+    result: dict
+    pending: dict = field(default_factory=dict)
+    force_item_ids: set = field(default_factory=set)
+
+
+def _sharepoint_folder_index_path(library_id: str) -> Path:
+    return SHAREPOINT_STATE_DIR / f"{library_id}.json"
+
+
+def _current_sharepoint_settings(library_id: str, target_version: int) -> dict:
+    """The live sharePoint settings of a library still syncing `target_version`. Caller holds STATE_LOCK."""
+    library = LIBRARIES.get(library_id)
+    monitor = (library or {}).get("folderMonitor") or {}
+    if not library or _monitor_source_type(monitor) != "sharepoint":
+        raise SharePointSyncSuperseded()
+    sharepoint = _normalize_sharepoint_settings(monitor.get("sharePoint"))
+    if sharepoint["targetVersion"] != target_version:
+        raise SharePointSyncSuperseded()
+    monitor["sharePoint"] = sharepoint
+    return sharepoint
+
+
+def _sharepoint_descriptor(item: dict, source: dict, relative_path: str) -> dict:
+    return {
+        "sharePointItemId": str(item.get("id") or ""),
+        "sharePointDriveId": source["driveId"],
+        "sharePointParentId": str((item.get("parentReference") or {}).get("id") or ""),
+        "sharePointWebUrl": item.get("webUrl"),
+        "sharePointETag": item.get("eTag"),
+        "sharePointCTag": item.get("cTag"),
+        "sourcePath": item.get("webUrl"),
+        "sourceRelativePath": relative_path,
+        "sourceFingerprint": content_fingerprint(item),
+        "sourceModifiedAt": str(item.get("lastModifiedDateTime") or "").strip() or None,
+        "fileName": str(item.get("name") or "").strip(),
+        "fileSize": int(item.get("size") or 0),
+    }
+
+
+def _collect_sharepoint_delta(url: str) -> tuple[list[dict], str]:
     items: list[dict] = []
-    final_delta_link = ""
-    for payload in SHAREPOINT_GRAPH.iter_pages(start_url):
-        items.extend(payload.get("value", []))
-        final_delta_link = payload.get("@odata.deltaLink") or final_delta_link
-    return items, final_delta_link
+    delta_link = ""
+    for page in SHAREPOINT_GRAPH.iter_pages(url):
+        items.extend(page.get("value", []))
+        delta_link = page.get("@odata.deltaLink") or delta_link
+    if not delta_link:
+        raise GraphError("Microsoft Graph ended the change list without a delta link.")
+    return items, delta_link
+
+
+def _read_sharepoint_changes(source: dict, settings: dict, full_scan: bool) -> tuple[list[dict], str, bool, str]:
+    """Return (changed items, next delta link, whether it was a full scan, scope mode).
+
+    The first sync of a target tries folder-scoped delta and falls back to drive-wide delta when the
+    tenant doesn't support it. An expired link (410) restarts from scratch; other errors propagate
+    (the client already retried throttling and server errors) and leave the saved link unchanged.
+    """
+    scope_mode = settings.get("scopeMode") or ""
+    if not scope_mode:
+        try:
+            items, link = _collect_sharepoint_delta(delta_url(source["driveId"], source["rootItemId"], "folder", source["folderPath"]))
+            return items, link, True, "folder"
+        except GraphError as exc:
+            if exc.status not in SHAREPOINT_SCOPE_FALLBACK_STATUSES:
+                raise
+            _safe_print(f"[SharePoint] Folder-scoped change tracking unavailable ({exc.status}); tracking the whole drive.")
+            scope_mode = "drive"
+            full_scan = True
+    start_url = delta_url(source["driveId"], source["rootItemId"], scope_mode, source["folderPath"])
+    if full_scan or not settings.get("deltaLink"):
+        items, link = _collect_sharepoint_delta(start_url)
+        return items, link, True, scope_mode
+    try:
+        items, link = _collect_sharepoint_delta(settings["deltaLink"])
+        return items, link, False, scope_mode
+    except GraphError as exc:
+        if exc.status != 410:
+            raise
+        _safe_print("[SharePoint] Change list expired (410); running a full scan.")
+        items, link = _collect_sharepoint_delta(start_url)
+        return items, link, True, scope_mode
+
+
+def _remove_sharepoint_document(run: _SharePointRun, doc_id: str) -> None:
+    try:
+        with STATE_LOCK:
+            _current_sharepoint_settings(run.library_id, run.target_version)
+            _remove_document_record(run.library_id, doc_id)
+            save_libraries(LIBRARIES)
+    except SharePointSyncSuperseded:
+        raise
+    except Exception as exc:
+        run.result["errorCount"] += 1
+        run.result["errors"].append({
+            "path": (run.documents.get(doc_id) or {}).get("sourceRelativePath") or doc_id, "error": _short_error(exc),
+        })
+        return
+    run.documents.pop(doc_id, None)
+    run.docs_by_item = {item_id: other for item_id, other in run.docs_by_item.items() if other != doc_id}
+    run.result["removed"] += 1
+
+
+def _update_sharepoint_metadata(run: _SharePointRun, doc_id: str, document: dict, descriptor: dict) -> None:
+    """Content unchanged: refresh names, paths and tags without downloading or re-indexing."""
+    changes = {name: descriptor.get(name) for name in SHAREPOINT_METADATA_FIELDS if document.get(name) != descriptor.get(name)}
+    if changes:
+        with STATE_LOCK:
+            _current_sharepoint_settings(run.library_id, run.target_version)
+            current = LIBRARIES[run.library_id].get("documents", {}).get(doc_id)
+            if current:
+                current.update(changes)
+                save_libraries(LIBRARIES)
+        run.documents[doc_id] = {**document, **changes}
+    moved = "fileName" in changes or "sourceRelativePath" in changes
+    run.result["renamed" if moved else "unchanged"] += 1
+
+
+def _apply_sharepoint_item(run: _SharePointRun, item: dict, seen: set) -> None:
+    item_id = str(item.get("id") or "")
+    if not item_id or "folder" in item or "root" in item:
+        return  # folders only feed the folder index
+    doc_id = run.docs_by_item.get(item_id)
+    if "deleted" in item:
+        run.pending.pop(item_id, None)
+        if doc_id:
+            _remove_sharepoint_document(run, doc_id)
+        return
+    if "file" not in item:
+        return
+    relative_path = run.folder_index.item_path(item, run.source["rootItemId"])
+    if relative_path is None or not _is_supported_sharepoint_file(item):
+        run.pending.pop(item_id, None)
+        if doc_id:
+            _remove_sharepoint_document(run, doc_id)  # moved out of the folder, or renamed to an unsupported type
+        elif relative_path is not None:
+            run.result["skipped"] += 1
+        return
+    seen.add(item_id)
+    descriptor = _sharepoint_descriptor(item, run.source, relative_path)
+    document = run.documents.get(doc_id) if doc_id else None
+    if document and item_id not in run.force_item_ids and not content_changed(document, item):
+        _update_sharepoint_metadata(run, doc_id, document, descriptor)
+        return
+    try:
+        _upsert_sharepoint_document(run.library_id, doc_id or str(uuid.uuid4()), descriptor, run.target_version)
+    except SharePointSyncSuperseded:
+        raise
+    except Exception as exc:
+        run.result["errorCount"] += 1
+        run.result["errors"].append({"path": relative_path, "error": _short_error(exc)})
+        return
+    run.pending.pop(item_id, None)
+    run.result["updated" if document else "added"] += 1
+
+
+def _refresh_sharepoint_paths(run: _SharePointRun, seen: set) -> None:
+    """A folder rename or move changes the paths of files the delta doesn't list; re-derive them."""
+    for item_id, doc_id in list(run.docs_by_item.items()):
+        document = run.documents.get(doc_id) or {}
+        parent_id = document.get("sharePointParentId")
+        if item_id in seen or item_id in run.pending or not parent_id:
+            continue
+        path = run.folder_index.path_for(parent_id, document.get("fileName") or "", run.source["rootItemId"])
+        if path is None:
+            _remove_sharepoint_document(run, doc_id)
+        elif path != document.get("sourceRelativePath"):
+            descriptor = {**{name: document.get(name) for name in SHAREPOINT_METADATA_FIELDS}, "sourceRelativePath": path}
+            _update_sharepoint_metadata(run, doc_id, document, descriptor)
 
 
 def _mark_monitor_sync_started(library_id: str, reason: str):
@@ -2087,14 +2238,14 @@ def _download_sharepoint_file_to_managed_upload(library_id: str, doc_id: str, de
     return managed_path
 
 
-def _upsert_sharepoint_document(library_id: str, doc_id: str, descriptor: dict):
+def _upsert_sharepoint_document(library_id: str, doc_id: str, descriptor: dict, target_version: int):
+    with STATE_LOCK:
+        _current_sharepoint_settings(library_id, target_version)  # don't download for a target that moved on
     managed_path = _download_sharepoint_file_to_managed_upload(library_id, doc_id, descriptor)
 
     with STATE_LOCK:
-        library = LIBRARIES.get(library_id)
-        if not library:
-            return
-
+        _current_sharepoint_settings(library_id, target_version)
+        library = LIBRARIES[library_id]
         document = library.setdefault("documents", {}).setdefault(doc_id, {"id": doc_id})
         document.update({
             "id": doc_id,
@@ -2111,6 +2262,7 @@ def _upsert_sharepoint_document(library_id: str, doc_id: str, descriptor: dict):
             "sourceModifiedAt": descriptor.get("sourceModifiedAt"),
             "sharePointItemId": descriptor["sharePointItemId"],
             "sharePointDriveId": descriptor["sharePointDriveId"],
+            "sharePointParentId": descriptor["sharePointParentId"],
             "sharePointWebUrl": descriptor.get("sharePointWebUrl"),
             "sharePointETag": descriptor.get("sharePointETag"),
             "sharePointCTag": descriptor.get("sharePointCTag"),
@@ -2122,6 +2274,11 @@ def _upsert_sharepoint_document(library_id: str, doc_id: str, descriptor: dict):
         save_libraries(LIBRARIES)
 
     _index_document(library_id, doc_id, str(managed_path))
+
+    with STATE_LOCK:
+        document = LIBRARIES.get(library_id, {}).get("documents", {}).get(doc_id) or {}
+        if document.get("status") == "error":
+            raise SharePointIndexError(document.get("error") or "Indexing failed.")
 
 
 def _sync_library_folder(library_id: str, reason: str) -> dict:
@@ -2217,135 +2374,80 @@ def _sync_library_sharepoint(library_id: str, reason: str) -> dict:
         if not library:
             raise ValueError("Library not found.")
         monitor = library.setdefault("folderMonitor", _default_folder_monitor())
-        source_settings = _normalize_sharepoint_settings(monitor.get("sharePoint"))
-        existing_documents = {
+        settings = _normalize_sharepoint_settings(monitor.get("sharePoint"))
+    target_version = settings["targetVersion"]
+
+    try:
+        source = _resolve_sharepoint_source(settings)
+    except Exception as exc:
+        with STATE_LOCK:
+            try:
+                _current_sharepoint_settings(library_id, target_version)["lastConnectionError"] = _short_error(exc)
+                save_libraries(LIBRARIES)
+            except SharePointSyncSuperseded:
+                pass
+        raise
+
+    with STATE_LOCK:
+        sharepoint = _current_sharepoint_settings(library_id, target_version)
+        sharepoint.update({
+            "siteUrl": source["siteUrl"], "siteId": source["siteId"], "driveId": source["driveId"],
+            "driveName": source["driveName"], "folderPath": source["folderPath"], "rootItemId": source["rootItemId"],
+            "lastConnectedAt": _utcnow_iso(), "lastConnectionError": None,
+        })
+        save_libraries(LIBRARIES)
+        settings = _normalize_sharepoint_settings(sharepoint)
+        documents = {
             doc_id: dict(document)
-            for doc_id, document in library.get("documents", {}).items()
+            for doc_id, document in LIBRARIES[library_id].get("documents", {}).items()
             if document.get("sourceType") == "sharepoint"
         }
 
-    source = _resolve_sharepoint_source(source_settings)
-    with STATE_LOCK:
-        library = LIBRARIES.get(library_id)
-        if library:
-            monitor = library.setdefault("folderMonitor", _default_folder_monitor())
-            sharepoint = _normalize_sharepoint_settings(monitor.get("sharePoint"))
-            sharepoint.update({
-                "siteUrl": source["siteUrl"],
-                "siteId": source["siteId"],
-                "driveId": source["driveId"],
-                "driveName": source["driveName"],
-                "folderPath": source["folderPath"],
-                "rootItemId": source["rootItemId"],
-                "lastConnectedAt": _utcnow_iso(),
-                "lastConnectionError": None,
-            })
-            monitor["sharePoint"] = sharepoint
-            save_libraries(LIBRARIES)
+    folder_index_path = _sharepoint_folder_index_path(library_id)
+    folder_index = FolderIndex.load(folder_index_path, target_version)
+    # Without a saved folder index (first sync, or first after upgrading) paths can't be derived from a delta.
+    full_scan = reason == "full-resync" or not settings["deltaLink"] or len(folder_index) == 0
+    items, delta_link, full_scan, scope_mode = _read_sharepoint_changes(source, settings, full_scan)
+    if full_scan:
+        folder_index = FolderIndex()
+    latest = {str(item.get("id") or ""): item for item in items}  # Graph may list an item more than once; the last wins
+    for item in latest.values():
+        folder_index.observe(item)
 
-    original_delta_link = source_settings.get("deltaLink", "")
-    full_scan = not original_delta_link
-    try:
-        items, delta_link = _iter_sharepoint_delta_items(source, original_delta_link)
-    except (ValueError, GraphError):
-        if not original_delta_link:
-            raise
-        full_scan = True
-        items, delta_link = _iter_sharepoint_delta_items(source, "")
+    result = _new_sync_result(reason)
+    result["mode"] = "full" if full_scan else "delta"
+    run = _SharePointRun(
+        library_id=library_id,
+        target_version=target_version,
+        source=source,
+        folder_index=folder_index,
+        documents=documents,
+        docs_by_item={str(doc["sharePointItemId"]): doc_id for doc_id, doc in documents.items() if doc.get("sharePointItemId")},
+        result=result,
+    )
 
-    existing_by_item_id = {
-        str(document.get("sharePointItemId")): {"docId": doc_id, "document": document}
-        for doc_id, document in existing_documents.items()
-        if document.get("sharePointItemId")
-    }
-
-    result = {
-        "reason": reason,
-        "added": 0,
-        "updated": 0,
-        "removed": 0,
-        "unchanged": 0,
-        "errorCount": 0,
-        "errors": [],
-    }
-
-    seen_supported_item_ids = set()
-    for item in items:
-        item_id = str(item.get("id") or "")
-        if not item_id:
-            continue
-        existing = existing_by_item_id.get(item_id)
-        if "deleted" in item:
-            if existing:
-                try:
-                    with STATE_LOCK:
-                        _remove_document_record(library_id, existing["docId"])
-                        save_libraries(LIBRARIES)
-                    result["removed"] += 1
-                except Exception as exc:
-                    result["errorCount"] += 1
-                    result["errors"].append({"path": existing["document"].get("sourceRelativePath") or item_id, "error": str(exc)})
-            continue
-
-        descriptor = _sharepoint_supported_file_descriptor(item, source)
-        if not descriptor:
-            continue
-        seen_supported_item_ids.add(item_id)
-        existing = existing_by_item_id.get(item_id)
-        try:
-            if not existing:
-                _upsert_sharepoint_document(library_id, str(uuid.uuid4()), descriptor)
-                result["added"] += 1
-                continue
-
-            document = existing["document"]
-            if document.get("sourceFingerprint") == descriptor["sourceFingerprint"]:
-                source_changed = any(
-                    document.get(field) != descriptor.get(field)
-                    for field in ["sourcePath", "sourceRelativePath", "sourceModifiedAt", "sharePointWebUrl", "sharePointETag", "sharePointCTag"]
-                )
-                if source_changed:
-                    with STATE_LOCK:
-                        current_document = LIBRARIES.get(library_id, {}).get("documents", {}).get(existing["docId"])
-                        if current_document:
-                            for field in ["sourcePath", "sourceRelativePath", "sourceModifiedAt", "sharePointWebUrl", "sharePointETag", "sharePointCTag"]:
-                                current_document[field] = descriptor.get(field)
-                            save_libraries(LIBRARIES)
-                result["unchanged"] += 1
-                continue
-
-            _upsert_sharepoint_document(library_id, existing["docId"], descriptor)
-            result["updated"] += 1
-        except Exception as exc:
-            result["errorCount"] += 1
-            result["errors"].append({"path": descriptor.get("sourceRelativePath") or item_id, "error": str(exc)})
+    seen: set[str] = set()
+    for item in latest.values():
+        _apply_sharepoint_item(run, item, seen)
 
     if full_scan:
-        stale_item_ids = sorted(set(existing_by_item_id) - seen_supported_item_ids)
-        for item_id in stale_item_ids:
-            existing = existing_by_item_id[item_id]
-            try:
-                with STATE_LOCK:
-                    _remove_document_record(library_id, existing["docId"])
-                    save_libraries(LIBRARIES)
-                result["removed"] += 1
-            except Exception as exc:
-                result["errorCount"] += 1
-                result["errors"].append({"path": existing["document"].get("sourceRelativePath") or item_id, "error": str(exc)})
+        for item_id, doc_id in list(run.docs_by_item.items()):
+            if item_id not in seen:
+                _remove_sharepoint_document(run, doc_id)
+    else:
+        _refresh_sharepoint_paths(run, seen)
 
     with STATE_LOCK:
-        library = LIBRARIES.get(library_id)
-        if library:
-            monitor = library.setdefault("folderMonitor", _default_folder_monitor())
-            sharepoint = _normalize_sharepoint_settings(monitor.get("sharePoint"))
-            sharepoint["deltaLink"] = delta_link or sharepoint.get("deltaLink", "")
-            sharepoint["lastConnectedAt"] = _utcnow_iso()
-            sharepoint["lastConnectionError"] = None
-            monitor["sharePoint"] = sharepoint
-            save_libraries(LIBRARIES)
+        sharepoint = _current_sharepoint_settings(library_id, target_version)
+        sharepoint.update({
+            "deltaLink": delta_link, "scopeMode": scope_mode, "pendingItems": run.pending,
+            "lastConnectedAt": _utcnow_iso(), "lastConnectionError": None,
+        })
+        folder_index.save(folder_index_path, target_version, _write_json_atomic)
+        save_libraries(LIBRARIES)
 
-    if len(result["errors"]) > 12:
-        result["errors"] = result["errors"][:12]
+    result["pendingCount"] = len(run.pending)
+    result["errors"] = result["errors"][:12]
     return result
 
 
